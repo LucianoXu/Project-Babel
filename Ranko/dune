@@ -1,0 +1,5 @@
+(coq.theory
+ (name Ranko))
+ 
+(include_subdirs qualified)
+
