@@ -1,12 +1,12 @@
-From ranko Require Export premises.
+From Ranko Require Export FQP.premises.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-Require FieldTheories.
-Require RealTheories.
+From Ranko Require FieldTheories.
+From Ranko Require RealTheories.
 
 
 

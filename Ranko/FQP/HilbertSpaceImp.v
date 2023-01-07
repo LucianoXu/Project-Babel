@@ -1,5 +1,4 @@
-From Ranko Require Import FQP.premises.
-From Ranko Require Import TerminalDogma.Sequence.
+Require Export premises.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -11,7 +10,7 @@ Require VectorSpaceTheories.
 
 
 
-Module HilbertSpaceTheory.
+Module Export HilbertSpaceTheory.
 
 Export ComplexTheories.ComplexTheory.
 Export VectorSpaceTheories.VectorSpaceTheory.
@@ -59,14 +58,14 @@ Definition unit_vector (CIPs : CIP_space) (u : CIPs) : Prop := |[ u ]| = 1%R.
 (** Definition 2.1.3 *)
 
 Record v_Cauchy_seq (H : CIP_space) := mk_v_Cauchy_seq {
-    f_v_seq :> infSeq H;
+    f_v_seq :> nat -> H;
     seq_conv_proof : 
         forall e : { r : R | r > 0 },
         exists N : nat, forall m n : { n : nat | (n > N)%nat }, 
         |[ (f_v_seq (proj1_sig m)) + (- (f_v_seq (proj1_sig n))) ]| < proj1_sig e;
 }.
 
-Definition seq_lim (H : CIP_space) (f : infSeq H) (psi : H) :=
+Definition seq_lim (H : CIP_space) (f : nat -> H) (psi : H) :=
     forall e : { r : R | r > 0 },
     exists N : nat, forall n : { n : nat | (n > N)%nat }, 
     |[ (f (proj1_sig n)) + (- psi) ]| < proj1_sig e.
@@ -78,18 +77,5 @@ Record Hilbert_space := build_Hspace {
 }.
 
 (** Definition 2.1.5 *)
-
-Definition is_ortho_basis (H : Hilbert_space) (s : Seque H) : Prop :=
-    forall i j : index s, s i ⊥ s j.
-
-Record ortho_basis (H : Hilbert_space) := build_ortho_basis {
-    ortho_basis_obj :> Seque H;
-    ortho_basis_proof : is_ortho_basis ortho_basis_obj;
-}.
-
-Definition in_linear_comb (H : Hilbert_space) (s : Seque H) (psi : H) :=
-    exists 
-
-
 
 End HilbertSpaceTheory.

@@ -1,14 +1,20 @@
-Require Export premises.
+From Ranko Require Export FQP.premises.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Require FieldTheories.
+From Ranko Require FieldTheories.
+From Ranko Require TerminalDogma.Sequence.
+
+
+
+
 
 Module Export VectorSpaceTheory.
 
 Export FieldTheories.FieldTheory.
+Export TerminalDogma.Sequence.
 
 Declare Scope Vspace_scope.
 Open Scope Vspace_scope.
@@ -35,7 +41,6 @@ Record vspace (F : field) := build_vspace {
     Radd_opp : forall u : V, Vadd u (Vopp u) = V0;
 
 
-
     (** scalar multiplication consistent with its definition in field F *)
     Vscal_cst : forall (a b : F) (u : V), 
         Vscal a (Vscal b u) = Vscal (rmul a b) u;
@@ -51,6 +56,7 @@ Record vspace (F : field) := build_vspace {
     Vadd_dist : forall (a b : F) (u : V),
         Vscal (radd a b) u = Vadd (Vscal a u) (Vscal b u);
 }.
+
 Notation " a + b " := (Vadd a b) : Vspace_scope.
 Notation " - a " := (Vopp a) : Vspace_scope.
 (* Note : considering that the level for a + b is 50, the level for a * b is 40, 
@@ -59,5 +65,11 @@ Notation " a '∗' b " := (Vscal a b) (at level 30): Vspace_scope.
 Notation "𝟎" := ( V0 _ ) : Vspace_scope.
 
 (** [] *)
+About sequeN_fun_zip.
+(** big sum *)
+Definition linear_comb (F : field) (V : vspace F) (n : nat)
+    (sf : sequeN F n) (sv : sequeN V n) : sequeN V n :=
+    sequeN_fun_zip sf sv (@Vscal _ V).
+
 
 End VectorSpaceTheory.

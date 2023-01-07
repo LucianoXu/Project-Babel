@@ -1,4 +1,4 @@
-Require Export premises.
+From Ranko Require Export FQP.premises.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

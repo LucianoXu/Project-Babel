@@ -23,11 +23,11 @@ Definition unify {T1 T2} (t1 : T1) (t2 : T2) (s : option string) :=
 
 Definition id {T} {t : T} (x : phantom t) := x.
 
-Notation "[find v | t1 ∼ t2 ] rest" :=
+Notation "[find v | t1 ~ t2 ] rest" :=
     (fun v (_ : unify t1 t2 None) => rest) (at level 10) 
     : CanonicalMethod_scope.
 
-Notation "[find v | t1 ∼ t2 | msg ] rest" :=
+Notation "[find v | t1 ~ t2 | msg ] rest" :=
     (fun v (_ : unify t1 t2 (Some msg)) => rest) (at level 11)
     : CanonicalMethod_scope.
 
