@@ -1,5 +1,7 @@
 From mathcomp Require Export all_ssreflect.
-Require Export Coq.Unicode.Utf8_core.
+Require Export Coq.Unicode.Utf8_core .
+Require Export Setoid.
+
 
 From Ranko.TerminalDogma Require Export NotationRefinements.
 From Ranko.TerminalDogma Require Export CanonicalMethod.
