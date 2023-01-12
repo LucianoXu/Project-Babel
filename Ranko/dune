@@ -1,5 +1,10 @@
 (coq.theory
- (name Ranko))
- 
+    (flags -w -ambiguous-paths
+        -w -notation-overridden
+        -w -redundant-canonical-projection
+        -w -projection-no-head-constant)
+    (name Ranko))
+
+
 (include_subdirs qualified)
 

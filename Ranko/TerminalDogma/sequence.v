@@ -7,7 +7,7 @@ From Ranko Require Import TerminalDogma.Isomorphism.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
+(*
 (** The module to deal with finite or countable infinite sequences. *)
 
 Open Scope Nat_scope.
@@ -89,7 +89,7 @@ Print sequeN_fun_zip.
 Definition sequeN_foldl (n : nat) (X Y : Type) (h : Y) (sx : sequeN X n)
     (f : Y -> X -> Y) : Y.
 Proof. elim : n sx. by move => x; exact h.
-
+*)
     
 
 
