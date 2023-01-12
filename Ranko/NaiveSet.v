@@ -30,7 +30,6 @@ Reserved Notation " A '∪' B " (at level 43).
 Reserved Notation " A '∩' B " (at level 42).
 Reserved Notation " '∁' A" (at level 39). 
 
-Reserved Notation " A -- B " (at level 41).
 Reserved Notation "'⋃' A" (at level 45).
 Reserved Notation "'⋂' A" (at level 44).
 Reserved Notation " f @ A " (at level 30).
@@ -42,7 +41,6 @@ Reserved Notation "'forall'' A '⊆' B , expr" (at level 80, A at level 20, B at
 Reserved Notation "'exists'' A '⊆' B , expr" (at level 80, A at level 20, B at level 80, expr at level 80).
 
 Reserved Notation " {{ x , .. , y }} " (at level 20).
-Reserved Notation " {[ x , .. , y ]} " (at level 20).
 
 (* ################################################################# *)
 
@@ -239,30 +237,31 @@ Qed.
 
 Definition big_union (T : Type) (A : 𝒫(𝒫(T))) : 𝒫(T) :=
     { x | exists X, X ∈ A /\ x ∈ X }.
-Notation "'⋃' A" := (big_union A).
+Notation "'⋃' A" := (big_union A) : NSet_scope.
 
 
 Definition big_itsct (T : Type) (A : 𝒫(𝒫(T))) : 𝒫(T) :=
     { x | forall X, X ∈ A -> x ∈ X }.
-Notation "'⋂' A" := (big_itsct A).
+Notation "'⋂' A" := (big_itsct A) : NSet_scope.
 
 
 Definition f_ele (X Y: Type) (A : 𝒫(X)) (f : X -> Y) : 𝒫(Y) :=
     { f x , x | x ∈ A }.
-Notation " f @ A " := (f_ele A f).
+Notation " f @ A " := (f_ele A f) : NSet_scope.
 
 Definition f_outer (X Y Z : Type)(A : 𝒫(X))(B : 𝒫(Y))(f : X -> Y -> Z): 𝒫(Z) :=
     ⋃ ((fun a => { f a b, b | b ∈ B } ) @ A).
-Notation " A @ f @ B " := (f_outer A B f).
+Notation " A @ f @ B " := (f_outer A B f) : NSet_scope.
 
 
-Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr).
-Notation "'exists'' x '∈' A , expr" := (exists x , x ∈ A /\ expr).
-Notation "'forall'' A '⊆' B , expr" := (forall A , A ⊆ B -> expr).
-Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr).
+Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr) : NSet_scope.
+Notation "'exists'' x '∈' A , expr" := (exists x , x ∈ A /\ expr) : NSet_scope.
+Notation "'forall'' A '⊆' B , expr" := (forall A , A ⊆ B -> expr) : NSet_scope.
+Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_scope.
 
 (* set by enumerating *)
-Notation "{{ x , .. , y }} " := ({ a | (a = x \/ .. (a = y \/ False) .. )}).
+Notation "{{ x , .. , y }} " := 
+    ({ a | (a = x \/ .. (a = y \/ False) .. )}) : NSet_scope.
 
 Add Parametric Morphism {X : Type} : (@big_union X)
     with signature (@subset (set X)) ==> (@subset X) as big_union_mor_sub.

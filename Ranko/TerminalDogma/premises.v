@@ -4,7 +4,7 @@ Require Export Setoid.
 
 
 From Ranko.TerminalDogma Require Export NotationRefinements.
-From Ranko.TerminalDogma Require Export CanonicalMethod.
+From Ranko.TerminalDogma Require Export CanonicalInfrastructure.
 From Ranko.TerminalDogma Require Export EqFact.
 From Ranko.TerminalDogma Require Export Function.
 
