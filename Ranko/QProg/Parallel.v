@@ -38,6 +38,7 @@ Inductive prog (qs : QvarScope): Type :=
 | seq_ (S1 S2 : prog qs)
 | atom_ (S0 : prog qs)
 | parallel_ (S1 S2 : prog qs).
+
 Notation " 'Skip' " := (@skip_ _) : QPP_scope.
 Notation " 'Abort' " := (@abort_ _) : QPP_scope.
 Notation " qv <- '0' " := (@init_ _ qv) (at level 10) : QPP_scope.
