@@ -136,11 +136,20 @@ Definition Step {qs : QvarScope} (S1 S2: prog qs)
         | Some Q => seq_Head S2 ;; [ S1 // Q ]
     end.
 
-(** Define the operational semantics *)
-Fixpoint opSemN {qs : QvarScope} (c : cfg qs) (n : nat) : 𝒫(𝒟( qs )⁻) :=
-    match c with
-    | <{ ↓ , rho_s }> => rho_s
-    | <{ P , rho_s }> => 
+Reserved Notation " ⟦ P , n ⟧ ( rho_s ) " 
+    (format "⟦  P ,  n  ⟧ ( rho_s )").
+Reserved Notation " ⟦ ↓ ⟧ ( rho_s ) " 
+    (only printing, format "⟦  ↓  ⟧ ( rho_s )").
+
+(** Define the denotational semantics of calculating n steps 
+    parameter :
+        [P : option (prog qs)], if [P] is [None] then the program is 
+            terminated.*)
+Fixpoint deSemN {qs : QvarScope} (P : option (prog qs)) (n : nat)
+    (rho_s : 𝒫(𝒟( qs )⁻)) : 𝒫(𝒟( qs )⁻) :=
+    match P with
+    | None => rho_s
+    | Some P => 
         match n with
         | 0 => PDensitySet_uni
         | n'.+1 => 
@@ -154,73 +163,91 @@ Fixpoint opSemN {qs : QvarScope} (c : cfg qs) (n : nat) : 𝒫(𝒟( qs )⁻) :=
             | qv *= U => 
                 UapplyS U rho_s
             | If m [[ qv_m ]] Then P0 Else P1 End =>
-                (opSemN <{ P0, MapplyS m true rho_s }> n')
-                + (opSemN <{ P1, MapplyS m false rho_s }> n')
+                (⟦ P0, n' ⟧ ( MapplyS m true rho_s ))
+                + (⟦ P1, n' ⟧ ( MapplyS m false rho_s ))
             | While m [[ qv_m ]] Do P0 End  =>
-                (opSemN <{ P0;; While m [[ qv_m ]] Do P0 End 
-                        , MapplyS m true rho_s }> n')
+                ⟦ P0;; While m [[ qv_m ]] Do P0 End, n' ⟧ (MapplyS m true rho_s)
                 + MapplyS m false rho_s
             | S1 ;; S2 => 
-                opSemN <{ S2 , opSemN <{S1, rho_s}> n' }> n'
+                ⟦ S2, n' ⟧ (⟦ S1, n' ⟧ (rho_s))
             | << P >> => 
-                opSemN <{ P, rho_s }> n'
+                ⟦ P, n' ⟧ (rho_s)
             | [ S1 // S2 ] => 
                 (** Note that here we give a different interpretation of 
                     nested parallel composition *)
-                (opSemN <{ Step S1 S2 true , rho_s }> n')
-                ∪ (opSemN <{ Step S1 S2 false , rho_s }> n')
+                (⟦ Step S1 S2 true, n'⟧ (rho_s))
+                ∪ (⟦ Step S1 S2 false, n'⟧ (rho_s))
             end
         end
-    end.
+    end
+    where " ⟦ P , n ⟧ ( rho_s ) " := (deSemN (Some P) n rho_s) : QPP_scope.
+
+Notation " ⟦ ↓ ⟧ ( rho_s ) " := (deSemN None _ rho_s) :QPP_scope.
 
 
-Lemma opSemN_seq_ex {qs : QvarScope} S0 S1 :
-        forall rho_s n, exists a b, opSemN <{ S0 ;; S1, rho_s }> n = 
-                @opSemN qs <{ S1 , opSemN <{ S0, rho_s}> a }> b.
+Lemma deSemN_seq_ex {qs : QvarScope} S0 S1 :
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n, exists a b, 
+        
+            ⟦ S0 ;; S1, n ⟧ (rho_s) = ⟦ S1 , b ⟧ (⟦ S0, a ⟧ (rho_s)).
+
 Proof.
     (** This property does not hold in the finite situation, because S0 can
         have branches of different lengths. *)
 Abort.
 
-Lemma opSemN_seq {qs : QvarScope} S0 S1 :
-        forall rho_s n, opSemN <{ S0 ;; S1, rho_s }> n.+1 = 
-                @opSemN qs <{ S1 , opSemN <{ S0, rho_s}> n }> n.
+Lemma deSemN_seq {qs : QvarScope} S0 S1 :
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n, 
+
+            ⟦ S0 ;; S1, n.+1 ⟧ (rho_s) = ⟦ S1 , n ⟧ (⟦ S0, n ⟧ (rho_s)).
+
 Proof. move => rho_s. by case. Qed.
 
 
-Lemma opSemN_if {qs : QvarScope} qv_m m S0 S1: 
-        forall rho_s n, opSemN <{ If m [[ qv_m ]] Then S0 Else S1 End , rho_s }> n.+1
-                    = opSemN <{ S0, MapplyS m true rho_s }> n
-                        + @opSemN qs <{ S1, MapplyS m false rho_s }> n.
-Proof. move => rho_s. by case. Qed.
+Lemma deSemN_if {qs : QvarScope} qv_m m S0 S1: 
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n,
 
-Lemma opSemN_while {qs : QvarScope} qv_m m S0:
-        forall rho_s n, opSemN <{ While m [[ qv_m ]] Do S0 End , rho_s }> n.+1
-                    = opSemN <{ S0;; While m [[ qv_m ]] Do S0 End , 
-                            MapplyS m true rho_s }> n
-                        + (@MapplyS qs qv_m m false rho_s).
-Proof. move => rho_s. by case. Qed.
+            ⟦ If m [[ qv_m ]] Then S0 Else S1 End , n.+1 ⟧ (rho_s)
+            = ⟦ S0, n ⟧ (MapplyS m true rho_s) 
+                + ⟦ S1, n ⟧ (MapplyS m false rho_s).
 
-Lemma opSemN_atom {qs : QvarScope} P :
-        forall rho_s n, opSemN <{ <<P>>, rho_s }> n.+1
-                    = @opSemN qs <{ P, rho_s }> n.
-Proof. move => rho_s. by case. Qed.
-
-Lemma opSemN_parallel {qs : QvarScope} S1 S2 :
-        forall rho_s n, opSemN <{ [ S1 // S2 ], rho_s }> n.+1
-                    = (opSemN <{ Step S1 S2 true , rho_s }> n)
-                        ∪ (@opSemN qs <{ Step S1 S2 false , rho_s }> n).
 Proof. move => rho_s. by case. Qed.
 
 
+Lemma deSemN_while {qs : QvarScope} qv_m m S0:
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n, 
+        
+            ⟦ While m [[ qv_m ]] Do S0 End, n.+1 ⟧(rho_s)
+            = ⟦ S0;; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
+                + (MapplyS m false rho_s).
+
+Proof. move => rho_s. by case. Qed.
+
+
+Lemma deSemN_atom {qs : QvarScope} P :
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n, 
+        
+            ⟦ <<P>>, n.+1 ⟧ (rho_s) = ⟦ P, n ⟧ (rho_s).
+
+Proof. move => rho_s. by case. Qed.
+
+
+Lemma deSemN_parallel {qs : QvarScope} S1 S2 :
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n, 
+        
+            ⟦ [ S1 // S2 ], n.+1 ⟧ (rho_s) 
+            = (⟦ Step S1 S2 true, n ⟧ (rho_s))
+                ∪ (⟦ Step S1 S2 false, n ⟧ (rho_s)).
+
+Proof. move => rho_s. by case. Qed.
 
 
 
 
-(* The relation between opSemN and order *)
-Lemma PDenSetOrder_opSemN_strong {qs : QvarScope} :
+
+(* The strong relation between opSemN and order *)
+Lemma deSemN_monotonic_strong {qs : QvarScope} :
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) n i, 
-        i <= n -> r1 ⊑♯ r2 -> opSemN <{ S0 , r1 }> i ⊑♯ opSemN <{ S0 , r2 }> i.
+        i <= n -> r1 ⊑♯ r2 -> ⟦ S0, i ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
 Proof. 
     move => S0 r1 r2 n.
 
@@ -231,7 +258,7 @@ Proof.
 
     (* induction step, process i=0 first *)
     move => n IHn S0 r1 r2 i Hi Hr1r2. case: i Hi.
-    by reflexivity.
+    move => _. by apply PDenSet_uni_least.
 
     move => i Hi.
     (* case on programs *)
@@ -256,189 +283,133 @@ Proof.
     (* atom *)
     move => S0 => //=. by apply IHn => //.
     (* parallel *)
-    move => S1 S2. rewrite !opSemN_parallel. 
+    move => S1 S2. rewrite !deSemN_parallel. 
     by apply PDenSetOrder_union_split; apply IHn.
 Qed.
 
-Lemma PDenSetOrder_opSemN {qs : QvarScope} :
+Lemma deSemN_monotonic_rho {qs : QvarScope} :
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) n, 
-        r1 ⊑♯ r2 -> opSemN <{ S0 , r1 }> n ⊑♯ opSemN <{ S0 , r2 }> n.
+        r1 ⊑♯ r2 -> ⟦ S0, n ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
 Proof.
     move => S0 r1 r2 n.
-    by apply (@PDenSetOrder_opSemN_strong qs S0 r1 r2 n n).
+    by apply (@deSemN_monotonic_strong qs S0 r1 r2 n n).
 Qed.
 
 
 
 (** Prove that [opSemN c i] is increasing when i increases. *)
-Lemma opSemN_inc_strong {qs : QvarScope} : 
-    forall (c : cfg qs) n i, i <= n -> opSemN c i ⊑♯ opSemN c i.+1.
-Proof.
-    (** process terminated configurations first *)
-    move => []; last first.
-    move => rho_s n. case => //=; by reflexivity.
-
-    (* induction on n *)
-    move => S0 rho_s n. elim : n S0 rho_s.
-
-    (* induction basi, n = 0 *)
-    move => S0 rho_s i. rewrite leqn0 => /eqP ->. by apply PDenSet_uni_least.
-
-    (* induction step, process i=0 first *)
-    move => n IHn S0 rho_s. case.
-    move => _ //=. by apply PDenSet_uni_least.
-    
-    (* case on programs *)
-    case : S0 rho_s.
-
-    (* skip, abort, init, unitary *)
-    1,2,3,4: move => i Hi => //=; by reflexivity.
-    
-    (* if *)
-    move => qv_m m S0 S1 rho_s i Hi. rewrite !opSemN_if.
-    by apply PDenSetOrder_add_split; apply /IHn.
-
-    (* while *)
-    move => qv_m m S0 rho_s i Hi. rewrite !opSemN_while.
-    apply PDenSetOrder_add_split. by apply /IHn. by reflexivity.
-
-    (* seq *)
-    move => S1 S2 rho_s i Hi. rewrite !opSemN_seq.
-    transitivity (opSemN <{ S2, opSemN <{ S1, rho_s }> i.+1 }> i).
-    apply PDenSetOrder_opSemN. (* Here the relation on order and opSemN is used. *)
-    by apply IHn.
-    by apply IHn.
-
-    (* atom *)
-    move => S0 rho_s i Hi. rewrite !opSemN_atom.
-    by apply IHn.
-
-    (* parallel *)
-    move => S1 S2 rho_s i Hi. rewrite !opSemN_parallel.
-    apply PDenSetOrder_union_split; by apply IHn.
+Lemma deSemN_monotonic_N {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
+    forall i n, i <= n -> ⟦ P, i ⟧ (rho_s) ⊑♯ ⟦ P, n ⟧ (rho_s).
+Proof. move => i n Hin. 
+    apply deSemN_monotonic_strong => //. by reflexivity.
 Qed.
 
-Lemma opSemN_inc_step {qs : QvarScope} : 
-    forall (c : cfg qs) n, opSemN c n ⊑♯ opSemN c n.+1.
-Proof. move => c n. by apply (@opSemN_inc_strong qs c n n). Qed.
+Lemma deSemN_monotonic_step {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
+    forall n, ⟦ P, n ⟧ (rho_s) ⊑♯ ⟦ P, n.+1 ⟧ (rho_s).
+Proof. move => n. apply deSemN_monotonic_strong => //. by reflexivity. Qed.
 
-Lemma opSemN_inc {qs : QvarScope} : 
-    forall (c : cfg qs) i n, i <= n -> opSemN c i ⊑♯ opSemN c n.
+
+
+
+(** Some preparatings of order theory *)
+
+(* TODO #4
+Definition f_chain_obj {H : HilbertSpace} (f : 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻))
+    (ch : chain H) : nat -> 𝒫(𝒟( H )⁻) :=
+        fun n => f (ch _[n]).
+
+Lemma f_chain_inc {H : HilbertSpace} (f : 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻))
+    (ch : chain H) :
+    forall n 
+    forall n, f_chain_obj f ch n ⊑♯ f_chain_obj f ch n.+1.
 Proof.
-    (** process terminated configurations first *)
-    case; last first.
-    move => rho_s. case. case.
-    move => _. by reflexivity.
-    move => n _. by reflexivity.
-    move => i n. elim: n.
-    move => _. by reflexivity.
-    move => n _ _. by reflexivity.
-
-    move => S0 rho_s.
-
-    (* we prove a equivalent proposition, which is easier to be proved. *)
-    have temp : forall (i x : nat),
-        opSemN <{ S0, rho_s }> i ⊑♯ opSemN <{ S0, rho_s }> (x + i)%nat.
-    { move => i. elim. by reflexivity.
-        move => n IHn. replace (n.+1 + i)%nat with (n + i).+1; last first.
-            by [].
-            transitivity (opSemN <{ S0, rho_s }> (n + i)).
-            by apply IHn.
-            by apply opSemN_inc_step. }
-
-    move => i n Hi.
-    replace n with (i + (n - i)%nat)%nat; last first.
-    by apply subnKC.
-    
-    replace (i + (n - i))%nat with ((n-i)%nat+i)%nat; last first.
-    apply Nat.add_comm.
-    apply temp.
-Qed.
-
+    move => n. apply 
+*)
 
 
 
 
 (** Define the operationa semantics (infinite step) *)
-Definition chain_opSemN {qs : QvarScope} (P : prog qs) rho_s : chain qs :=
-    {|  chain_obj := fun n=>opSemN <{P,rho_s}> n; 
-        chain_prop := fun n=>opSemN_inc_step <{P,rho_s}> n |}.
+Definition chain_deSemN {qs : QvarScope} (P : prog qs) rho_s : chain qs :=
+    mk_chain (deSemN_monotonic_step P rho_s).
 
 (* TODO we can implement a general lemma for monotonic functions *)
-Lemma chain_opSemN_n {qs : QvarScope} (P : prog qs) rho_s n :
-        chain_opSemN P rho_s _[n] = opSemN <{P, rho_s}> n.
+Lemma chain_deSemN_n {qs : QvarScope} (P : prog qs) rho_s n :
+        chain_deSemN P rho_s _[n] = ⟦ P, n ⟧ (rho_s).
 Proof. by []. Qed.
-    
-Definition OpSem {qs : QvarScope} (P : prog qs) rho_s : 𝒫(𝒟( qs )⁻) :=
-    lim→∞ (chain_opSemN P rho_s).
 
-Notation " '⟦' P '⟧' ( rho_s ) " := (@OpSem _ P rho_s) : QPP_scope.
 
-Lemma OpSem_ub : forall {qs : QvarScope} n (P : prog qs) rho_s, 
-    opSemN <{P, rho_s}> n ⊑♯ ⟦ P ⟧ (rho_s).
+Definition DeSem {qs : QvarScope} (P : prog qs) rho_s : 𝒫(𝒟( qs )⁻) :=
+    lim→∞ (chain_deSemN P rho_s).
+
+Notation " ⟦ P ⟧ ( rho_s ) " := (@DeSem _ P rho_s) 
+    (format "⟦  P  ⟧ ( rho_s )"): QPP_scope.
+
+Lemma DeSem_ub : forall {qs : QvarScope} n (P : prog qs) rho_s, 
+    ⟦ P, n ⟧ (rho_s) ⊑♯ ⟦ P ⟧ (rho_s).
 Proof. 
-    rewrite /OpSem => qs n P rho_s. rewrite -chain_opSemN_n. 
+    rewrite /DeSem => qs n P rho_s. rewrite -chain_deSemN_n. 
     by apply chain_limit_ub.
 Qed.
 
-Lemma OpSem_lub : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
-    (forall n, opSemN <{P, rho_s}> n ⊑♯ rho_ub) -> ⟦ P ⟧ (rho_s) ⊑♯ rho_ub.
+Lemma DeSem_lub : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
+    (forall n, ⟦ P, n ⟧(rho_s) ⊑♯ rho_ub) -> ⟦ P ⟧ (rho_s) ⊑♯ rho_ub.
 Proof.
-    rewrite /OpSem => qs P rho_s rho_ub H. apply chain_limit_lub. by apply H.
+    rewrite /DeSem => qs P rho_s rho_ub H. apply chain_limit_lub. by apply H.
 Qed.
 
-Lemma OpSem_lubP : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
-    (forall n, opSemN <{P, rho_s}> n ⊑♯ rho_ub) <-> ⟦ P ⟧ (rho_s) ⊑♯ rho_ub.
-Proof. split. by apply OpSem_lub.
+Lemma DeSem_lubP : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
+    (forall n, ⟦ P, n ⟧(rho_s) ⊑♯ rho_ub) <-> ⟦ P ⟧ (rho_s) ⊑♯ rho_ub.
+Proof. split. by apply DeSem_lub.
     move => HP n. transitivity (⟦ P ⟧ (rho_s)) => //. 
-    by apply OpSem_ub.
+    by apply DeSem_ub.
 Qed.
 
 
 (** Properties of Operationl Semantics *)
 
-Lemma OpSem_skip {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_skip {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ Skip ⟧ (rho_s) = rho_s.
 Proof.
     apply PDenSetOrder_asymm.
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
     move => n //=. by reflexivity.
-    transitivity (opSemN <{ Skip, rho_s }> 1). by reflexivity.
-    by apply OpSem_ub.
+    transitivity (⟦ Skip, 1 ⟧(rho_s)). by reflexivity.
+    by apply DeSem_ub.
 Qed.
 
-Lemma OpSem_abort {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_abort {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ Abort ⟧ (rho_s) = PDensitySet_uni.
 Proof.
     apply PDenSetOrder_asymm.
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
     move => n //=. by reflexivity.
-    transitivity (opSemN <{ Abort, rho_s }> 1). by reflexivity.
-    by apply OpSem_ub.
+    transitivity (⟦ Abort, 1 ⟧(rho_s)). by reflexivity.
+    by apply DeSem_ub.
 Qed.
 
-Lemma OpSem_init {qs : QvarScope} qv (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_init {qs : QvarScope} qv (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ qv <- 0 ⟧ (rho_s) = InitSttS qv rho_s.
 Proof.
     apply PDenSetOrder_asymm.
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
     move => n //=. by reflexivity.
-    transitivity (opSemN <{ qv <- 0, rho_s }> 1). by reflexivity.
-    by apply OpSem_ub.
+    transitivity (⟦ qv <- 0, 1 ⟧ (rho_s)). by reflexivity.
+    by apply DeSem_ub.
 Qed.
 
-Lemma OpSem_unitary {qs : QvarScope} qv U (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_unitary {qs : QvarScope} qv U (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ qv *= U ⟧ (rho_s) = UapplyS U rho_s.
 Proof.
     apply PDenSetOrder_asymm.
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
     move => n //=. by reflexivity.
-    transitivity (opSemN <{ qv *= U, rho_s }> 1). by reflexivity.
-    by apply OpSem_ub.
+    transitivity (⟦ qv *= U, 1⟧ (rho_s)). by reflexivity.
+    by apply DeSem_ub.
 Qed.
 
 
-Lemma OpSem_if {qs : QvarScope} qv_m m S0 S1 (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_if {qs : QvarScope} qv_m m S0 S1 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ If m [[qv_m]] Then S0 Else S1 End ⟧ (rho_s) 
         = ⟦ S0 ⟧ (MapplyS m true rho_s) + ⟦ S1 ⟧ (MapplyS m false rho_s).
 Proof.
@@ -456,75 +427,75 @@ Proof.
 
     *)
     (* proof : ⟦S0⟧ + ⟦S1⟧ is the upper bound, therefore larger than lub ⟦IF⟧. *)
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
-    move => n //=. apply PDenSetOrder_add_split; apply OpSem_ub.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
+    move => n //=. apply PDenSetOrder_add_split; apply DeSem_ub.
 
     (* proof : ⟦IF⟧ is the upper bound, therefore larger than lub ⟦S0⟧ + ⟦S1⟧.
         For this purpose we need the continuity of add. *)
-    rewrite ![⟦ _ ⟧ (MapplyS m _ rho_s)]/OpSem. rewrite add_continuous.
+    rewrite ![⟦ _ ⟧ (MapplyS m _ rho_s)]/DeSem. rewrite add_continuous.
     apply chain_limit_lub => l. rewrite /chain_add /chain_add_obj => //=.
-    rewrite -opSemN_if. by apply OpSem_ub.
+    rewrite -deSemN_if. by apply DeSem_ub.
 Qed.
 
 
-Lemma OpSem_while {qs : QvarScope} qv_m m S0 (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_while {qs : QvarScope} qv_m m S0 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ While m [[qv_m]] Do S0 End ⟧ (rho_s) 
         = ⟦ S0 ;; While m [[qv_m]] Do S0 End ⟧ (MapplyS m true rho_s) 
             + MapplyS m false rho_s.
 Proof.
     apply PDenSetOrder_asymm.
 
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
     move => n //=. apply PDenSetOrder_add_split. 
-    by apply OpSem_ub. by reflexivity.
+    by apply DeSem_ub. by reflexivity.
 
 
-    rewrite [⟦ _ ⟧ (MapplyS m _ rho_s)]/OpSem.
+    rewrite [⟦ _ ⟧ (MapplyS m _ rho_s)]/DeSem.
 
     (* We need to transform the [MapplyS m rho_s false] term into a singleton
         chain. *)
     rewrite -(singleton_chain_limit (MapplyS m false rho_s)).
     rewrite add_continuous.
     apply chain_limit_lub => l. rewrite /chain_add /chain_add_obj => //=.
-    rewrite -opSemN_while. by apply OpSem_ub.
+    rewrite -deSemN_while. by apply DeSem_ub.
 Qed.
 
 
-(* The chain of opSemN ch (different from chain_opSemN) *)
-Definition opSemN_chain_obj {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
-    fun i => opSemN <{S, ch _[i]}> n.
+(* The chain of deSemN ch (different from chain_deSemN) *)
+Definition deSemN_chain_obj {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
+    fun i => ⟦ S, n ⟧(ch _[i]).
 
-Lemma opSemN_chain_prop {qs : QvarScope} (S : prog qs) (ch : chain qs) n
-    : forall i, opSemN_chain_obj S ch n i ⊑♯ opSemN_chain_obj S ch n i.+1.
+Lemma deSemN_chain_prop {qs : QvarScope} (S : prog qs) (ch : chain qs) n
+    : forall i, deSemN_chain_obj S ch n i ⊑♯ deSemN_chain_obj S ch n i.+1.
 Proof. 
-    rewrite /opSemN_chain_obj => i. apply PDenSetOrder_opSemN.
+    rewrite /deSemN_chain_obj => i. apply deSemN_monotonic_rho.
     by apply ch.
 Qed.
 
-Definition opSemN_chain {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
-    mk_chain (opSemN_chain_prop S ch n).
+Definition deSemN_chain {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
+    mk_chain (deSemN_chain_prop S ch n).
 
 
 
-Theorem opSemN_continuous (qs : QvarScope) (S : prog qs) (ch : chain qs) n:
-        opSemN <{S, lim→∞ (ch)}> n = lim→∞ (opSemN_chain S ch n).
+Theorem deSemN_continuous (qs : QvarScope) (S : prog qs) (ch : chain qs) n:
+        ⟦ S, n ⟧ (lim→∞ (ch)) = lim→∞ (deSemN_chain S ch n).
 Proof.
     elim: n S ch.
     (* induction basis *)
     move => S ch //=. apply PDenSetOrder_asymm.
     by apply PDenSet_uni_least.
-    apply chain_limit_lub. rewrite /opSemN_chain /opSemN_chain_obj //=. by reflexivity.
+    apply chain_limit_lub. rewrite /deSemN_chain /deSemN_chain_obj //=. by reflexivity.
 
     (* induction step, case on program [S] *)
     move => n IHn. case.
     (* skip *)
     move => ch.
-    rewrite /opSemN_chain /opSemN_chain_obj => //=. f_equal. 
+    rewrite /deSemN_chain /deSemN_chain_obj => //=. f_equal. 
     by apply /chain_eqP.
     (* abort *) 
     move => ch //=. apply PDenSetOrder_asymm. 
     by apply PDenSet_uni_least.
-    apply chain_limit_lub. rewrite /opSemN_chain /opSemN_chain_obj //=. 
+    apply chain_limit_lub. rewrite /deSemN_chain /deSemN_chain_obj //=. 
     by reflexivity.
     (* init *)
     move => ch qv //=. rewrite init_continuous. f_equal. 
@@ -533,79 +504,79 @@ Proof.
     move => ch qv U //=. rewrite unitary_continuous. f_equal. 
     apply /chain_eqP => //.
     (* if *)
-    move => qv_m m S0 S1 ch. rewrite opSemN_if.
+    move => qv_m m S0 S1 ch. rewrite deSemN_if.
     rewrite !mea_continuous !IHn add_continuous. f_equal. apply /chain_eqP => //.
     (* While *)
-    move => qv_m m S0 ch. rewrite opSemN_while.
+    move => qv_m m S0 ch. rewrite deSemN_while.
     rewrite !mea_continuous IHn add_continuous. f_equal. apply /chain_eqP => //.
     (* Seq *)
-    move => S1 S2 ch. rewrite opSemN_seq.
+    move => S1 S2 ch. rewrite deSemN_seq.
     rewrite !IHn. f_equal. apply /chain_eqP => //.
     (* atom *)
-    move => S0 ch. rewrite opSemN_atom.
+    move => S0 ch. rewrite deSemN_atom.
     rewrite IHn. f_equal. apply /chain_eqP => //.
     (* parallel *)
-    move => S1 S2 ch. rewrite opSemN_parallel.
+    move => S1 S2 ch. rewrite deSemN_parallel.
     rewrite !IHn union_continuous. f_equal. apply /chain_eqP => //.
 Qed.
 
 
 
-Lemma OpSem_seq {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_seq {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ S1 ;; S2 ⟧ (rho_s) =  ⟦ S2 ⟧ ( ⟦ S1 ⟧ (rho_s) ).
 Proof.
     apply PDenSetOrder_asymm.
 
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
-    move => n //=. transitivity (opSemN <{ S2, ⟦ S1 ⟧ (rho_s) }> n).
-    apply PDenSetOrder_opSemN. by apply OpSem_ub.
-    by apply OpSem_ub.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
+    move => n //=. transitivity (⟦ S2, n ⟧(⟦ S1 ⟧ (rho_s))).
+    apply deSemN_monotonic_rho. by apply DeSem_ub.
+    by apply DeSem_ub.
 
-    apply OpSem_lub => n.
-    rewrite [⟦ S1 ⟧(_)]/OpSem. rewrite opSemN_continuous.
+    apply DeSem_lub => n.
+    rewrite [⟦ S1 ⟧(_)]/DeSem. rewrite deSemN_continuous.
     apply chain_limit_lub => i.
-    rewrite /opSemN_chain /opSemN_chain_obj //=.
+    rewrite /deSemN_chain /deSemN_chain_obj //=.
     
     (* using [max i n] steps in [S1 ;; S2] *)
-    move : (OpSem_ub (max i n).+1 (S1;;S2) rho_s) => //=.
+    move : (DeSem_ub (max i n).+1 (S1;;S2) rho_s) => //=.
     case E : (i <= n). 
     { move /leP : E => E. rewrite (max_r _ _ E) => H.
-    transitivity (opSemN <{ S2, opSemN <{ S1, rho_s }> n }> n).
-    apply PDenSetOrder_opSemN.
-    by apply /opSemN_inc /leP.
+    transitivity (⟦ S2, n ⟧ (⟦ S1, n ⟧(rho_s))).
+    apply deSemN_monotonic_rho.
+    by apply /deSemN_monotonic_N /leP.
     by apply H. }
     move /leP /Nat.lt_nge /Nat.lt_le_incl: E => E. rewrite (max_l _ _ E) => H.
-    transitivity (opSemN <{ S2, opSemN <{ S1, rho_s }> i }> i).
-    by apply /opSemN_inc /leP.
+    transitivity (⟦ S2, i ⟧ (⟦ S1, i ⟧(rho_s))).
+    by apply /deSemN_monotonic_N /leP.
     by apply H.
 Qed.    
 
-Lemma OpSem_atom {qs : QvarScope} P (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_atom {qs : QvarScope} P (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ <<P>> ⟧ (rho_s) =  ⟦ P ⟧ (rho_s).
 Proof.
 
     apply PDenSetOrder_asymm.
 
-    apply OpSem_lub. case => //=. by apply PDenSet_uni_least.
-    move => n. by apply (OpSem_ub n).
+    apply DeSem_lub. case => //=. by apply PDenSet_uni_least.
+    move => n. by apply (DeSem_ub n).
 
-    apply OpSem_lub => n. rewrite -opSemN_atom. by apply OpSem_ub.
+    apply DeSem_lub => n. rewrite -deSemN_atom. by apply DeSem_ub.
 Qed.
 
-Lemma OpSem_para {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
+Lemma DeSem_para {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ [S1 // S2] ⟧ (rho_s) = 
         ⟦ Step S1 S2 true ⟧ (rho_s) ∪ ⟦ Step S1 S2 false ⟧ (rho_s).
 Proof.
     apply PDenSetOrder_asymm.
 
-    apply OpSem_lub. case. by apply PDenSet_uni_least.
-    move => n. rewrite opSemN_parallel. 
-    apply PDenSetOrder_union_split; by apply OpSem_ub.
+    apply DeSem_lub. case. by apply PDenSet_uni_least.
+    move => n. rewrite deSemN_parallel. 
+    apply PDenSetOrder_union_split; by apply DeSem_ub.
 
-    rewrite ![⟦ Step _ _ _ ⟧(rho_s)]/OpSem. 
+    rewrite ![⟦ Step _ _ _ ⟧(rho_s)]/DeSem. 
     rewrite union_continuous. apply chain_limit_lub => l.
-    rewrite /chain_union /chain_union_obj /chain_opSemN /chain_obj => //.
-    rewrite -opSemN_parallel. by apply OpSem_ub.
+    rewrite /chain_union /chain_union_obj /chain_deSemN /chain_obj => //.
+    rewrite -deSemN_parallel. by apply DeSem_ub.
 Qed.
 
 End QParallelProg.
