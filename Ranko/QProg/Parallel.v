@@ -1,3 +1,5 @@
+(** Parallel.v : describing parallel quantum programs *)
+
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
@@ -151,12 +153,12 @@ Fixpoint opSemN {qs : QvarScope} (c : cfg qs) (n : nat) : 𝒫(𝒟( qs )⁻) :=
             | qv *= U => 
                 UapplyS U rho_s
             | If m [[ qv_m ]] Then P0 Else P1 End =>
-                (opSemN <{ P0, MapplyS m rho_s true }> n')
-                + (opSemN <{ P1, MapplyS m rho_s false }> n')
+                (opSemN <{ P0, MapplyS m true rho_s }> n')
+                + (opSemN <{ P1, MapplyS m false rho_s }> n')
             | While m [[ qv_m ]] Do P0 End  =>
                 (opSemN <{ P0;; While m [[ qv_m ]] Do P0 End 
-                        , MapplyS m rho_s true }> n')
-                + MapplyS m rho_s false
+                        , MapplyS m true rho_s }> n')
+                + MapplyS m false rho_s
             | S1 ;; S2 => 
                 opSemN <{ S2 , opSemN <{S1, rho_s}> n' }> n'
             | << P >> => 
@@ -187,15 +189,15 @@ Proof. move => rho_s. by case. Qed.
 
 Lemma opSemN_if {qs : QvarScope} qv_m m S0 S1: 
         forall rho_s n, opSemN <{ If m [[ qv_m ]] Then S0 Else S1 End , rho_s }> n.+1
-                    = opSemN <{ S0, MapplyS m rho_s true }> n
-                        + @opSemN qs <{ S1, MapplyS m rho_s false }> n.
+                    = opSemN <{ S0, MapplyS m true rho_s }> n
+                        + @opSemN qs <{ S1, MapplyS m false rho_s }> n.
 Proof. move => rho_s. by case. Qed.
 
 Lemma opSemN_while {qs : QvarScope} qv_m m S0:
         forall rho_s n, opSemN <{ While m [[ qv_m ]] Do S0 End , rho_s }> n.+1
                     = opSemN <{ S0;; While m [[ qv_m ]] Do S0 End , 
-                            MapplyS m rho_s true }> n
-                        + (@MapplyS qs qv_m m rho_s false).
+                            MapplyS m true rho_s }> n
+                        + (@MapplyS qs qv_m m false rho_s).
 Proof. move => rho_s. by case. Qed.
 
 Lemma opSemN_atom {qs : QvarScope} P :
@@ -437,7 +439,7 @@ Qed.
 
 Lemma OpSem_if {qs : QvarScope} qv_m m S0 S1 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ If m [[qv_m]] Then S0 Else S1 End ⟧ (rho_s) 
-        = ⟦ S0 ⟧ (MapplyS m rho_s true) + ⟦ S1 ⟧ (MapplyS m rho_s false).
+        = ⟦ S0 ⟧ (MapplyS m true rho_s) + ⟦ S1 ⟧ (MapplyS m false rho_s).
 Proof.
     apply PDenSetOrder_asymm.
 
@@ -458,7 +460,7 @@ Proof.
 
     (* proof : ⟦IF⟧ is the upper bound, therefore larger than lub ⟦S0⟧ + ⟦S1⟧.
         For this purpose we need the continuity of add. *)
-    rewrite ![⟦ _ ⟧ (MapplyS m rho_s _)]/OpSem. rewrite add_continuous.
+    rewrite ![⟦ _ ⟧ (MapplyS m _ rho_s)]/OpSem. rewrite add_continuous.
     apply chain_limit_lub => l. rewrite /chain_add /chain_add_obj => //=.
     rewrite -opSemN_if. by apply OpSem_ub.
 Qed.
@@ -466,8 +468,8 @@ Qed.
 
 Lemma OpSem_while {qs : QvarScope} qv_m m S0 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ While m [[qv_m]] Do S0 End ⟧ (rho_s) 
-        = ⟦ S0 ;; While m [[qv_m]] Do S0 End ⟧ (MapplyS m rho_s true) 
-            + MapplyS m rho_s false.
+        = ⟦ S0 ;; While m [[qv_m]] Do S0 End ⟧ (MapplyS m true rho_s) 
+            + MapplyS m false rho_s.
 Proof.
     apply PDenSetOrder_asymm.
 
@@ -476,11 +478,11 @@ Proof.
     by apply OpSem_ub. by reflexivity.
 
 
-    rewrite [⟦ _ ⟧ (MapplyS m rho_s _)]/OpSem.
+    rewrite [⟦ _ ⟧ (MapplyS m _ rho_s)]/OpSem.
 
     (* We need to transform the [MapplyS m rho_s false] term into a singleton
         chain. *)
-    rewrite -(singleton_chain_limit (MapplyS m rho_s false)).
+    rewrite -(singleton_chain_limit (MapplyS m false rho_s)).
     rewrite add_continuous.
     apply chain_limit_lub => l. rewrite /chain_add /chain_add_obj => //=.
     rewrite -opSemN_while. by apply OpSem_ub.

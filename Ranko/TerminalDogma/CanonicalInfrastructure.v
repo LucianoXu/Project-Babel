@@ -25,19 +25,19 @@ Definition phantom_unify {T1 T2} (t1 : T1) (t2 : T2)
 Definition phantom_id {T} {t : T} (x : phantom t) := x.
 
 
-Notation "[find v | t1 ~ t2 ] rest" :=
+Notation "[ 'find' v | t1 ~ t2 ] rest" :=
     (fun v (_ : phantom_unify t1 t2 None) => rest) 
-    (at level 10, format "[find  v  |  t1  ~  t2 ]  rest") 
+    (at level 0, format "[ 'find'  v  |  t1  ~  t2 ]  rest") 
     : Canonical_Infrastructure_scope.
 
-Notation "[find v | t1 ~ t2 | msg ] rest" :=
+Notation "[ 'find' v | t1 ~ t2 | msg ] rest" :=
     (fun v (_ : phantom_unify t1 t2 (Some msg)) => rest) 
-    (at level 10, format "[find  v  |  t1  ~  t2  |  msg ]  rest") 
+    (at level 0, format "[ 'find'  v  |  t1  ~  t2  |  msg ]  rest") 
     : Canonical_Infrastructure_scope.
 
-Notation "[get v | t1 ~ t2 ]" :=
+Notation "[ 'get' v | t1 ~ t2 ]" :=
     (([find v | t1 ~ t2 ] v) _ phantom_id)
-    (format "[get  v  |  t1  ~  t2 ]") 
+    (format "[ 'get'  v  |  t1  ~  t2 ]") 
     : Canonical_Infrastructure_scope.
 
 Notation "’Error: t msg" := (phantom_unify _ t (Some msg)) 

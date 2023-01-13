@@ -3,7 +3,7 @@
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Coq Require Import Classical.
+From Coq Require Import Classical Reals.
 From Coq Require Import Arith.
 
 Set Implicit Arguments.
@@ -18,8 +18,8 @@ Unset Printing Implicit Defensive.
 (** Basic aspects of quantum theory. *)
 Module Type QTheoryBasicType.
 
-Declare Scope QTheory_scope.
-Open Scope QTheory_scope.
+Declare Scope QTheoryBasic_scope.
+Open Scope QTheoryBasic_scope.
 
 (** Hilbert spaces are the types of quantum variables *)
 Parameter HilbertSpace : Type.
@@ -41,16 +41,41 @@ Parameter em_var : forall qs : QvarScope, qs.
 (** The operator to union two quantum varibles *)
 Parameter QvarUnion : forall qs : QvarScope, qs -> qs -> qs.
 Notation " a [+] b " := (@QvarUnion _ a b ) 
-    (at level 10, left associativity) : QTheory_scope.
+    (at level 10, left associativity) : QTheoryBasic_scope.
 
 Parameter QvType : forall qs: QvarScope, qs -> HilbertSpace.
 Coercion QvType : Qvar >-> HilbertSpace.
 
 Parameter PDensityOpt : HilbertSpace -> Type.
-Notation " '𝒟(' H ')⁻' " := (PDensityOpt H) : QTheory_scope.
+Notation " '𝒟(' H ')⁻' " := (PDensityOpt H) 
+    (format "'𝒟(' H ')⁻'" ): QTheoryBasic_scope.
+
+Parameter InitStt : 
+    forall (qs : QvarScope), qs -> 𝒟( qs )⁻ -> 𝒟( qs )⁻.
 
 Parameter UnitaryOpt : HilbertSpace -> Type.
+
+Parameter Uapply : 
+    forall (qs : QvarScope) (qv : qs), UnitaryOpt qv -> 𝒟( qs )⁻ -> 𝒟( qs )⁻.
+
+(** Here we assume the measurements are dichotomous. *)
 Parameter MeaOpt : HilbertSpace -> Type.
+
+Parameter Mapply : forall (qs : QvarScope) (qv : qs),
+    MeaOpt qv -> bool -> 𝒟( qs )⁻ -> 𝒟( qs )⁻.
+
+Parameter scalar_PDenOpt : forall (H : HilbertSpace),
+    [0, 1]R -> 𝒟( H )⁻ -> 𝒟( H )⁻.
+Notation " a * b " := (scalar_PDenOpt a b) : QTheoryBasic_scope.
+
+Parameter scalar_convex_comb : forall (H : HilbertSpace),
+    [0, 1]R -> 𝒟( H )⁻ -> 𝒟( H )⁻ -> 𝒟( H )⁻.
+Notation " a [ p ⊕ ] b " := (scalar_convex_comb p a b) 
+    (at level 10): QTheoryBasic_scope.
+
+Parameter add_PDenOpt : forall (H : HilbertSpace),
+    𝒟( H )⁻ -> 𝒟( H )⁻ -> 𝒟( H )⁻.
+Notation " a + b " := (add_PDenOpt a b) : QTheoryBasic_scope.
 
 End QTheoryBasicType.
 
@@ -60,16 +85,19 @@ End QTheoryBasicType.
 
 Module Type QTheorySetType (Export QTB : QTheoryBasicType).
 
+Declare Scope QTheorySet_scope.
+Open Scope QTheorySet_scope.
+
 (** Here we need the notion of subset. it can be described base on a
     wrapping of sigma type. 
     TODO #1 *)
 Parameter PDensitySet : HilbertSpace -> Type.
-Notation " '𝒫(𝒟(' H ')⁻)' " := (PDensitySet H) : QTheory_scope.
+Notation " '𝒫(𝒟(' H ')⁻)' " := (PDensitySet H) : QTheorySet_scope.
 
 (** The universal set of this partial density operator *)
 Parameter PDensitySet_uni : forall {H}, 𝒫(𝒟( H )⁻).
 Notation " '𝒟(' H ')⁻' " := (@PDensitySet_uni H) 
-    (only printing) : QTheory_scope.
+    (only printing) : QTheorySet_scope.
 
 (** Here we have the difference : we need to perform 'union' on the program
     state, but we cannot union two density operators. Therefore density 
@@ -80,8 +108,8 @@ Parameter union_set : forall {H : HilbertSpace},
 Parameter add_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻).
 
-Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheory_scope.
-Notation " A + B " := (@add_set _ A B) : QTheory_scope.
+Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope.
+Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
 
 Axiom add_set_uni_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
     PDensitySet_uni + s = PDensitySet_uni.
@@ -90,32 +118,30 @@ Axiom add_set_uni_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)),
     s + PDensitySet_uni = PDensitySet_uni.
 
 
-Parameter InitSttS : forall {qs : QvarScope}
-        (qv_init : qs) (rho_s : 𝒫(𝒟( qs )⁻)), 𝒫(𝒟( qs )⁻).
+Parameter InitSttS : 
+    forall {qs : QvarScope}, qs -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
 (* Notation "'𝒮ℯ𝓉⁰_'" := InitStt. *)
 
-Parameter UapplyS : forall (qs : QvarScope)
-       (qv_U : qs) (U : UnitaryOpt qv_U) 
-       (rho_s : 𝒫(𝒟( qs )⁻)), 𝒫(𝒟( qs )⁻).
+Parameter UapplyS : forall (qs : QvarScope) (qv_U : qs), 
+    UnitaryOpt qv_U -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
 (* Notation "'𝒰_'" := Uapply. *)
 
-Parameter MapplyS : forall (qs : QvarScope)
-       (qv_M : qs) (m : MeaOpt qv_M) 
-       (rho_s : 𝒫(𝒟( qs )⁻)) (result : bool), 𝒫(𝒟( qs )⁻).
+Parameter MapplyS : forall (qs : QvarScope) (qv_M : qs), 
+       MeaOpt qv_M -> bool -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
 (* Notation "'𝒫_'" := Mapply. *)
 
 Axiom MapplyS_repeat : forall (qs : QvarScope)
          (qv_M : qs) (m : MeaOpt qv_M) 
          (rho_s : 𝒫(𝒟( qs )⁻)) (result : bool), 
-         MapplyS m (MapplyS m rho_s result) result
-         = MapplyS m rho_s result.
+         MapplyS m result (MapplyS m result rho_s ) 
+         = MapplyS m result rho_s .
 
 (** about set order *)
 
 (** Arguments about order *)
 Axiom PDenSetOrder : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> Prop.
-Notation " A '⊑♯' B " := (PDenSetOrder A B) (at level 60) : QTheory_scope.
+Notation " A '⊑♯' B " := (PDenSetOrder A B) (at level 60) : QTheorySet_scope.
 
 
 Axiom PDenSetOrder_refl : 
@@ -167,7 +193,7 @@ Axiom PDenSetOrder_U :
         r1 ⊑♯ r2 -> UapplyS U r1 ⊑♯ UapplyS U r2.
 Axiom PDenSetOrder_M : 
     forall {qs : QvarScope} r1 r2 (qv_m : qs) (m : MeaOpt qv_m) (result : bool),
-        r1 ⊑♯ r2 -> MapplyS m r1 result ⊑♯ MapplyS m r2 result.
+        r1 ⊑♯ r2 -> MapplyS m result r1 ⊑♯ MapplyS m result r2.
 
 
 
@@ -179,7 +205,7 @@ Record chain (H : HilbertSpace) := mk_chain {
     chain_obj : nat -> 𝒫(𝒟( H )⁻);
     chain_prop : forall n, chain_obj n ⊑♯ chain_obj n.+1;
 }.
-Notation " ch _[ n ] " := (chain_obj ch n) (at level 40) : QTheory_scope.
+Notation " ch _[ n ] " := (chain_obj ch n) (at level 40) : QTheorySet_scope.
 
 (** Convert a singal element into a list *)
 Definition singleton_chain_obj {H : HilbertSpace} rho_s : nat -> 𝒫(𝒟( H )⁻) :=
@@ -204,7 +230,7 @@ Qed.
 
 Axiom chain_limit : forall H (ch : chain H), 𝒫(𝒟( H )⁻).
 Notation " 'lim→∞' ( ch ) " := (@chain_limit _ ch) 
-    (at level 200) : QTheory_scope.
+    (at level 200) : QTheorySet_scope.
 
 Axiom chain_limit_ub : forall H (ch : chain H) n,
     ch _[n] ⊑♯ lim→∞ (ch).
@@ -218,7 +244,7 @@ Proof.
     apply PDenSetOrder_asymm.
     apply chain_limit_lub. 
     rewrite /singleton_chain /singleton_chain_obj => n => //=. by reflexivity.
-    have temp := chain_limit_ub rho_s. by apply (temp 0).
+    have temp := chain_limit_ub rho_s. by apply (temp O).
 Qed.
 
 
@@ -298,22 +324,22 @@ Axiom unitary_continuous :
 
 (* The chain of MapplyS M ch result *)
 Definition Mapply_chain_obj 
-    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (ch : chain qs) (r : bool) :=
-    fun i => MapplyS M (ch _[i]) r.
+    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain qs) :=
+    fun i => MapplyS M r (ch _[i]).
 Lemma Mapply_chain_prop 
     {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (ch : chain qs) (r : bool)
-    : forall i, Mapply_chain_obj M ch r i ⊑♯ Mapply_chain_obj M ch r i.+1.
+    : forall i, Mapply_chain_obj M r ch i ⊑♯ Mapply_chain_obj M r ch i.+1.
 Proof.
     rewrite /Mapply_chain_obj => i. apply PDenSetOrder_M. by apply ch.
 Qed.
 
 Definition Mapply_chain 
-    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (ch : chain qs) (r : bool) :=
+    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain qs) :=
     mk_chain (Mapply_chain_prop M ch r).
 
 (** We still need the assumption that addition is continuous *)
 Axiom mea_continuous : forall {qs : QvarScope} 
     (qv : qs) (M : MeaOpt qv) (ch : chain qs) (r : bool),
-    MapplyS M (lim→∞ (ch)) r = lim→∞ (Mapply_chain M ch r).
+    MapplyS M r (lim→∞ (ch)) = lim→∞ (Mapply_chain M r ch).
 
 End QTheorySetType.

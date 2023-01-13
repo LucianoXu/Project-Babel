@@ -33,7 +33,7 @@ Reserved Notation " '∁' A" (at level 39).
 Reserved Notation "'⋃' A" (at level 45).
 Reserved Notation "'⋂' A" (at level 44).
 Reserved Notation " f @ A " (at level 30).
-Reserved Notation " A @ f @ B " (at level 35).
+Reserved Notation " A @ f @ B " (at level 30, f at next level).
 
 Reserved Notation "'forall'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
 Reserved Notation "'exists'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
@@ -247,11 +247,11 @@ Notation "'⋂' A" := (big_itsct A) : NSet_scope.
 
 Definition f_ele (X Y: Type) (A : 𝒫(X)) (f : X -> Y) : 𝒫(Y) :=
     { f x , x | x ∈ A }.
-Notation " f @ A " := (f_ele A f) : NSet_scope.
+Notation " f @ A " := (@f_ele _ _ A f) : NSet_scope.
 
 Definition f_outer (X Y Z : Type)(A : 𝒫(X))(B : 𝒫(Y))(f : X -> Y -> Z): 𝒫(Z) :=
     ⋃ ((fun a => { f a b, b | b ∈ B } ) @ A).
-Notation " A @ f @ B " := (f_outer A B f) : NSet_scope.
+Notation " A @ f @ B " := (@f_outer _ _ _ A B f) : NSet_scope.
 
 
 Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr) : NSet_scope.
