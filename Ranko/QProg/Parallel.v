@@ -1,4 +1,4 @@
-(** Parallel.v : describing parallel quantum programs *)
+(** * Parallel.v : describing parallel quantum programs *)
 
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
@@ -78,13 +78,6 @@ Fixpoint qvar_of_prog {qs : QvarScope} (S0 : prog qs) : qs :=
     end.
 Coercion qvar_of_prog : prog >-> Qvar.
 
-(** The configuration of computation *)
-Inductive cfg (qs : QvarScope): Type :=
-| Srho_pair (S0 : prog qs) (rho_s : 𝒫(𝒟( qs )⁻))
-| Terminated (rho_s : 𝒫(𝒟( qs )⁻)).
-Notation " <{ S0 , rho_s }> " := (@Srho_pair _ S0 rho_s ) : QPP_scope.
-Notation " <{ '↓' , rho_s }> " := (@Terminated _ rho_s) : QPP_scope.
-
 
 Fixpoint seq_Head {qs : QvarScope} (S0 : prog qs) : prog qs :=
     match S0 with
@@ -136,6 +129,21 @@ Definition Step {qs : QvarScope} (S1 S2: prog qs)
         | Some Q => seq_Head S2 ;; [ S1 // Q ]
     end.
 
+(* ############################################################ *)
+(** ** Operational Semantics *)
+
+(** The configuration of computation *)
+Inductive cfg (qs : QvarScope): Type :=
+| Srho_pair (S0 : prog qs) (rho : 𝒟( qs )⁻ )
+| Terminated (rho : 𝒟( qs )⁻ ).
+Notation " <{ S0 , rho }> " := (@Srho_pair _ S0 rho ) : QPP_scope.
+Notation " <{ '↓' , rho }> " := (@Terminated _ rho) : QPP_scope.
+
+
+
+(* ############################################################ *)
+(** ** Denotational Semantics *)
+
 Reserved Notation " ⟦ P , n ⟧ ( rho_s ) " 
     (format "⟦  P ,  n  ⟧ ( rho_s )").
 Reserved Notation " ⟦ ↓ ⟧ ( rho_s ) " 
@@ -151,13 +159,13 @@ Fixpoint deSemN {qs : QvarScope} (P : option (prog qs)) (n : nat)
     | None => rho_s
     | Some P => 
         match n with
-        | 0 => PDensitySet_uni
+        | 0 => {U}
         | n'.+1 => 
             match P with
             | Skip => 
                 rho_s
             | Abort => 
-                PDensitySet_uni
+                {U}
             | qv <- 0 => 
                 InitSttS qv rho_s
             | qv *= U => 
@@ -266,7 +274,7 @@ Proof.
     (* skip *)
     by move => //=.
     (* abort *)
-    move => //=. by reflexivity.
+    by move => //=.
     (* init *)
     move => qv //=. by apply PDenSetOrder_Init.
     (* unitary *)
@@ -301,13 +309,13 @@ Qed.
 Lemma deSemN_monotonic_N {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
     forall i n, i <= n -> ⟦ P, i ⟧ (rho_s) ⊑♯ ⟦ P, n ⟧ (rho_s).
 Proof. move => i n Hin. 
-    apply deSemN_monotonic_strong => //. by reflexivity.
+    by apply deSemN_monotonic_strong.
 Qed.
 
 Lemma deSemN_monotonic_step {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
     forall n, ⟦ P, n ⟧ (rho_s) ⊑♯ ⟦ P, n.+1 ⟧ (rho_s).
-Proof. move => n. apply deSemN_monotonic_strong => //. by reflexivity. Qed.
-
+Proof. move => n. apply deSemN_monotonic_strong => //. Qed.
+Arguments deSemN_monotonic_step {qs} P rho_s.
 
 
 
@@ -325,8 +333,6 @@ Lemma f_chain_inc {H : HilbertSpace} (f : 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )�
 Proof.
     move => n. apply 
 *)
-
-
 
 
 (** Define the operationa semantics (infinite step) *)
@@ -351,6 +357,7 @@ Proof.
     rewrite /DeSem => qs n P rho_s. rewrite -chain_deSemN_n. 
     by apply chain_limit_ub.
 Qed.
+Arguments DeSem_ub {qs} n P rho_s.
 
 Lemma DeSem_lub : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
     (forall n, ⟦ P, n ⟧(rho_s) ⊑♯ rho_ub) -> ⟦ P ⟧ (rho_s) ⊑♯ rho_ub.
@@ -373,17 +380,17 @@ Lemma DeSem_skip {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
 Proof.
     apply PDenSetOrder_asymm.
     apply DeSem_lub. case. by apply PDenSet_uni_least.
-    move => n //=. by reflexivity.
+    by move => n //=.
     transitivity (⟦ Skip, 1 ⟧(rho_s)). by reflexivity.
     by apply DeSem_ub.
 Qed.
 
 Lemma DeSem_abort {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
-    ⟦ Abort ⟧ (rho_s) = PDensitySet_uni.
+    ⟦ Abort ⟧ (rho_s) = {U}.
 Proof.
     apply PDenSetOrder_asymm.
     apply DeSem_lub. case. by apply PDenSet_uni_least.
-    move => n //=. by reflexivity.
+    by move => n //=.
     transitivity (⟦ Abort, 1 ⟧(rho_s)). by reflexivity.
     by apply DeSem_ub.
 Qed.
@@ -393,7 +400,7 @@ Lemma DeSem_init {qs : QvarScope} qv (rho_s : 𝒫(𝒟( qs )⁻)):
 Proof.
     apply PDenSetOrder_asymm.
     apply DeSem_lub. case. by apply PDenSet_uni_least.
-    move => n //=. by reflexivity.
+    by move => n //=.
     transitivity (⟦ qv <- 0, 1 ⟧ (rho_s)). by reflexivity.
     by apply DeSem_ub.
 Qed.
@@ -403,7 +410,7 @@ Lemma DeSem_unitary {qs : QvarScope} qv U (rho_s : 𝒫(𝒟( qs )⁻)):
 Proof.
     apply PDenSetOrder_asymm.
     apply DeSem_lub. case. by apply PDenSet_uni_least.
-    move => n //=. by reflexivity.
+    by move => n //=.
     transitivity (⟦ qv *= U, 1⟧ (rho_s)). by reflexivity.
     by apply DeSem_ub.
 Qed.
@@ -471,6 +478,7 @@ Proof.
     rewrite /deSemN_chain_obj => i. apply deSemN_monotonic_rho.
     by apply ch.
 Qed.
+Arguments deSemN_chain_prop {qs} S ch.
 
 Definition deSemN_chain {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
     mk_chain (deSemN_chain_prop S ch n).
@@ -484,7 +492,7 @@ Proof.
     (* induction basis *)
     move => S ch //=. apply PDenSetOrder_asymm.
     by apply PDenSet_uni_least.
-    apply chain_limit_lub. rewrite /deSemN_chain /deSemN_chain_obj //=. by reflexivity.
+    apply chain_limit_lub. by rewrite /deSemN_chain /deSemN_chain_obj //=.
 
     (* induction step, case on program [S] *)
     move => n IHn. case.
@@ -495,8 +503,7 @@ Proof.
     (* abort *) 
     move => ch //=. apply PDenSetOrder_asymm. 
     by apply PDenSet_uni_least.
-    apply chain_limit_lub. rewrite /deSemN_chain /deSemN_chain_obj //=. 
-    by reflexivity.
+    apply chain_limit_lub. by rewrite /deSemN_chain /deSemN_chain_obj //=. 
     (* init *)
     move => ch qv //=. rewrite init_continuous. f_equal. 
     apply /chain_eqP => //.
@@ -536,7 +543,6 @@ Proof.
     rewrite [⟦ S1 ⟧(_)]/DeSem. rewrite deSemN_continuous.
     apply chain_limit_lub => i.
     rewrite /deSemN_chain /deSemN_chain_obj //=.
-    
     (* using [max i n] steps in [S1 ;; S2] *)
     move : (DeSem_ub (max i n).+1 (S1;;S2) rho_s) => //=.
     case E : (i <= n). 
@@ -557,8 +563,7 @@ Proof.
 
     apply PDenSetOrder_asymm.
 
-    apply DeSem_lub. case => //=. by apply PDenSet_uni_least.
-    move => n. by apply (DeSem_ub n).
+    apply DeSem_lub. case => n //=. by apply DeSem_ub.
 
     apply DeSem_lub => n. rewrite -deSemN_atom. by apply DeSem_ub.
 Qed.

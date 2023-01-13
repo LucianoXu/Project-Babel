@@ -1,7 +1,8 @@
 (** QInterface.v *)
 
 From Ranko Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+                          TerminalDogma.Extensionality
+                          NaiveSet.
 
 From Coq Require Import Classical Reals.
 From Coq Require Import Arith.
@@ -85,19 +86,22 @@ End QTheoryBasicType.
 
 Module Type QTheorySetType (Export QTB : QTheoryBasicType).
 
+Export NaiveSet.
+
 Declare Scope QTheorySet_scope.
 Open Scope QTheorySet_scope.
 
 (** Here we need the notion of subset. it can be described base on a
     wrapping of sigma type. 
     TODO #1 *)
-Parameter PDensitySet : HilbertSpace -> Type.
-Notation " '𝒫(𝒟(' H ')⁻)' " := (PDensitySet H) : QTheorySet_scope.
+Definition PDensitySet (H: HilbertSpace) : Type := 𝒫(𝒟( H )⁻).
+(* Notation " '𝒫(𝒟(' H ')⁻)' " := (PDensitySet H) : QTheorySet_scope. *)
 
 (** The universal set of this partial density operator *)
-Parameter PDensitySet_uni : forall {H}, 𝒫(𝒟( H )⁻).
-Notation " '𝒟(' H ')⁻' " := (@PDensitySet_uni H) 
-    (only printing) : QTheorySet_scope.
+(* Parameter PDensitySet_uni : forall {H}, 𝒫(𝒟( H )⁻). *)
+
+(* Notation " '𝒟(' H ')⁻' " := (@PDensitySet_uni H) 
+    (only printing) : QTheorySet_scope. *)
 
 (** Here we have the difference : we need to perform 'union' on the program
     state, but we cannot union two density operators. Therefore density 
@@ -108,14 +112,14 @@ Parameter union_set : forall {H : HilbertSpace},
 Parameter add_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻).
 
-Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope.
+(* Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope. *)
 Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
 
 Axiom add_set_uni_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
-    PDensitySet_uni + s = PDensitySet_uni.
+    {U} + s = {U}.
 
 Axiom add_set_uni_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
-    s + PDensitySet_uni = PDensitySet_uni.
+    s + {U} = {U}.
 
 
 Parameter InitSttS : 
@@ -139,8 +143,10 @@ Axiom MapplyS_repeat : forall (qs : QvarScope)
 (** about set order *)
 
 (** Arguments about order *)
-Axiom PDenSetOrder : forall {H : HilbertSpace}, 
-    𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> Prop.
+(* Axiom PDenSetOrder : forall {H : HilbertSpace}, 
+    𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> Prop. *)
+Definition PDenSetOrder {H : HilbertSpace} (A B : 𝒫(𝒟( H )⁻)) :=
+    B ⊆ A.
 Notation " A '⊑♯' B " := (PDenSetOrder A B) (at level 60) : QTheorySet_scope.
 
 
@@ -156,7 +162,7 @@ Add Parametric Relation H : _ (@PDenSetOrder H)
     transitivity proved by (@PDenSetOrder_trans H) as rel_PDenSetOrder.
 
 Axiom PDenSet_uni_least : 
-    forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), PDensitySet_uni ⊑♯ s.
+    forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), {U} ⊑♯ s.
 
 
 
@@ -181,7 +187,10 @@ Lemma PDenSetOrder_union_split {H : HilbertSpace} :
     forall {rho_s1 rho_s2 rho_s1' rho_s2': 𝒫(𝒟( H )⁻)}, 
         rho_s1 ⊑♯ rho_s1' -> rho_s2 ⊑♯ rho_s2' 
             -> rho_s1 ∪ rho_s2 ⊑♯ rho_s1' ∪ rho_s2'.
-Proof. move => a b c d Hac Hbd. rewrite Hac Hbd. by reflexivity. Qed.
+Proof. 
+    rewrite /PDenSetOrder => a b c d Hac Hbd. 
+    rewrite Hac Hbd. by reflexivity. 
+Qed.
 
 
 
@@ -208,12 +217,14 @@ Record chain (H : HilbertSpace) := mk_chain {
 Notation " ch _[ n ] " := (chain_obj ch n) (at level 40) : QTheorySet_scope.
 
 (** Convert a singal element into a list *)
-Definition singleton_chain_obj {H : HilbertSpace} rho_s : nat -> 𝒫(𝒟( H )⁻) :=
+Definition singleton_chain_obj {H : HilbertSpace} rho_s 
+    : nat -> PDensitySet H :=
     fun => rho_s.
 
-Lemma singleton_chain_prop {H : HilbertSpace} (rho_s : 𝒫(𝒟( H )⁻)) 
+Lemma singleton_chain_prop {H : HilbertSpace} (rho_s : PDensitySet H) 
     : forall n, singleton_chain_obj rho_s n ⊑♯ singleton_chain_obj rho_s n.+1.
-Proof. rewrite /singleton_chain_obj => n => //=. by reflexivity. Qed.
+Proof. rewrite /singleton_chain_obj => n => //=. Qed.
+Arguments singleton_chain_prop {H} rho_s.
 
 Definition singleton_chain {H : HilbertSpace} rho_s : chain H :=
     mk_chain (singleton_chain_prop rho_s).
@@ -238,29 +249,32 @@ Axiom chain_limit_ub : forall H (ch : chain H) n,
 Axiom chain_limit_lub : forall H (ch : chain H) rho_ub,
     (forall n, ch _[n] ⊑♯ rho_ub) -> lim→∞ (ch) ⊑♯ rho_ub.
 
-Lemma singleton_chain_limit (H : HilbertSpace) (rho_s : 𝒫(𝒟( H )⁻)) :
+Lemma singleton_chain_limit (H : HilbertSpace) (rho_s : PDensitySet H) :
     lim→∞ (rho_s) = rho_s.
 Proof.
     apply PDenSetOrder_asymm.
     apply chain_limit_lub. 
-    rewrite /singleton_chain /singleton_chain_obj => n => //=. by reflexivity.
-    have temp := chain_limit_ub rho_s. by apply (temp O).
+    rewrite /singleton_chain /singleton_chain_obj => n => //=.
+    have temp := @chain_limit_ub _ (singleton_chain rho_s). 
+    by apply (temp O).
 Qed.
 
 
 (* chain_add *)
-Definition chain_add_obj (H : HilbertSpace) (ch_obj1 ch_obj2 : nat -> 𝒫(𝒟( H )⁻)) :=
+Definition chain_add_obj (H : HilbertSpace) 
+    (ch_obj1 ch_obj2 : nat -> PDensitySet H) :=
     fun n => ch_obj1 n + ch_obj2 n.
-Lemma chain_add_obj_prop (H : HilbertSpace) (ch1 ch2 : chain H) :
+Lemma chain_add_prop (H : HilbertSpace) (ch1 ch2 : chain H) :
     let ch := chain_add_obj (chain_obj ch1) (chain_obj ch2) in 
         forall n, ch n ⊑♯ ch n.+1.
 Proof. move => ch n. rewrite /ch /chain_add_obj. apply PDenSetOrder_add_split.
     by apply ch1. by apply ch2.
 Qed.
+Arguments chain_add_prop {H} ch1 ch2.
 
 (** Add chain is needed for proving if statement *)
 Definition chain_add H (ch1 ch2 : chain H) : chain H :=
-    mk_chain (chain_add_obj_prop ch1 ch2).
+    mk_chain (chain_add_prop ch1 ch2).
 
 (** We still need the assumption that addition is continuous *)
 Axiom add_continuous : forall H (ch1 ch2 : chain H),
@@ -275,6 +289,7 @@ Lemma chain_union_prop (H : HilbertSpace) (ch1 ch2 : chain H) :
 Proof. move => n. rewrite /chain_union_obj. apply PDenSetOrder_union_split.
     by apply ch1. by apply ch2.
 Qed.
+Arguments chain_union_prop {H} ch1 ch2.
 
 (** union chain is needed for proving parallel statement *)
 Definition chain_union H (ch1 ch2 : chain H) : chain H :=
@@ -293,6 +308,7 @@ Lemma InitStt_chain_prop {qs : QvarScope} (qv : qs) (ch : chain qs)
 Proof.
     rewrite /InitStt_chain_obj => i. apply PDenSetOrder_Init. by apply ch.
 Qed.
+Arguments InitStt_chain_prop {qs} qv ch.
 
 Definition InitStt_chain {qs : QvarScope} (qv : qs) (ch : chain qs) :=
     mk_chain (InitStt_chain_prop qv ch).
@@ -311,6 +327,7 @@ Lemma Uapply_chain_prop
 Proof.
     rewrite /Uapply_chain_obj => i. apply PDenSetOrder_U. by apply ch.
 Qed.
+Arguments Uapply_chain_prop {qs} {qv} U ch.
 
 Definition Uapply_chain 
     {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain qs) :=
@@ -332,6 +349,7 @@ Lemma Mapply_chain_prop
 Proof.
     rewrite /Mapply_chain_obj => i. apply PDenSetOrder_M. by apply ch.
 Qed.
+Arguments Mapply_chain_prop {qs} {qv} M ch r.
 
 Definition Mapply_chain 
     {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain qs) :=
