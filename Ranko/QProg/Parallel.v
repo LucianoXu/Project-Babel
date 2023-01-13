@@ -5,8 +5,7 @@ From Ranko Require Import TerminalDogma.premises
 
 From Ranko Require Import QTheory.
 
-From Coq Require Import Classical.
-From Coq Require Import Arith.
+From Coq Require Import Classical Arith Relations.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -141,6 +140,62 @@ Notation " <{ '↓' , rho }> " := (@Terminated _ rho) : QPP_scope.
 
 
 
+Reserved Notation " c1 -=> c2 " (at level 20).
+Reserved Notation " c1 -=>* c2 " (at level 20).
+
+
+Inductive opSem_trans qs : cfg qs -> cfg qs -> Prop :=
+| skip_step rho : 
+    <{ Skip, rho }> -=> <{ ↓, rho }>
+
+| abort_step rho:
+    <{ Abort, rho }> -=> <{ ↓, 𝟎 }>
+
+| init_step qv rho:
+    <{ qv <- 0, rho }> -=> <{ ↓, InitStt qv rho }>
+
+| unitary_step qv U rho:
+    <{ qv *= U, rho }> -=> <{ ↓, Uapply U rho }>
+
+| if_step_Y qv_m m S0 S1 rho:
+    <{ If m [[qv_m]] Then S0 Else S1 End, rho }>
+    -=> <{ S0, Mapply m true rho }>
+
+| if_step_N qv_m m S0 S1 rho:
+    <{ If m [[qv_m]] Then S0 Else S1 End, rho }>
+        -=> <{ S1, Mapply m false rho }>
+
+| while_step_Y qv_m m S0 rho:
+    <{ While m [[qv_m]] Do S0 End, rho }>
+        -=> <{ S0 ;; While m [[qv_m]] Do S0 End, Mapply m true rho }>
+
+| while_step_N qv_m m S0 rho:
+    <{ While m [[qv_m]] Do S0 End, rho }>
+        -=> <{ ↓, Mapply m true rho }>
+
+| seq_step_p S0 St S1 rho0 rho1:
+    <{ S0, rho0 }> -=> <{ St, rho1 }>
+    -> <{ S0 ;; S1, rho0 }> -=> <{ St ;; S1, rho1 }>
+
+| seq_step_t S0 S1 rho0 rho1:
+    <{ S0, rho0 }> -=> <{ ↓, rho1 }>
+        -> <{ S0 ;; S1, rho0 }> -=> <{ S1, rho1 }>
+
+| atom_step S0 rho0 rho1 :
+    <{ S0, rho0 }> -=>* <{ ↓, rho1 }>
+        -> <{ <<S0>>, rho0 }> -=> <{ ↓, rho1 }>
+
+| parallel_step_0 S0 S1 rho :
+    <{ [S0 // S1], rho }> -=> <{ Step S0 S1 true, rho }>
+
+| parallel_step_1 S0 S1 rho :
+    <{ [S0 // S1], rho }> -=> <{ Step S0 S1 false, rho }>
+
+where " c1 -=> c2 " := (opSem_trans c1 c2)
+    and " c1 -=>* c2 " := (clos_trans _ (@opSem_trans _) c1 c2).
+
+
+
 (* ############################################################ *)
 (** ** Denotational Semantics *)
 
@@ -164,27 +219,38 @@ Fixpoint deSemN {qs : QvarScope} (P : option (prog qs)) (n : nat)
             match P with
             | Skip => 
                 rho_s
+
             | Abort => 
-                {U}
+                {U} 
+                (** Note : universal set is necessary here. Otherwise, it's
+                    hard to construct the infimum set. *)
+
             | qv <- 0 => 
                 InitSttS qv rho_s
+
             | qv *= U => 
                 UapplyS U rho_s
+
             | If m [[ qv_m ]] Then P0 Else P1 End =>
                 (⟦ P0, n' ⟧ ( MapplyS m true rho_s ))
                 + (⟦ P1, n' ⟧ ( MapplyS m false rho_s ))
+
             | While m [[ qv_m ]] Do P0 End  =>
                 ⟦ P0;; While m [[ qv_m ]] Do P0 End, n' ⟧ (MapplyS m true rho_s)
                 + MapplyS m false rho_s
+
             | S1 ;; S2 => 
                 ⟦ S2, n' ⟧ (⟦ S1, n' ⟧ (rho_s))
+
             | << P >> => 
                 ⟦ P, n' ⟧ (rho_s)
+
             | [ S1 // S2 ] => 
                 (** Note that here we give a different interpretation of 
                     nested parallel composition *)
                 (⟦ Step S1 S2 true, n'⟧ (rho_s))
                 ∪ (⟦ Step S1 S2 false, n'⟧ (rho_s))
+
             end
         end
     end

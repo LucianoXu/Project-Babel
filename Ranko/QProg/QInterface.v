@@ -51,6 +51,9 @@ Parameter PDensityOpt : HilbertSpace -> Type.
 Notation " '𝒟(' H ')⁻' " := (PDensityOpt H) 
     (format "'𝒟(' H ')⁻'" ): QTheoryBasic_scope.
 
+Parameter densityOpt0 : forall {H : HilbertSpace}, 𝒟( H )⁻.
+Notation " 𝟎 " := (@densityOpt0 _) : QTheoryBasic_scope.
+
 Parameter InitStt : 
     forall (qs : QvarScope), qs -> 𝒟( qs )⁻ -> 𝒟( qs )⁻.
 
@@ -115,13 +118,19 @@ Parameter add_set : forall {H : HilbertSpace},
 (* Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope. *)
 Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
 
+(* TODO #5 *)
+Axiom add_set_0_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
+    {{ 𝟎 }} + s = s.
+
+Axiom add_set_0_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
+    s + {{ 𝟎 }} = s.
+
 Axiom add_set_uni_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
     {U} + s = {U}.
-
+    
 Axiom add_set_uni_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
     s + {U} = {U}.
-
-
+    
 Parameter InitSttS : 
     forall {qs : QvarScope}, qs -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
 (* Notation "'𝒮ℯ𝓉⁰_'" := InitStt. *)
