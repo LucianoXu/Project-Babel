@@ -92,6 +92,7 @@ Module Type QTheorySetType (Export QTB : QTheoryBasicType).
 Export NaiveSet.
 
 Declare Scope QTheorySet_scope.
+Delimit Scope QTheorySet_scope with QTS.
 Open Scope QTheorySet_scope.
 
 (** Here we need the notion of subset. it can be described base on a
@@ -109,8 +110,9 @@ Definition PDensitySet (H: HilbertSpace) : Type := 𝒫(𝒟( H )⁻).
 (** Here we have the difference : we need to perform 'union' on the program
     state, but we cannot union two density operators. Therefore density 
     operator sets are needed.*)
-Parameter union_set : forall {H : HilbertSpace}, 
-    𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻).
+Definition union_set : forall {H : HilbertSpace}, 
+    𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
+        fun _ a b => union a b.
         
 Parameter add_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻).
@@ -142,6 +144,11 @@ Parameter UapplyS : forall (qs : QvarScope) (qv_U : qs),
 Parameter MapplyS : forall (qs : QvarScope) (qv_M : qs), 
        MeaOpt qv_M -> bool -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
 (* Notation "'𝒫_'" := Mapply. *)
+
+Parameter scalar_convex_combS : forall (H : HilbertSpace), 
+    [0, 1]R -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻).
+Notation " A [ p ⊕ ] B " := (@scalar_convex_combS _ p A B) 
+    (format "A  [ p ⊕ ]  B"): QTheorySet_scope.
 
 Axiom MapplyS_repeat : forall (qs : QvarScope)
          (qv_M : qs) (m : MeaOpt qv_M) 
@@ -187,11 +194,24 @@ Lemma PDenSetOrder_add_split {H : HilbertSpace} :
 Proof. move => a b c d Hac Hbd. rewrite Hac Hbd. by reflexivity. Qed.
 
 
+Add Parametric Morphism {H : HilbertSpace} : (@scalar_convex_combS H)
+    with signature eq ==> (@PDenSetOrder H) ==> (@PDenSetOrder H) 
+                ==> (@PDenSetOrder H) as convex_comb_mor_le.
+Proof.
+Admitted.
+Lemma PDensetOrder_cv_comb_split {H : HilbertSpace} :
+    forall p {rho_s1 rho_s2 rho_s1' rho_s2': 𝒫(𝒟( H )⁻)},
+        rho_s1 ⊑♯ rho_s1' -> rho_s2 ⊑♯ rho_s2' 
+            -> rho_s1 [ p ⊕ ] rho_s2 ⊑♯ rho_s1' [ p ⊕ ] rho_s2'.
+Proof. move => p a b c d Hac Hbd. by apply convex_comb_mor_le. Qed.
+
 Add Parametric Morphism {H : HilbertSpace} : (@union_set H)
     with signature (@PDenSetOrder H) ==> (@PDenSetOrder H) 
                     ==> (@PDenSetOrder H) as union_mor_le.
-Proof.
-Admitted.
+Proof. rewrite /PDenSetOrder /union_set => a c Hac b d Hbd.
+    by rewrite Hac Hbd.
+Qed.
+
 Lemma PDenSetOrder_union_split {H : HilbertSpace} :
     forall {rho_s1 rho_s2 rho_s1' rho_s2': 𝒫(𝒟( H )⁻)}, 
         rho_s1 ⊑♯ rho_s1' -> rho_s2 ⊑♯ rho_s2' 
@@ -281,13 +301,33 @@ Proof. move => ch n. rewrite /ch /chain_add_obj. apply PDenSetOrder_add_split.
 Qed.
 Arguments chain_add_prop {H} ch1 ch2.
 
-(** Add chain is needed for proving if statement *)
 Definition chain_add H (ch1 ch2 : chain H) : chain H :=
     mk_chain (chain_add_prop ch1 ch2).
 
 (** We still need the assumption that addition is continuous *)
 Axiom add_continuous : forall H (ch1 ch2 : chain H),
     (lim→∞(ch1)) + (lim→∞(ch2)) = lim→∞ (chain_add ch1 ch2).
+
+
+(* chain_cv_comb *)
+Definition chain_cvcomb_obj (H : HilbertSpace) p
+    (ch_obj1 ch_obj2 : nat -> PDensitySet H) :=
+    fun n => (ch_obj1 n) [p⊕] (ch_obj2 n).
+Lemma chain_cvcomb_prop (H : HilbertSpace) p (ch1 ch2 : chain H) :
+    let ch := chain_cvcomb_obj p (chain_obj ch1) (chain_obj ch2) in 
+        forall n, ch n ⊑♯ ch n.+1.
+Proof. move => ch n. rewrite /ch /chain_cvcomb_obj. 
+    apply PDensetOrder_cv_comb_split.
+    by apply ch1. by apply ch2.
+Qed.
+Arguments chain_cvcomb_prop {H} p ch1 ch2.
+
+Definition chain_cvcomb H p (ch1 ch2 : chain H) : chain H :=
+    mk_chain (chain_cvcomb_prop p ch1 ch2).
+
+(** We still need the assumption that addition is continuous *)
+Axiom cvcomb_continuous : forall H p (ch1 ch2 : chain H),
+    (lim→∞(ch1)) [p⊕] (lim→∞(ch2)) = lim→∞ (chain_cvcomb p ch1 ch2).
 
 
 (* chain_union *)

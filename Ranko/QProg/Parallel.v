@@ -5,11 +5,12 @@ From Ranko Require Import TerminalDogma.premises
 
 From Ranko Require Import QTheory.
 
-From Coq Require Import Classical Arith Relations.
+From Coq Require Import Classical Arith Relations Reals.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
 
 
 Module QParallelProg 
@@ -35,6 +36,8 @@ Inductive prog (qs : QvarScope): Type :=
 | if_ (qv_m : qs) (m : MeaOpt qv_m) (S0 S1: prog qs)
 | while_ (qv_m : qs) (m : MeaOpt qv_m) (S0 : prog qs)
 | seq_ (S1 S2 : prog qs)
+| prob_ (p : [0, 1]R) (S1 S2 : prog qs)
+| nondet_ (S1 S2 : prog qs)
 | atom_ (S0 : prog qs)
 | parallel_ (S1 S2 : prog qs).
 
@@ -48,6 +51,9 @@ Notation " 'While' m [[ qv_m ]] 'Do' S0 'End' " :=
     (@while_ _ qv_m m S0) (at level 90) : QPP_scope.
 Notation " S1 ;; S2 " := (@seq_ _ S1 S2) 
     (at level 95, right associativity) : QPP_scope.
+Notation " S1 [ p ⊕ ] S2 " := (@prob_ _ p S1 S2) 
+    (format "S1  [ p  ⊕ ]  S2"): QPP_scope.
+Notation " S1 □ S2 " := (@nondet_ _ S1 S2) (at level 3): QPP_scope.
 Notation " << P >> " := (@atom_ _ P) : QPP_scope.
 Notation " [ S1 // S2 ] " := (@parallel_ _ S1 S2) (at level 5) : QPP_scope.
 
@@ -72,6 +78,8 @@ Fixpoint qvar_of_prog {qs : QvarScope} (S0 : prog qs) : qs :=
     | While _ [[ qv_m ]] Do S0 End
         => qv_m [+] (qvar_of_prog S0)
     | S1;;S2 => (qvar_of_prog S1) [+] (qvar_of_prog S2)
+    | S1 [ p ⊕ ] S2 => (qvar_of_prog S1) [+] (qvar_of_prog S2)
+    | S1 □ S2 =>(qvar_of_prog S1) [+] (qvar_of_prog S2)
     | <<S0>> => qvar_of_prog S0
     | [ S1 // S2 ] => (qvar_of_prog S1) [+] (qvar_of_prog S2)
     end.
@@ -242,6 +250,12 @@ Fixpoint deSemN {qs : QvarScope} (P : option (prog qs)) (n : nat)
             | S1 ;; S2 => 
                 ⟦ S2, n' ⟧ (⟦ S1, n' ⟧ (rho_s))
 
+            | S1 [ p ⊕ ] S2 =>
+                (⟦ S1, n' ⟧(rho_s) [ p ⊕ ] ⟦ S2, n'⟧(rho_s))%QTS
+
+            | S1 □ S2 =>
+                ⟦ S1, n' ⟧(rho_s) ∪ ⟦ S2, n' ⟧(rho_s)
+
             | << P >> => 
                 ⟦ P, n' ⟧ (rho_s)
 
@@ -274,7 +288,7 @@ Lemma deSemN_seq {qs : QvarScope} S0 S1 :
 
             ⟦ S0 ;; S1, n.+1 ⟧ (rho_s) = ⟦ S1 , n ⟧ (⟦ S0, n ⟧ (rho_s)).
 
-Proof. move => rho_s. by case. Qed.
+Proof. by []. Qed.
 
 
 Lemma deSemN_if {qs : QvarScope} qv_m m S0 S1: 
@@ -284,7 +298,7 @@ Lemma deSemN_if {qs : QvarScope} qv_m m S0 S1:
             = ⟦ S0, n ⟧ (MapplyS m true rho_s) 
                 + ⟦ S1, n ⟧ (MapplyS m false rho_s).
 
-Proof. move => rho_s. by case. Qed.
+Proof. by []. Qed.
 
 
 Lemma deSemN_while {qs : QvarScope} qv_m m S0:
@@ -294,7 +308,25 @@ Lemma deSemN_while {qs : QvarScope} qv_m m S0:
             = ⟦ S0;; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
                 + (MapplyS m false rho_s).
 
-Proof. move => rho_s. by case. Qed.
+Proof. by []. Qed.
+
+
+Lemma deSemN_prob {qs : QvarScope} p S1 S2:
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n, 
+
+            ⟦ S1 [ p ⊕ ] S2, n.+1 ⟧ (rho_s)
+            = (⟦ S1, n ⟧(rho_s) [ p ⊕ ] ⟦ S2, n⟧(rho_s))%QTS.
+
+Proof. by []. Qed.
+
+
+Lemma deSemN_nondet {qs : QvarScope} S1 S2:
+        forall (rho_s : 𝒫(𝒟( qs )⁻)) n, 
+        
+            ⟦ S1 □ S2, n.+1 ⟧ (rho_s)
+            = ⟦ S1, n ⟧(rho_s) ∪ ⟦ S2, n ⟧(rho_s).
+
+Proof. by []. Qed.
 
 
 Lemma deSemN_atom {qs : QvarScope} P :
@@ -302,7 +334,7 @@ Lemma deSemN_atom {qs : QvarScope} P :
         
             ⟦ <<P>>, n.+1 ⟧ (rho_s) = ⟦ P, n ⟧ (rho_s).
 
-Proof. move => rho_s. by case. Qed.
+Proof. by []. Qed.
 
 
 Lemma deSemN_parallel {qs : QvarScope} S1 S2 :
@@ -312,7 +344,7 @@ Lemma deSemN_parallel {qs : QvarScope} S1 S2 :
             = (⟦ Step S1 S2 true, n ⟧ (rho_s))
                 ∪ (⟦ Step S1 S2 false, n ⟧ (rho_s)).
 
-Proof. move => rho_s. by case. Qed.
+Proof. by []. Qed.
 
 
 
@@ -320,8 +352,8 @@ Proof. move => rho_s. by case. Qed.
 
 (* The strong relation between opSemN and order *)
 Lemma deSemN_monotonic_strong {qs : QvarScope} :
-    forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) n i, 
-        i <= n -> r1 ⊑♯ r2 -> ⟦ S0, i ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
+    forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) (n i : nat), 
+        (i <= n)%nat -> r1 ⊑♯ r2 -> ⟦ S0, i ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
 Proof. 
     move => S0 r1 r2 n.
 
@@ -337,10 +369,8 @@ Proof.
     move => i Hi.
     (* case on programs *)
     case: S0.
-    (* skip *)
-    by move => //=.
-    (* abort *)
-    by move => //=.
+    (* skip, abort *)
+    1, 2 : by [].
     (* init *)
     move => qv //=. by apply PDenSetOrder_Init.
     (* unitary *)
@@ -353,9 +383,13 @@ Proof.
     apply PDenSetOrder_add_split; last first. by apply PDenSetOrder_M.
     apply IHn => //. by apply PDenSetOrder_M.
     (* sequence *)
-    move => S1 S2 //=. apply IHn => //. by apply IHn => //.
+    move => S1 S2 //=. apply IHn => //. by apply IHn.
+    (* probability *)
+    move => p S1 S2 //=. apply PDensetOrder_cv_comb_split; by apply IHn.
+    (* nondet*)
+    move => S1 S2 //=. apply PDenSetOrder_union_split; by apply IHn.
     (* atom *)
-    move => S0 => //=. by apply IHn => //.
+    move => S0 => //=. by apply IHn.
     (* parallel *)
     move => S1 S2. rewrite !deSemN_parallel. 
     by apply PDenSetOrder_union_split; apply IHn.
@@ -373,7 +407,7 @@ Qed.
 
 (** Prove that [opSemN c i] is increasing when i increases. *)
 Lemma deSemN_monotonic_N {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
-    forall i n, i <= n -> ⟦ P, i ⟧ (rho_s) ⊑♯ ⟦ P, n ⟧ (rho_s).
+    forall i n, (i <= n)%nat -> ⟦ P, i ⟧ (rho_s) ⊑♯ ⟦ P, n ⟧ (rho_s).
 Proof. move => i n Hin. 
     by apply deSemN_monotonic_strong.
 Qed.
@@ -569,28 +603,34 @@ Proof.
     (* abort *) 
     move => ch //=. apply PDenSetOrder_asymm. 
     by apply PDenSet_uni_least.
-    apply chain_limit_lub. by rewrite /deSemN_chain /deSemN_chain_obj //=. 
+    apply chain_limit_lub. by rewrite /deSemN_chain /deSemN_chain_obj. 
     (* init *)
     move => ch qv //=. rewrite init_continuous. f_equal. 
-    apply /chain_eqP => //.
+    by apply /chain_eqP.
     (* unitary *)
     move => ch qv U //=. rewrite unitary_continuous. f_equal. 
-    apply /chain_eqP => //.
+    by apply /chain_eqP.
     (* if *)
     move => qv_m m S0 S1 ch. rewrite deSemN_if.
-    rewrite !mea_continuous !IHn add_continuous. f_equal. apply /chain_eqP => //.
+    rewrite !mea_continuous !IHn add_continuous. f_equal. by apply /chain_eqP.
     (* While *)
     move => qv_m m S0 ch. rewrite deSemN_while.
-    rewrite !mea_continuous IHn add_continuous. f_equal. apply /chain_eqP => //.
+    rewrite !mea_continuous IHn add_continuous. f_equal. by apply /chain_eqP.
     (* Seq *)
     move => S1 S2 ch. rewrite deSemN_seq.
-    rewrite !IHn. f_equal. apply /chain_eqP => //.
+    rewrite !IHn. f_equal. by apply /chain_eqP.
+    (* probability *)
+    move => p S1 S2 ch. rewrite deSemN_prob.
+    rewrite !IHn cvcomb_continuous. f_equal. by apply /chain_eqP.
+    (* nondeterminism *)
+    move => S1 S2 ch. rewrite deSemN_nondet.
+    rewrite !IHn union_continuous. f_equal. by apply /chain_eqP.
     (* atom *)
     move => S0 ch. rewrite deSemN_atom.
-    rewrite IHn. f_equal. apply /chain_eqP => //.
+    rewrite IHn. f_equal. by apply /chain_eqP.
     (* parallel *)
     move => S1 S2 ch. rewrite deSemN_parallel.
-    rewrite !IHn union_continuous. f_equal. apply /chain_eqP => //.
+    rewrite !IHn union_continuous. f_equal. by apply /chain_eqP.
 Qed.
 
 
@@ -611,7 +651,7 @@ Proof.
     rewrite /deSemN_chain /deSemN_chain_obj //=.
     (* using [max i n] steps in [S1 ;; S2] *)
     move : (DeSem_ub (max i n).+1 (S1;;S2) rho_s) => //=.
-    case E : (i <= n). 
+    case E : (i <= n)%nat. 
     { move /leP : E => E. rewrite (max_r _ _ E) => H.
     transitivity (⟦ S2, n ⟧ (⟦ S1, n ⟧(rho_s))).
     apply deSemN_monotonic_rho.

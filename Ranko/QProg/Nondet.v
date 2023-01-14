@@ -77,7 +77,7 @@ Module QNondetProg
 (** This Module relies on a basic theory of quantum. *)
                      (Import QTB : QTheoryBasicType).
 
-Module Import QTheorySet_NOndet := QTheorySet_Nondet_Fun QTB.
+Module Import QTheorySet_Nondet := QTheorySet_Nondet_Fun QTB.
 
 Declare Scope QNondetP_scope.
 Open Scope QNondetP_scope.
