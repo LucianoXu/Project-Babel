@@ -138,6 +138,12 @@ Notation " A '⊇' B " := (supset A B) : NSet_scope.
 Lemma subsupP (T : Type) (A B : 𝒫(T)) : A ⊆ B <-> B ⊇ A.
 Proof. split; auto. Qed.
 
+(* 
+Lemma set_trichotomy (T : Type) (A B : 𝒫(T)) :
+    A = B \/ A ⊆ B \/ A ⊇ B.
+Proof.
+*)
+
 (** subset relation *)
 
 (** subset_refl : A ⊆ A *)
@@ -195,11 +201,12 @@ Add Parametric Relation {T : Type} : _ (@supset T)
 Lemma em_subset (T : Type): forall (A : 𝒫(T)), ∅ ⊆ A.
 Proof. unfold subset. unfold set_em. simpl. intros. destruct H. Qed.
 
-Lemma subset_em (T : Type): forall (A : 𝒫(T)), A ⊆ ∅ -> A = ∅.
+Lemma subset_emP (T : Type): forall (A : 𝒫(T)), A ⊆ ∅ <-> A = ∅.
 Proof.
-    move => A HAin.
-    apply /seteqP => x. split.
+    move => A. split.
+    move => HAin. apply /seteqP => x. split.
     by apply HAin. by move => Hxin; destruct Hxin.
+    by move => ->.
 Qed.
 
 

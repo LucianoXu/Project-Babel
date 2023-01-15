@@ -439,16 +439,48 @@ Proof.
 Qed.
 
 
+(***********************************)
+(** The gadget for abort semantics *)
+
+Lemma rho_s_em_em:
+
+        rho_s = ∅ -> { _ : 𝒟(qs)⁻ | rho_s <> ∅ } = ∅.
+
+Proof.
+    move => ->.
+    replace (∅ ≠ ∅) with False => //.
+    by apply propositional_extensionality.
+Qed.
+
+Lemma rho_s_nem_U:
+
+        rho_s <> ∅ -> { _ : 𝒟(qs)⁻ | rho_s <> ∅ } = 𝕌.
+
+Proof.
+    move => H.
+    replace (rho_s <> ∅) with True => //.
+    by apply propositional_extensionality.
+Qed.
+
+
+(***********************************)
+
 Lemma deSemN_abort n:
 
-            rho_s <> ∅ -> 
-            ⟦ Abort, n.+1 ⟧(rho_s) = 𝕌.
+            ⟦ Abort, n.+1 ⟧(rho_s) = { _ | rho_s <> ∅ }.
 
 (** Note that rho_s not empty is needed for this argument *)
 
 Proof. 
     rewrite /deSemN.
-    rewrite /f_map => H //=. by apply big_union_sgl_nem.
+    rewrite /f_map => //=.
+    case (em_classic rho_s).
+
+    move => H. rewrite big_union_sgl_em //.
+    by rewrite rho_s_em_em.
+
+    move => H. rewrite big_union_sgl_nem //.
+    by rewrite rho_s_nem_U.
 Qed.
 
 Lemma deSemN_init qv n:
@@ -518,6 +550,11 @@ Proof.
     rewrite /deSemN /f_map => //=.
     by rewrite union_big_union_dist.
 Qed.
+
+Lemma deSemN_atom P n:
+        ⟦ <<P>>, n.+1 ⟧(rho_s) = ⟦ P, n ⟧(rho_s).
+Proof. by []. Qed.
+
 
 Lemma deSemN_parallel S1 S2 n:
         ⟦ [ S1 // S2], n.+1 ⟧(rho_s) 
@@ -544,90 +581,97 @@ Qed.
 
 Lemma deSemN_abort_fun n:
 
-            ⟦ Abort, n.+1 ⟧ = (fun rho_s => 𝕌.
+            ⟦ (@abort_ qs), n.+1 ⟧ = (fun rho_s => { _ | rho_s <> ∅ }).
 
-(** Note that rho_s not empty is needed for this argument *)
+(** TODO try to use this technique elsewhere! *)
 
 Proof. 
-    rewrite /deSemN.
-    rewrite /f_map => H //=. by apply big_union_sgl_nem.
+    apply functional_extensionality => x.
+    apply deSemN_abort.
 Qed.
 
-Lemma deSemN_init qv n:
+Lemma deSemN_init_fun (qv : qs) n:
  
-            ⟦ qv <-0 , n.+1 ⟧(rho_s) = InitSttS qv rho_s.
+            ⟦ qv <-0 , n.+1 ⟧ = InitSttS qv.
 
-Proof. 
-    rewrite /InitSttS /deSemN /f_map //=. 
-    by apply big_union_fun_rei.
+Proof.
+    apply functional_extensionality => x.
+    apply deSemN_init.
 Qed.
 
-Lemma deSemN_unitary qv U n:
+Lemma deSemN_unitary_fun (qv : qs) U n:
  
-            ⟦ qv *= U , n.+1 ⟧(rho_s) = UapplyS U rho_s.
+            ⟦ qv *= U , n.+1 ⟧ = UapplyS U.
 
-Proof. 
-    rewrite /UapplyS /deSemN /f_map //=. 
-    by apply big_union_fun_rei.
+Proof.
+    apply functional_extensionality => x.
+    apply deSemN_unitary.
 Qed.
 
-Lemma deSemN_if qv_m m S0 S1 n:
+Lemma deSemN_if_fun (qv_m : qs) m S0 S1 n:
 
-            ⟦ If m [[ qv_m ]] Then S0 Else S1 End, n.+1 ⟧ (rho_s) 
-            = ( ⟦ S0 , n ⟧ (MapplyS m true rho_s)
-            + ⟦ S1 , n ⟧ (MapplyS m false rho_s) )%QTS.
-
-Proof.
-    rewrite /deSemN //=.
-Admitted.
-
-Lemma deSemN_while qv_m m S0 n:
-
-            ⟦ While m [[ qv_m ]] Do S0 End, n.+1 ⟧ (rho_s) 
-            = ( ⟦ S0 ;; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
-            + MapplyS m false rho_s )%QTS.
+            ⟦ If m [[ qv_m ]] Then S0 Else S1 End, n.+1 ⟧
+            = fun rho_s => 
+                ( ⟦ S0 , n ⟧ (MapplyS m true rho_s)
+                + ⟦ S1 , n ⟧ (MapplyS m false rho_s) )%QTS.
 
 Proof.
-    rewrite /deSemN //=.
-Admitted.
-
-Lemma deSemN_seq S0 S1 n:
-
-            ⟦ S0 ;; S1, n.+1 ⟧ (rho_s) = ⟦ S1 , n ⟧ (⟦ S0, n ⟧ (rho_s)).
-
-Proof.
-    rewrite /deSemN /f_map.
-    rewrite deSemN_seq_point_fun /f_map.
-
-    rewrite sep_big_union_dist /f_map.
-    rewrite sep_union_dist /f_map.
-
-    rewrite big_union_dist.
-    by rewrite big_union_sep_sep_dist.
+    apply functional_extensionality => x.
+    apply deSemN_if.
 Qed.
 
-Lemma deSemN_prob p S1 S2 n:
+Lemma deSemN_while_fun (qv_m : qs) m S0 n:
 
-        ⟦ S1 [p ⊕] S2, n.+1 ⟧(rho_s) 
-        = (⟦ S1, n ⟧( rho_s )[ p ⊕ ] ⟦ S2, n ⟧( rho_s ))%QTS.
+            ⟦ While m [[ qv_m ]] Do S0 End, n.+1 ⟧
+            = fun rho_s => 
+                ( ⟦ S0 ;; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
+                + MapplyS m false rho_s )%QTS.
 
 Proof.
-Admitted.
-
-Lemma deSemN_nondet S1 S2 n:
-        ⟦ S1 □ S2, n.+1 ⟧(rho_s) = ⟦ S1, n ⟧(rho_s) ∪ ⟦ S2, n ⟧(rho_s).
-Proof.
-    rewrite /deSemN /f_map => //=.
-    by rewrite union_big_union_dist.
+    apply functional_extensionality => x.
+    apply deSemN_while.
 Qed.
 
-Lemma deSemN_parallel S1 S2 n:
-        ⟦ [ S1 // S2], n.+1 ⟧(rho_s) 
-        =  (⟦ Step S1 S2 true, n ⟧(rho_s)) ∪ (⟦ Step S1 S2 false, n ⟧(rho_s)).
+Lemma deSemN_seq_fun (S0 S1 : prog qs) n:
+
+            ⟦ S0 ;; S1, n.+1 ⟧ = ⟦ S1 , n ⟧ ◦ ⟦ S0, n ⟧.
+
 Proof.
-    rewrite /deSemN /f_map.
-    by rewrite union_big_union_dist.
+    apply functional_extensionality => x.
+    apply deSemN_seq.
 Qed.
+
+Lemma deSemN_prob_fun p (S1 S2 : prog qs) n:
+
+        ⟦ S1 [p ⊕] S2, n.+1 ⟧
+        = fun rho_s =>
+            (⟦ S1, n ⟧( rho_s )[ p ⊕ ] ⟦ S2, n ⟧( rho_s ))%QTS.
+
+Proof.
+    apply functional_extensionality => x.
+    apply deSemN_prob.
+Qed.
+
+Lemma deSemN_nondet_fun (S1 S2 : prog qs) n:
+        ⟦ S1 □ S2, n.+1 ⟧ = fun rho_s => ⟦ S1, n ⟧(rho_s) ∪ ⟦ S2, n ⟧(rho_s).
+Proof.
+    apply functional_extensionality => x.
+    apply deSemN_nondet.
+Qed.
+
+Lemma deSemN_atom_fun (P : prog qs) n:
+        ⟦ <<P>>, n.+1 ⟧ = ⟦ P, n ⟧.
+Proof. by []. Qed.
+
+Lemma deSemN_parallel_fun (S1 S2 : prog qs) n:
+        ⟦ [ S1 // S2], n.+1 ⟧
+        = fun rho_s => 
+            (⟦ Step S1 S2 true, n ⟧(rho_s)) ∪ (⟦ Step S1 S2 false, n ⟧(rho_s)).
+Proof.
+    apply functional_extensionality => x.
+    apply deSemN_parallel.
+Qed.
+
 End DeSemStepFun.
 
 
@@ -642,7 +686,7 @@ Lemma deSem0_smaller {qs : QvarScope}:
 
 Proof. move => S0 r1 r2 n.
     case (em_classic r1).
-    { move => -> /subset_em ->.
+    { move => -> /subset_emP ->.
         rewrite !deSem0_em //. }
     { move => Hr1. case (em_classic r2).
         move => -> _. by rewrite [in X in _ ⊑♯ X]deSem0_em //.
@@ -771,8 +815,14 @@ Proof. split. by apply DeSem_lub.
     by apply DeSem_ub.
 Qed.
 
+Lemma DeSem_em {qs : QvarScope} (P : prog qs) :
+        ⟦ P ⟧ (∅) = ∅.
+Proof.
+Admitted.
 
-(** Properties of Operationl Semantics *)
+
+
+(** Properties of Denotational Semantics *)
 
 Lemma DeSem_skip {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ Skip ⟧ (rho_s) = rho_s.
@@ -789,14 +839,13 @@ Proof.
 Qed.
 
 Lemma DeSem_abort {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
-    rho_s <> ∅ -> ⟦ Abort ⟧ (rho_s) = 𝕌.
+    ⟦ Abort ⟧ (rho_s) = { _ | rho_s <> ∅ }.
 Proof.
-    move => Hnem.
     apply PDenSetOrder_asymm.
     apply DeSem_lub. case.
         case (em_classic rho_s).
-            by move => /Hnem.
-            move => H. by rewrite deSem0_nem //.
+            move => H. by rewrite rho_s_em_em //.
+            move => H. rewrite rho_s_nem_U //. by rewrite deSem0_nem.
         move => H. by rewrite deSemN_abort.
     transitivity (⟦ Abort, 1 ⟧(rho_s)). by rewrite deSemN_abort.
     by apply DeSem_ub.
@@ -903,6 +952,20 @@ Definition deSemN_chain {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
     mk_chain (deSemN_chain_prop S ch n).
 
 
+
+Lemma lim_ch_em_deSemN_em (qs : QvarScope) (S : prog qs) (ch : chain qs) n:
+    (lim→∞ (ch)) = ∅ -> (lim→∞ (deSemN_chain S ch n)) = ∅.
+Proof.
+Admitted.
+
+Lemma lim_ch_nem_chi_nem (qs : QvarScope) (ch : chain qs) i :
+    (lim→∞ (ch)) ≠ ∅ -> ch _[i] ≠ ∅.
+Proof.
+    move => Hch. have Htemp := (@chain_limit_ub _ ch i).
+    move => Heq. apply /Hch /subset_emP. rewrite -Heq. apply Htemp.
+Qed.
+
+
 Theorem deSem0_continuous (qs : QvarScope) (S : prog qs) (ch : chain qs):
     ⟦ S, 0 ⟧ (lim→∞ (ch)) = lim→∞ (deSemN_chain S ch 0).
 Proof.
@@ -913,6 +976,7 @@ Proof.
 Admitted.
 
 
+(** TODO #8 *)
 Theorem deSemN_continuous (qs : QvarScope) (S : prog qs) (ch : chain qs) n:
         ⟦ S, n ⟧ (lim→∞ (ch)) = lim→∞ (deSemN_chain S ch n).
 Proof.
@@ -936,41 +1000,72 @@ Proof.
 
     (* induction step, case on program [S] *)
     move => n IHn. case.
+
     (* skip *)
     move => ch.
     rewrite /deSemN_chain /deSemN_chain_obj deSemN_skip. f_equal. 
     apply /chain_eqP. by rewrite /chain_obj deSemN_skip_fun.
+
     (* abort *) 
-    move => ch //=. apply PDenSetOrder_asymm. 
-    by apply PDenSet_uni_least.
-    apply chain_limit_lub. by rewrite /deSemN_chain /deSemN_chain_obj. 
+    move => ch.
+    rewrite deSemN_abort. case (em_classic (lim→∞ (ch))).
+
+    move => H. rewrite rho_s_em_em //. rewrite lim_ch_em_deSemN_em //.
+    
+    move => H. rewrite rho_s_nem_U //. apply PDenSetOrder_asymm.
+    by []. apply chain_limit_lub => i //=. rewrite /deSemN_chain_obj.
+    rewrite deSemN_abort rho_s_nem_U //. by apply lim_ch_nem_chi_nem. 
+
     (* init *)
-    move => ch qv //=. rewrite init_continuous. f_equal. 
-    by apply /chain_eqP.
+    move => ch qv. 
+    rewrite /deSemN_chain /deSemN_chain_obj deSemN_init init_continuous. 
+    f_equal. apply /chain_eqP. by rewrite /chain_obj deSemN_init_fun.
+
     (* unitary *)
-    move => ch qv U //=. rewrite unitary_continuous. f_equal. 
-    by apply /chain_eqP.
+    move => ch qv U. rewrite /deSemN_chain /deSemN_chain_obj.
+    rewrite deSemN_unitary unitary_continuous. f_equal. 
+    apply /chain_eqP. by rewrite /chain_obj deSemN_unitary_fun.
+
     (* if *)
     move => qv_m m S0 S1 ch. rewrite deSemN_if.
-    rewrite !mea_continuous !IHn add_continuous. f_equal. by apply /chain_eqP.
+    rewrite !mea_continuous !IHn add_continuous. f_equal. 
+    rewrite chain_eqP //.
+    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_if_fun.
+    
     (* While *)
     move => qv_m m S0 ch. rewrite deSemN_while.
-    rewrite !mea_continuous IHn add_continuous. f_equal. by apply /chain_eqP.
+    rewrite !mea_continuous IHn add_continuous. f_equal.     
+    rewrite chain_eqP //.
+    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_while_fun.
+
     (* Seq *)
     move => S1 S2 ch. rewrite deSemN_seq.
-    rewrite !IHn. f_equal. by apply /chain_eqP.
+    rewrite !IHn. f_equal.     
+    rewrite chain_eqP //.
+    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_seq_fun.
+
     (* probability *)
     move => p S1 S2 ch. rewrite deSemN_prob.
-    rewrite !IHn cvcomb_continuous. f_equal. by apply /chain_eqP.
+    rewrite !IHn cvcomb_continuous. f_equal.
+    rewrite chain_eqP //.
+    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_prob_fun.
+
     (* nondeterminism *)
     move => S1 S2 ch. rewrite deSemN_nondet.
-    rewrite !IHn union_continuous. f_equal. by apply /chain_eqP.
+    rewrite !IHn union_continuous. f_equal. 
+    rewrite chain_eqP //.
+    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_nondet_fun.
+ 
     (* atom *)
     move => S0 ch. rewrite deSemN_atom.
     rewrite IHn. f_equal. by apply /chain_eqP.
+
     (* parallel *)
     move => S1 S2 ch. rewrite deSemN_parallel.
-    rewrite !IHn union_continuous. f_equal. by apply /chain_eqP.
+    rewrite !IHn union_continuous. f_equal.     
+    rewrite chain_eqP //.
+    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. 
+    by rewrite deSemN_parallel_fun.
 Qed.
 
 
@@ -980,26 +1075,35 @@ Lemma DeSem_seq {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
 Proof.
     apply PDenSetOrder_asymm.
 
-    apply DeSem_lub. case. by apply PDenSet_uni_least.
-    move => n //=. transitivity (⟦ S2, n ⟧(⟦ S1 ⟧ (rho_s))).
+    apply DeSem_lub. case. 
+    (* induction basis, case on whether rho_s is empty *)
+    case (em_classic rho_s).
+    move => ->. by rewrite deSem0_em !DeSem_em.
+    move => H. by rewrite deSem0_nem.
+
+    (* induction step *)
+    move => n. rewrite deSemN_seq. transitivity (⟦ S2, n ⟧(⟦ S1 ⟧ (rho_s))).
     apply deSemN_monotonic_rho. by apply DeSem_ub.
     by apply DeSem_ub.
 
     apply DeSem_lub => n.
     rewrite [⟦ S1 ⟧(_)]/DeSem. rewrite deSemN_continuous.
     apply chain_limit_lub => i.
-    rewrite /deSemN_chain /deSemN_chain_obj //=.
+    rewrite /deSemN_chain /deSemN_chain_obj.
     (* using [max i n] steps in [S1 ;; S2] *)
-    move : (DeSem_ub (max i n).+1 (S1;;S2) rho_s) => //=.
+    move : (DeSem_ub (max i n).+1 (S1;;S2) rho_s).
     case E : (i <= n)%nat. 
     { move /leP : E => E. rewrite (max_r _ _ E) => H.
     transitivity (⟦ S2, n ⟧ (⟦ S1, n ⟧(rho_s))).
     apply deSemN_monotonic_rho.
     by apply /deSemN_monotonic_N /leP.
+    rewrite deSemN_seq in H.
     by apply H. }
+
     move /leP /Nat.lt_nge /Nat.lt_le_incl: E => E. rewrite (max_l _ _ E) => H.
     transitivity (⟦ S2, i ⟧ (⟦ S1, i ⟧(rho_s))).
     by apply /deSemN_monotonic_N /leP.
+    rewrite deSemN_seq in H.
     by apply H.
 Qed.    
 
@@ -1009,7 +1113,11 @@ Proof.
 
     apply PDenSetOrder_asymm.
 
-    apply DeSem_lub. case => n //=. by apply DeSem_ub.
+    apply DeSem_lub. case. 
+    case (em_classic rho_s).
+        move => ->. by rewrite deSem0_em DeSem_em.
+        move => H. by rewrite deSem0_nem.
+    move => n. rewrite deSemN_atom. by apply DeSem_ub.
 
     apply DeSem_lub => n. rewrite -deSemN_atom. by apply DeSem_ub.
 Qed.
@@ -1020,7 +1128,11 @@ Lemma DeSem_para {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
 Proof.
     apply PDenSetOrder_asymm.
 
-    apply DeSem_lub. case. by apply PDenSet_uni_least.
+    apply DeSem_lub. case.
+    case (em_classic rho_s).
+        move => ->. by rewrite deSem0_em !DeSem_em union_same.
+        move => H. by rewrite deSem0_nem.
+
     move => n. rewrite deSemN_parallel. 
     apply PDenSetOrder_union_split; by apply DeSem_ub.
 
