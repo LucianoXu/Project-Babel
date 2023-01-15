@@ -7,6 +7,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Declare Scope Nat_scope.
+Declare Scope R_scope.
+
 Notation " [ a , b ]N " := ({x : nat | (a <= x <= b)%nat }) : Nat_scope.
 Notation " ( a , b )N " := ({x : nat | (a < x < b)%nat }) : Nat_scope.
 Notation " ( a , b ]N " := ({x : nat | (a < x <= b)%nat }) : Nat_scope.

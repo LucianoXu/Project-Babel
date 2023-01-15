@@ -1,6 +1,6 @@
 (** Nondet.v : describing nondeterministic quantum programs 
             with Feng Yuan *)
-
+(*
 
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
@@ -20,7 +20,7 @@ Unset Printing Implicit Defensive.
 Module QTheorySet_Nondet_Fun (Import QTB : QTheoryBasicType).
 
 Definition PDensitySet (H : HilbertSpace) := 𝒫(𝒟(H)⁻).
-Definition PDensitySet_uni (H : HilbertSpace): 𝒫(𝒟(H)⁻) := {U}.
+Definition PDensitySet_uni (H : HilbertSpace): 𝒫(𝒟(H)⁻) := 𝕌.
 
 Definition union_set (H : HilbertSpace) (A B : 𝒫(𝒟(H)⁻)) := A ∪ B.
 Notation " A '∪' B " := (@union_set _ A B).
@@ -31,12 +31,12 @@ Notation " A + B " := (@add_set _ A B).
 
     
 Lemma add_set_uni_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
-    {U} + s = {U}.
+    𝕌 + s = 𝕌.
 Proof.
 Admitted.
 
 Lemma add_set_uni_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
-    s + {U} = {U}.
+    s + 𝕌 = 𝕌.
 Proof.
 Admitted.
 
@@ -139,3 +139,5 @@ Fixpoint DeSem (qs : QvarScope) (P : prog qs) (rho_s : 𝒫(𝒟(qs)⁻))
 
 
 End QNondetProg.
+
+*)

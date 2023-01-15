@@ -2207,7 +2207,7 @@ Definition PointRel : relation Point :=
 
 Definition PointPo : poset Point.
 Proof.
-    refine (@mk_poset Point {U} PointRel _ _ _).
+    refine (@mk_poset Point 𝕌 PointRel _ _ _).
     { unfold Rrefl, PointRel. intros. by destruct t. }
     { unfold Rtrans, PointRel. intros x _ y _ z _. destruct x,y,z; auto. }
     { unfold Rasymm, PointRel. intros x _ y _. 
@@ -2370,7 +2370,7 @@ Definition Ncl_le : relation Ncl :=
 
 Definition Nclpo : poset Ncl.
 Proof.
-    refine (@mk_poset Ncl {U} Ncl_le _ _ _).
+    refine (@mk_poset Ncl 𝕌 Ncl_le _ _ _).
     (** reflexivity *)
     { unfold Rrefl, Ncl_le. intros t _. by destruct t. }
     (** transitivity *)

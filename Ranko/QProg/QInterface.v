@@ -21,6 +21,7 @@ Module Type QTheoryBasicType.
 
 Declare Scope QTheoryBasic_scope.
 Open Scope QTheoryBasic_scope.
+Delimit Scope QTheoryBasic_scope with QTB.
 
 (** Hilbert spaces are the types of quantum variables *)
 Parameter HilbertSpace : Type.
@@ -128,17 +129,19 @@ Axiom add_set_0_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)),
     s + {{ 𝟎 }} = s.
 
 Axiom add_set_uni_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
-    {U} + s = {U}.
+    𝕌 + s = 𝕌.
     
 Axiom add_set_uni_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
-    s + {U} = {U}.
+    s + 𝕌 = 𝕌.
     
-Parameter InitSttS : 
-    forall {qs : QvarScope}, qs -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
+Definition InitSttS {qs : QvarScope} qv rho_s : 𝒫(𝒟( qs )⁻) :=
+    (InitStt qv) [@] rho_s.
+
 (* Notation "'𝒮ℯ𝓉⁰_'" := InitStt. *)
 
-Parameter UapplyS : forall (qs : QvarScope) (qv_U : qs), 
-    UnitaryOpt qv_U -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
+Definition UapplyS {qs : QvarScope} (qv_U : qs) (U : UnitaryOpt qv_U) rho_s :
+     𝒫(𝒟( qs )⁻) :=
+    (Uapply U) [@] rho_s.
 (* Notation "'𝒰_'" := Uapply. *)
 
 Parameter MapplyS : forall (qs : QvarScope) (qv_M : qs), 
@@ -178,7 +181,7 @@ Add Parametric Relation H : _ (@PDenSetOrder H)
     transitivity proved by (@PDenSetOrder_trans H) as rel_PDenSetOrder.
 
 Axiom PDenSet_uni_least : 
-    forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), {U} ⊑♯ s.
+    forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 𝕌 ⊑♯ s.
 
 
 

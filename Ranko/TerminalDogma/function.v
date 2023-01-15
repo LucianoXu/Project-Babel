@@ -99,8 +99,7 @@ Admitted.
 Definition fun_comp (X Y Z : Type) (f : X -> Y) (g : Y -> Z) : X -> Z :=
     fun x => g (f x).
 
-Notation " g '◦' f " := (fun_comp f g) (at level 40).
-
+Notation " g '◦' f " := (fun x => g (f x)) (at level 40).
 
 
 (** Composition is associative *)
@@ -127,3 +126,4 @@ Lemma comp_bijective (X Y Z : Type) (f : X -> Y) (g : Y -> Z) :
 Proof. move => [Hfi Hfs] [Hgi Hgs]. split.
     by apply /comp_injective. by apply /comp_surjective.
 Qed.
+
