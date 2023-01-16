@@ -301,7 +301,6 @@ Notation " ⟦ ↓ ⟧ ( rho_s ) " := (deSemN None _ rho_s )
     (only printing, format "⟦  ↓  ⟧ ( rho_s )") : QPP_scope.
 
 
-
 Lemma deSem0_nem (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)) :
 
     rho_s <> ∅ -> ⟦ P , 0 ⟧ (rho_s) = 𝕌.
@@ -508,7 +507,9 @@ Lemma deSemN_if qv_m m S0 S1 n:
             + ⟦ S1 , n ⟧ (MapplyS m false rho_s) )%QTS.
 
 Proof.
-    rewrite /deSemN //=.
+
+    rewrite /deSemN.
+
 Admitted.
 
 Lemma deSemN_while qv_m m S0 n:
@@ -530,7 +531,7 @@ Proof.
     rewrite deSemN_seq_point_fun /f_map.
 
     rewrite sep_big_union_dist /f_map.
-    rewrite sep_union_dist /f_map.
+    rewrite -sep_union_dist /f_map.
 
     rewrite big_union_dist.
     by rewrite big_union_sep_sep_dist.
@@ -675,7 +676,25 @@ Qed.
 End DeSemStepFun.
 
 
+Lemma deSem0 (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)) :
+        
+        ⟦ P , 0 ⟧ (rho_s) = { _ | rho_s <> ∅ }.
 
+Proof. 
+    case (em_classic rho_s).
+    move => H. rewrite [in LHS]H. rewrite deSem0_em rho_s_em_em //. 
+    rewrite //= /f_map //= => H.
+    rewrite big_union_sgl_nem //. rewrite rho_s_nem_U //.
+Qed.
+
+Lemma deSem0_fun (qs : QvarScope) (P : prog qs) :
+        
+        ⟦ P , 0 ⟧  = fun rho_s => { _ | rho_s <> ∅ }.
+
+Proof.
+    apply functional_extensionality => x.
+    by apply deSem0.
+Qed.
 
 
 
@@ -953,13 +972,42 @@ Definition deSemN_chain {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
 
 
 
+(** Here is some dirty work about empty set *)
+Lemma lim_ch_em_ex_em (qs : QvarScope) (ch : chain qs) :
+    (lim→∞ (ch)) = ∅ -> exists i, ch _[i] = ∅.
+Proof.
+    (** This is not true. *)
+Abort.
+
+
 Lemma lim_ch_em_deSemN_em (qs : QvarScope) (S : prog qs) (ch : chain qs) n:
     (lim→∞ (ch)) = ∅ -> (lim→∞ (deSemN_chain S ch n)) = ∅.
 Proof.
+    move => Hem. apply PDenSetOrder_asymm => //.
+    
+    case: n.
+    rewrite -Hem. apply chain_limit_lub => i.
+    (* 
+    transitivity ({ _ : 𝒟(qs)⁻ | ch _[ i] ≠ ∅ }).
+    { case (em_classic(ch _[i])).
+        move => H. rewrite {1}H. rewrite rho_s_em_em //.
+        move => H. rewrite rho_s_nem_U //.  }
+    *)
+
+    have Htemp := @chain_limit_ub _ (deSemN_chain S ch 0).
+    move : Htemp.
+    rewrite {1}/deSemN_chain /deSemN_chain_obj.
+    rewrite {1}/chain_obj.
+    rewrite deSem0_fun //.
+
+    have Htemp2 := chain_limit_lub .
+
+    (* n = 0 *)
+    rewrite /deSemN_chain /deSemN_chain_obj.
 Admitted.
 
 Lemma lim_ch_nem_chi_nem (qs : QvarScope) (ch : chain qs) i :
-    (lim→∞ (ch)) ≠ ∅ -> ch _[i] ≠ ∅.
+    (lim→∞ (ch)) <> ∅ -> ch _[i] <> ∅.
 Proof.
     move => Hch. have Htemp := (@chain_limit_ub _ ch i).
     move => Heq. apply /Hch /subset_emP. rewrite -Heq. apply Htemp.
@@ -969,11 +1017,13 @@ Qed.
 Theorem deSem0_continuous (qs : QvarScope) (S : prog qs) (ch : chain qs):
     ⟦ S, 0 ⟧ (lim→∞ (ch)) = lim→∞ (deSemN_chain S ch 0).
 Proof.
-    rewrite /deSemN_chain /deSemN_chain_obj //.
     case (em_classic (lim→∞ (ch))).
-    case S.
-    move => H. rewrite H. rewrite deSem0_em.
-Admitted.
+    move => H. rewrite H deSem0_em. rewrite lim_ch_em_deSemN_em //.
+    move => H. rewrite deSem0_nem //. apply PDenSetOrder_asymm => //.
+    apply chain_limit_lub => i. 
+    rewrite /deSemN_chain /deSemN_chain_obj {1}/chain_obj. 
+    rewrite deSem0_nem //. apply lim_ch_nem_chi_nem => //.
+Qed.
 
 
 (** TODO #8 *)

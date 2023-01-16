@@ -113,10 +113,11 @@ Definition PDensitySet (H: HilbertSpace) : Type := 𝒫(𝒟( H )⁻).
     operator sets are needed.*)
 Definition union_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
-        fun _ a b => union a b.
+        fun _ a b => a ∪ b.
         
-Parameter add_set : forall {H : HilbertSpace}, 
-    𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻).
+Definition add_set : forall {H : HilbertSpace}, 
+    𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
+        fun _ a b => ⋃ { add_PDenOpt x [@] b, x | x ∈ a }.
 
 (* Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope. *)
 Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
@@ -128,12 +129,14 @@ Axiom add_set_0_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)),
 Axiom add_set_0_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
     s + {{ 𝟎 }} = s.
 
+(*
 Axiom add_set_uni_l : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
     𝕌 + s = 𝕌.
     
 Axiom add_set_uni_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)), 
     s + 𝕌 = 𝕌.
-    
+*)
+
 Definition InitSttS {qs : QvarScope} qv rho_s : 𝒫(𝒟( qs )⁻) :=
     (InitStt qv) [@] rho_s.
 
@@ -144,8 +147,9 @@ Definition UapplyS {qs : QvarScope} (qv_U : qs) (U : UnitaryOpt qv_U) rho_s :
     (Uapply U) [@] rho_s.
 (* Notation "'𝒰_'" := Uapply. *)
 
-Parameter MapplyS : forall (qs : QvarScope) (qv_M : qs), 
-       MeaOpt qv_M -> bool -> 𝒫(𝒟( qs )⁻) -> 𝒫(𝒟( qs )⁻).
+Definition MapplyS (qs : QvarScope) (qv_M : qs) (m : MeaOpt qv_M) (r : bool)
+    rho_s : 𝒫(𝒟( qs )⁻) :=
+    (Mapply m r) [@] rho_s.
 (* Notation "'𝒫_'" := Mapply. *)
 
 Parameter scalar_convex_combS : forall (H : HilbertSpace), 

@@ -19,7 +19,7 @@ Unset Printing Implicit Defensive.
 Declare Scope NSet_scope.
 Open Scope NSet_scope.
 
-Reserved Notation " {  expr , x | cond  } " (at level 0, expr at level 99).
+Reserved Notation " {  expr , x .. y | cond  } " (x binder, at level 0, expr at level 99).
 Reserved Notation " s '∈' S " (at level 50).
 Reserved Notation " s '∉' S " (at level 50).
 Reserved Notation "∅".
@@ -63,10 +63,14 @@ Record set T := mk_set {
 Notation " '𝒫(' T ) " := (set T) (format "'𝒫(' T )") : NSet_scope.
 Notation " s '∈' S " := ((chac S) s) : NSet_scope.
 Notation " s '∉' S " := (~ s ∈ S) : NSet_scope.
-Notation "{  x | P  }" := (mk_set (fun x => P)) : NSet_scope.
 Notation "{  x : A | P  }" := (mk_set (T:=A) (fun x => P)) : NSet_scope.
-Notation " {  expr , x | cond  } " := { y | exists x, cond /\ expr = y }.
+Notation "{  x | P  }" := (mk_set (fun x => P)) : NSet_scope.
+Notation "{ expr , x .. y | cond }" :=
+    { a | (exists x, .. (exists y, cond /\ expr = a ) ..) } : NSet_scope.
 
+(** TODO We should add a lemma to move the binder right and left in the set description 
+    { f a b , a b | a ∈ A /\ b ∈ B } = { f a [@] B , a | a ∈ A }
+*)
 
 (** The equivalence between sets. *)
 Lemma seteq_predP (T : Type) (A B : 𝒫(T)) : A = B <-> chac A = chac B.
@@ -291,6 +295,11 @@ Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_sco
 (* set by enumerating *)
 Notation "{{ x , .. , y }} " := 
     ({ a | (a = x \/ .. (a = y \/ False) .. )}) : NSet_scope.
+
+Notation "[| t * ( x , y , .. , z ) ; ( a , b , .. , c )  * u |]" :=
+    (pair (pair .. (pair (pair t x) (pair t y)) .. (pair t z))
+            (pair .. (pair (pair a u) (pair b u)) .. (pair c u)))
+    (t at level 39).
 
 Add Parametric Morphism {X : Type} : (@big_union X)
     with signature (@subset (set X)) ==> (@subset X) as big_union_mor_sub.
@@ -525,11 +534,11 @@ Proof.
     move => [v] [[a [Hain Hveq]] Hxeq]. exists a. rewrite Hveq. by split.
 Qed.
 
-Lemma sep_union_dist (X Y : Type) (A : 𝒫(X)) (f : X -> 𝒫(𝒫(Y))) :
-    { ⋃ (f a), a | a ∈ A } = { ⋃ b, b | b ∈ f [@] A}.
+Lemma sep_union_dist (X Y Z: Type) (A : 𝒫(X)) (g : X -> Y) (f : Y -> Z) :
+    { f b, b | b ∈ g [@] A} = { f (g a), a | a ∈ A }.
 Proof.
-    rewrite (separate_dist _ f (fun x => ⋃ x)).
-    by rewrite -f_mapP.
+    rewrite [RHS]separate_dist.
+    by rewrite f_mapP.
 Qed.
 
 Lemma big_union_dist (X : Type) (A : 𝒫(𝒫(𝒫(X)))) :
@@ -550,7 +559,7 @@ Qed.
 Lemma big_union_fun_dist (X Y: Type) (A : 𝒫(X)) (f : X -> 𝒫(𝒫(Y))):
     ⋃ { ⋃ f a , a | a ∈ A } = ⋃ ⋃ f [@] A.
 Proof.
-    rewrite sep_union_dist.
+    rewrite -sep_union_dist.
     by rewrite big_union_dist.
 Qed.
 
