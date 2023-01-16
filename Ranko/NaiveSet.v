@@ -294,11 +294,6 @@ Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_sco
 Notation "{{ x , .. , y }} " := 
     ({ a | (a = x \/ .. (a = y \/ False) .. )}) : NSet_scope.
 
-Notation "[| t * ( x , y , .. , z ) ; ( a , b , .. , c )  * u |]" :=
-    (pair (pair .. (pair (pair t x) (pair t y)) .. (pair t z))
-            (pair .. (pair (pair a u) (pair b u)) .. (pair c u)))
-    (t at level 39).
-
 Add Parametric Morphism {X : Type} : (@big_union X)
     with signature (@subset (set X)) ==> (@subset X) as big_union_mor_sub.
 Proof.
@@ -391,6 +386,18 @@ End SetTheory.
 
 
 
+
+Lemma big_union_em (T : Type) :
+
+    ⋃ ∅ = set_em T.
+
+Proof.
+    rewrite /big_union. apply seteqP => x. split.
+    move => [?] [H]. by destruct H.
+    by move => [].
+Qed.
+
+
 (** subset morphism of separation set *)
 (** Here a more precise description of the relation between f and g is 
     something like 'subfunction' *)
@@ -403,12 +410,27 @@ Proof. rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
     exists (g t). split => //. exists t. split => //. by apply HAinB.
 Qed.
 
-
-    
-
+(** combine theses results into the morphism! *)
+(*
+Lemma sep_mor_sub (T V: Type) (f g: T -> 𝒫(V)) (A B: 𝒫(T)):
+    A ⊆ B -> (forall t, f t ⊆ g t) -> f [@] A ⊆ g [@] B.
+Proof. rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
+    have H := Hfleg t v. rewrite HSveq in H. have H' := H Hvin.
+    exists (g t). split => //. exists t. split => //. by apply HAinB.
+Qed.
+*)
 
         
 (** About big opertor and mappings *)
+
+Lemma f_map_rei (X Y : Type) (A : 𝒫(X)) (y : Y) :
+    A <> ∅ -> { y , a | a ∈ A } = {{ y }} .
+Proof. move => /nonemptyP [a Hain]. apply seteqP => x. split.
+    move => [x0] [Hx0in] Heq. rewrite Heq. by apply singletonP.
+    move => [Heq|].
+    exists a. by split.
+    by move => [].
+Qed.
 
 Lemma f_map_em (X Y: Type) (f : X -> Y) :
 

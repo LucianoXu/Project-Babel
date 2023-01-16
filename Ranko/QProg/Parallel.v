@@ -282,23 +282,16 @@ Notation " ⦗ ↓ ⦘ ( rho ) " := (deSemN_point None _ rho) :QPP_scope.
 Notation " ⦗ ↓ ⦘ " := (deSemN_point None _ ) :QPP_scope.
 
 
-Definition deSemN {qs : QvarScope} (P : option (prog qs)) (n : nat)
-    (rho_s : 𝒫(𝒟( qs )⁻)) : 𝒫(𝒟( qs )⁻) :=
-    match P with
-    | None => rho_s
-    | Some P =>
-        ⋃ ⦗ P, n ⦘ [@] (rho_s)
-    end.
+Definition deSemN {qs : QvarScope} (P : prog qs) (n : nat) :=
+    fun rho_s => ⋃ (⦗ P, n ⦘ [@] rho_s).
 
-Notation " ⟦ P , n ⟧ " := (deSemN (Some P) n)
+
+Notation " ⟦ P , n ⟧ " := (deSemN P n)
     (at level 10, format "⟦  P ,  n  ⟧") : QPP_scope.
 
-Notation " ⟦ P , n ⟧ ( rho_s ) " := (deSemN (Some P) n rho_s)
+Notation " ⟦ P , n ⟧ ( rho_s ) " := (deSemN P n rho_s)
     (at level 10, rho_s at next level, 
     format "⟦  P ,  n  ⟧ ( rho_s )") : QPP_scope.
-    
-Notation " ⟦ ↓ ⟧ ( rho_s ) " := (deSemN None _ rho_s )
-    (only printing, format "⟦  ↓  ⟧ ( rho_s )") : QPP_scope.
 
 
 Lemma deSem0_nem (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)) :
@@ -319,26 +312,21 @@ Admitted.
 
 Section DeSemPointStep.
 
-Variable (qs : QvarScope) (rho : 𝒟( qs )⁻).
+Variable (qs : QvarScope) (rho : 𝒟( qs )⁻) (n : nat).
 
+Lemma deSemN_skip_point:
 
-Lemma deSemN_seq_point S1 S2 n:
-
-            ⦗ S1 ;; S2, n.+1 ⦘ (rho) = 
-                ⋃ { ⦗ S2, n ⦘ (rho') , rho' | rho' ∈ ⦗ S1, n ⦘ (rho) }.
+    ⦗ Skip, n.+1 ⦘ (rho) = {{ rho }}.
 
 Proof. by []. Qed.
 
+Lemma deSemN_skip_point_fun:
 
-Lemma deSemN_seq_point_fun (S1 S2 : prog qs) n:
+    ⦗ @skip_ qs, n.+1 ⦘ = fun rho => {{ rho }}.
 
-            ⦗ S1 ;; S2, n.+1 ⦘ = 
-                fun rho => ⋃ { ⦗ S2, n ⦘ (rho') , rho' | rho' ∈ ⦗ S1, n ⦘ (rho) }.
+Proof. by[]. Qed.
 
-Proof. by []. Qed.
-
-
-Lemma deSemN_if_point qv_m m S0 S1 n:
+Lemma deSemN_if_point qv_m m S0 S1:
 
     ⦗ If m [[ qv_m ]] Then S0 Else S1 End, n.+1 ⦘ (rho) = 
         (⦗ S0, n ⦘ ( Mapply m true rho ))
@@ -346,7 +334,7 @@ Lemma deSemN_if_point qv_m m S0 S1 n:
 
 Proof. by []. Qed.
 
-Lemma deSemN_if_point_fun qv_m m (S0 S1 : prog qs) n:
+Lemma deSemN_if_point_fun qv_m m (S0 S1 : prog qs):
 
     ⦗ If m [[ qv_m ]] Then S0 Else S1 End, n.+1 ⦘= 
         fun x => (⦗ S0, n ⦘ ( Mapply m true x ))
@@ -365,11 +353,26 @@ Lemma deSemN_if {qs : QvarScope} qv_m m S0 S1:
 Proof. by []. Qed.
 *)
 
-Lemma deSemN_while_point qv_m m S0 n:
+Lemma deSemN_while_point qv_m m S0:
 
             ⦗ While m [[ qv_m ]] Do S0 End, n.+1 ⦘ (rho) = 
                 (⦗ S0 ;; While m [[ qv_m ]] Do S0 End, n ⦘ ( Mapply m true rho ))
                 + {{ Mapply m false rho }}.
+
+Proof. by []. Qed.
+
+Lemma deSemN_seq_point S1 S2:
+
+    ⦗ S1 ;; S2, n.+1 ⦘ (rho) = 
+        ⋃ { ⦗ S2, n ⦘ (rho') , rho' | rho' ∈ ⦗ S1, n ⦘ (rho) }.
+
+Proof. by []. Qed.
+
+
+Lemma deSemN_seq_point_fun (S1 S2 : prog qs):
+
+    ⦗ S1 ;; S2, n.+1 ⦘ = 
+        fun rho => ⋃ { ⦗ S2, n ⦘ (rho') , rho' | rho' ∈ ⦗ S1, n ⦘ (rho) }.
 
 Proof. by []. Qed.
 
@@ -384,7 +387,7 @@ Lemma deSemN_while {qs : QvarScope} qv_m m S0:
 Proof. by []. Qed.
 *)
 
-Lemma deSemN_prob_point p S1 S2 n:
+Lemma deSemN_prob_point p S1 S2:
 
             ⦗ S1 [ p ⊕ ] S2, n.+1 ⦘ (rho)
             = (⦗ S1, n ⦘(rho) [ p ⊕ ] ⦗ S2, n⦘(rho))%QTS.
@@ -393,7 +396,7 @@ Proof. by []. Qed.
 
 (******)
 
-Lemma deSemN_nondet_point S1 S2 n:
+Lemma deSemN_nondet_point S1 S2:
         
             ⦗ S1 □ S2, n.+1 ⦘ (rho)
             = ⦗ S1, n ⦘(rho) ∪ ⦗ S2, n ⦘(rho).
@@ -402,7 +405,7 @@ Proof. by []. Qed.
 
 (******)
 
-Lemma deSemN_atom_point P n: 
+Lemma deSemN_atom_point P: 
         
             ⦗ <<P>>, n.+1 ⦘ (rho) = ⦗ P, n ⦘ (rho).
 
@@ -410,7 +413,7 @@ Proof. by []. Qed.
 
 (******)
 
-Lemma deSemN_parallel_point S1 S2 n: 
+Lemma deSemN_parallel_point S1 S2: 
         
             ⦗ [ S1 // S2 ], n.+1 ⦘ (rho) 
             = (⦗ Step S1 S2 true, n ⦘ (rho))
@@ -510,7 +513,7 @@ Proof.
 
     rewrite /deSemN.
 
-Admitted.
+Abort.
 
 Lemma deSemN_while qv_m m S0 n:
 
@@ -520,7 +523,7 @@ Lemma deSemN_while qv_m m S0 n:
 
 Proof.
     rewrite /deSemN //=.
-Admitted.
+Abort.
 
 Lemma deSemN_seq S0 S1 n:
 
@@ -543,7 +546,7 @@ Lemma deSemN_prob p S1 S2 n:
         = (⟦ S1, n ⟧( rho_s )[ p ⊕ ] ⟦ S2, n ⟧( rho_s ))%QTS.
 
 Proof.
-Admitted.
+Abort.
 
 Lemma deSemN_nondet S1 S2 n:
         ⟦ S1 □ S2, n.+1 ⟧(rho_s) = ⟦ S1, n ⟧(rho_s) ∪ ⟦ S2, n ⟧(rho_s).
@@ -617,9 +620,7 @@ Lemma deSemN_if_fun (qv_m : qs) m S0 S1 n:
                 + ⟦ S1 , n ⟧ (MapplyS m false rho_s) )%QTS.
 
 Proof.
-    apply functional_extensionality => x.
-    apply deSemN_if.
-Qed.
+Abort.
 
 Lemma deSemN_while_fun (qv_m : qs) m S0 n:
 
@@ -629,9 +630,7 @@ Lemma deSemN_while_fun (qv_m : qs) m S0 n:
                 + MapplyS m false rho_s )%QTS.
 
 Proof.
-    apply functional_extensionality => x.
-    apply deSemN_while.
-Qed.
+Abort.
 
 Lemma deSemN_seq_fun (S0 S1 : prog qs) n:
 
@@ -649,9 +648,7 @@ Lemma deSemN_prob_fun p (S1 S2 : prog qs) n:
             (⟦ S1, n ⟧( rho_s )[ p ⊕ ] ⟦ S2, n ⟧( rho_s ))%QTS.
 
 Proof.
-    apply functional_extensionality => x.
-    apply deSemN_prob.
-Qed.
+Abort.
 
 Lemma deSemN_nondet_fun (S1 S2 : prog qs) n:
         ⟦ S1 □ S2, n.+1 ⟧ = fun rho_s => ⟦ S1, n ⟧(rho_s) ∪ ⟦ S2, n ⟧(rho_s).
@@ -683,8 +680,8 @@ Lemma deSem0 (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)) :
 Proof. 
     case (em_classic rho_s).
     move => H. rewrite [in LHS]H. rewrite deSem0_em rho_s_em_em //. 
-    rewrite //= /f_map //= => H.
-    rewrite big_union_sgl_nem //. rewrite rho_s_nem_U //.
+    rewrite //= /f_map //= => H. rewrite rho_s_nem_U //.
+    by rewrite deSem0_nem //.
 Qed.
 
 Lemma deSem0_fun (qs : QvarScope) (P : prog qs) :
@@ -714,46 +711,66 @@ Qed.
 
 
 
+(* The strong relation between opSemN and order *)
+Lemma deSemN_point_monotonic_strong {qs : QvarScope} :
+    forall (S0 : prog qs) (rho : 𝒟( qs )⁻) n i, 
+        (i <= n)%nat -> ⦗ S0, i ⦘ (rho) ⊑♯ ⦗ S0, n ⦘ (rho).
+Proof. 
+    move => S0 rho n.
+
+    (* induction on n *)
+    elim: n S0 rho.
+    (* induction basis, n = 0*)
+    move => S0 rho i. by rewrite leqn0 => /eqP ->.
+
+    (* induction step, process i=0 first *)
+    move => n IHn S0 rho i Hi. case: i Hi.
+    by move => _.
+
+    move => i Hi.
+    (* case on programs *)
+    case: S0.
+    (* skip abort, init, unitary *)
+    1,2,3,4: by intros.
+    (* if *)
+    move => qv_m m S0 S1. 
+    by apply PDenSetOrder_add_split; apply /IHn.
+    (* while *)
+    move => qv_m m S0. rewrite !deSemN_while_point.
+    apply PDenSetOrder_add_split; last first => //.
+    by apply IHn.
+    (* sequence *)
+    move => S1 S2. rewrite !deSemN_seq_point. 
+    apply big_union_sep_mor_sub.
+    by apply IHn. 
+    move => t. by apply IHn.
+    (* probability *)
+    move => p S1 S2. rewrite !deSemN_prob_point. 
+    apply PDensetOrder_cv_comb_split; by apply IHn.
+    (* nondet *)
+    move => S1 S2. rewrite !deSemN_nondet_point.
+    apply PDenSetOrder_union_split; by apply IHn.
+    (* atom *)
+    move => S0 //=. by apply IHn => //.
+    (* parallel *)
+    move => S1 S2. rewrite !deSemN_parallel_point. 
+    apply PDenSetOrder_union_split; by apply IHn.
+Qed.
+
+Lemma deSemN_point_monotonic_step {qs : QvarScope} (P : prog qs) rho: 
+    forall n, ⦗ P, n ⦘ (rho) ⊑♯ ⦗ P, n.+1 ⦘ (rho).
+Proof. move => n. by apply deSemN_point_monotonic_strong. Qed.
+Arguments deSemN_point_monotonic_step {qs} P rho.
+
+
 (* The strong relation between deSemN and order *)
 Lemma deSemN_monotonic_strong {qs : QvarScope}:
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) (n i : nat), 
         (i <= n)%nat -> r1 ⊑♯ r2 -> ⟦ S0, i ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
 Proof. 
-    rewrite /PDenSetOrder => S0 r1 r2 n.
-
-    (* induction on n *)
-    elim: n S0 r1 r2.
-    (* induction basis, n = 0 *)
-    move => S0 r1 r2 i. rewrite leqn0 => /eqP ->. by apply deSem0_smaller.
-
-
-    (* induction step, process i=0 first *)
-    move => n IHn S0 r1 r2 i Hi Hr1r2. case: i Hi.
-    move => _. by apply deSem0_smaller.
-
-    move => i Hi.
-    (* case on programs *)
-    case: S0.
-    (* skip, abort, init, unitary*)
-    1, 2, 3, 4: rewrite /deSemN; intros; by rewrite Hr1r2.
-    (* if *)
-    move => qv_m m S0 S1. rewrite !deSemN_if. 
-    apply PDenSetOrder_add_split; apply IHn => //; by apply PDenSetOrder_M.
-    (* while *)
-    move => qv_m m S0. rewrite !deSemN_while.
-    apply PDenSetOrder_add_split. apply IHn => //.
-    1, 2 : by apply PDenSetOrder_M.
-    (* sequence *)
-    move => S1 S2. rewrite !deSemN_seq. apply IHn => //. by apply IHn.
-    (* probability *)
-    move => p S1 S2. rewrite !deSemN_prob. apply PDensetOrder_cv_comb_split; by apply IHn.
-    (* nondet*)
-    move => S1 S2. rewrite !deSemN_nondet. apply PDenSetOrder_union_split; by apply IHn.
-    (* atom *)
-    move => S0 => //=. by apply IHn.
-    (* parallel *)
-    move => S1 S2. rewrite !deSemN_parallel. 
-    by apply PDenSetOrder_union_split; apply IHn.
+    rewrite /deSemN => S0 r1 r2 n i Hi Hr1r2.
+    apply big_union_sep_mor_sub => // t.
+    by apply deSemN_point_monotonic_strong.
 Qed.
 
 
@@ -776,7 +793,7 @@ Qed.
 
 Lemma deSemN_monotonic_step {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
     forall n, ⟦ P, n ⟧ (rho_s) ⊑♯ ⟦ P, n.+1 ⟧ (rho_s).
-Proof. move => n. apply deSemN_monotonic_strong => //. Qed.
+Proof. move => n. by apply deSemN_monotonic_strong. Qed.
 Arguments deSemN_monotonic_step {qs} P rho_s.
 
 
@@ -798,8 +815,12 @@ Proof.
 
 
 (** Define the operationa semantics (infinite step) *)
-Definition chain_deSemN {qs : QvarScope} (P : prog qs) rho_s : chain qs :=
+Definition chain_deSemN {qs : QvarScope} (P : prog qs) rho_s : chain 𝒟(qs)⁻ :=
     mk_chain (deSemN_monotonic_step P rho_s).
+(** Note that these two chains are different.
+    One on step number, and another on ch index. *)
+
+
 
 (* TODO we can implement a general lemma for monotonic functions *)
 Lemma chain_deSemN_n {qs : QvarScope} (P : prog qs) rho_s n :
@@ -919,6 +940,7 @@ Proof.
               ...    ...
 
     *)
+    (* 
     (* proof : ⟦S0⟧ + ⟦S1⟧ is the upper bound, therefore larger than lub ⟦IF⟧. *)
     apply DeSem_lub. case. by rewrite deSem0_nem //.
     move => n //. rewrite deSemN_if. apply PDenSetOrder_add_split; apply DeSem_ub.
@@ -928,7 +950,8 @@ Proof.
     rewrite ![⟦ _ ⟧ (MapplyS m _ rho_s)]/DeSem. rewrite add_continuous.
     apply chain_limit_lub => l. rewrite /chain_add /chain_add_obj => //=.
     rewrite -deSemN_if. by apply DeSem_ub.
-Qed.
+    *)
+Abort.
 
 
 Lemma DeSem_while {qs : QvarScope} qv_m m S0 (rho_s : 𝒫(𝒟( qs )⁻)):
@@ -937,6 +960,7 @@ Lemma DeSem_while {qs : QvarScope} qv_m m S0 (rho_s : 𝒫(𝒟( qs )⁻)):
         = ⟦ S0 ;; While m [[qv_m]] Do S0 End ⟧ (MapplyS m true rho_s) 
             + MapplyS m false rho_s.
 Proof.
+    (*
     move => Hnem. apply PDenSetOrder_asymm.
 
     apply DeSem_lub. case. by rewrite deSem0_nem //.
@@ -951,15 +975,17 @@ Proof.
     rewrite -(singleton_chain_limit (MapplyS m false rho_s)).
     rewrite add_continuous.
     apply chain_limit_lub => l. rewrite /chain_add /chain_add_obj => //=.
-    rewrite -deSemN_while. by apply DeSem_ub.
-Qed.
+    rewrite -deSemN_while. by apply DeSem_ub. *)
+Abort.
 
+
+(*#########################################################################*)
 
 (* The chain of deSemN ch (different from chain_deSemN) *)
-Definition deSemN_chain_obj {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
+Definition deSemN_chain_obj {qs : QvarScope} (S : prog qs) (ch : chain 𝒟(qs)⁻) n :=
     fun i => ⟦ S, n ⟧(ch _[i]).
 
-Lemma deSemN_chain_prop {qs : QvarScope} (S : prog qs) (ch : chain qs) n
+Lemma deSemN_chain_prop {qs : QvarScope} (S : prog qs) (ch : chain 𝒟(qs)⁻) n
     : forall i, deSemN_chain_obj S ch n i ⊑♯ deSemN_chain_obj S ch n i.+1.
 Proof. 
     rewrite /deSemN_chain_obj => i. apply deSemN_monotonic_rho.
@@ -967,8 +993,42 @@ Proof.
 Qed.
 Arguments deSemN_chain_prop {qs} S ch.
 
-Definition deSemN_chain {qs : QvarScope} (S : prog qs) (ch : chain qs) n :=
+Definition deSemN_chain {qs : QvarScope} (S : prog qs) (ch : chain 𝒟(qs)⁻) n :=
     mk_chain (deSemN_chain_prop S ch n).
+
+
+(** The chain of chain_deSemN_point *)
+
+Definition deSemN_point_map_chain 
+    {qs : QvarScope} (P : prog qs) ch n : chain (𝒫(𝒟(qs)⁻)) :=
+    fmap_chain (⦗ P, n ⦘) ch.
+
+
+(** The relation between three chains: 
+    - bigU chain
+    - deSemN_point chain
+    - deSemN chain
+*)
+
+Lemma deSem_chain_decompose 
+    {qs : QvarScope} (P : prog qs) rho_s n :
+    deSemN_chain P rho_s n = bigU_chain (deSemN_point_map_chain P rho_s n).
+Proof. 
+    apply chain_eqP. apply functional_extensionality => i.
+    rewrite /deSemN_chain /deSemN_chain_obj {1}/chain_obj.
+    rewrite /bigU_chain /bigU_chain_obj {2}/chain_obj.
+    rewrite /deSemN_point_map_chain /fmap_chain /fmap_chain_obj {2}/chain_obj.
+    by [].
+Qed.
+
+
+(*#########################################################################*)
+
+
+
+
+
+
 
 
 
@@ -979,34 +1039,19 @@ Proof.
     (** This is not true. *)
 Abort.
 
-
-Lemma lim_ch_em_deSemN_em (qs : QvarScope) (S : prog qs) (ch : chain qs) n:
-    (lim→∞ (ch)) = ∅ -> (lim→∞ (deSemN_chain S ch n)) = ∅.
-Proof.
-    move => Hem. apply PDenSetOrder_asymm => //.
-    
-    case: n.
-    rewrite -Hem. apply chain_limit_lub => i.
-    (* 
-    transitivity ({ _ : 𝒟(qs)⁻ | ch _[ i] ≠ ∅ }).
-    { case (em_classic(ch _[i])).
-        move => H. rewrite {1}H. rewrite rho_s_em_em //.
-        move => H. rewrite rho_s_nem_U //.  }
-    *)
-
-    have Htemp := @chain_limit_ub _ (deSemN_chain S ch 0).
-    move : Htemp.
-    rewrite {1}/deSemN_chain /deSemN_chain_obj.
-    rewrite {1}/chain_obj.
-    rewrite deSem0_fun //.
-
-    have Htemp2 := chain_limit_lub .
-
-    (* n = 0 *)
-    rewrite /deSemN_chain /deSemN_chain_obj.
+Lemma lim_ch_em_deSemN_point_em (qs : QvarScope) (S : prog qs) (ch : chain 𝒟(qs)⁻) n:
+    (lim→∞ (ch)) = ∅ -> (lim→∞ (deSemN_point_map_chain S ch n)) = ∅.
 Admitted.
 
-Lemma lim_ch_nem_chi_nem (qs : QvarScope) (ch : chain qs) i :
+Lemma lim_ch_em_deSemN_em (qs : QvarScope) (S : prog qs) (ch : chain 𝒟(qs)⁻) n:
+    (lim→∞ (ch)) = ∅ -> (lim→∞ (deSemN_chain S ch n)) = ∅.
+Proof.
+    move => Hem.
+    rewrite deSem_chain_decompose. rewrite -bigU_continuous. 
+    rewrite lim_ch_em_deSemN_point_em //. by apply big_union_em.
+Qed.
+
+Lemma lim_ch_nem_chi_nem (qs : QvarScope) (ch : chain 𝒟( qs )⁻) i :
     (lim→∞ (ch)) <> ∅ -> ch _[i] <> ∅.
 Proof.
     move => Hch. have Htemp := (@chain_limit_ub _ ch i).
@@ -1014,7 +1059,7 @@ Proof.
 Qed.
 
 
-Theorem deSem0_continuous (qs : QvarScope) (S : prog qs) (ch : chain qs):
+Theorem deSem0_continuous (qs : QvarScope) (S : prog qs) (ch : chain 𝒟(qs)⁻):
     ⟦ S, 0 ⟧ (lim→∞ (ch)) = lim→∞ (deSemN_chain S ch 0).
 Proof.
     case (em_classic (lim→∞ (ch))).
@@ -1022,100 +1067,64 @@ Proof.
     move => H. rewrite deSem0_nem //. apply PDenSetOrder_asymm => //.
     apply chain_limit_lub => i. 
     rewrite /deSemN_chain /deSemN_chain_obj {1}/chain_obj. 
-    rewrite deSem0_nem //. apply lim_ch_nem_chi_nem => //.
+    rewrite deSem0_nem //. by apply lim_ch_nem_chi_nem.
 Qed.
 
 
-(** TODO #8 *)
-Theorem deSemN_continuous (qs : QvarScope) (S : prog qs) (ch : chain qs) n:
-        ⟦ S, n ⟧ (lim→∞ (ch)) = lim→∞ (deSemN_chain S ch n).
-Proof.
-    elim: n S ch.
-    (* induction basis *)
-    move => S ch //. apply deSem0_continuous.
-    
-    (* apply PDenSetOrder_asymm.
-    
-    (* deSemN is continuous, for all sets (including the empty set) *)
-    case (em_classic (lim→∞ (ch))).
-    move => Hlimch.
-    have Htemp : (lim→∞ (deSemN_chain S ch 0)) = ∅.
-    { apply PDenSetOrder_asymm. by []. 
-    }
-    move => ->. rewrite deSem0_em.
-
-    by apply PDenSet_uni_least.
-    apply chain_limit_lub. by rewrite /deSemN_chain /deSemN_chain_obj //=.
+Theorem deSemN_point_continuous 
+    (qs : QvarScope) (S : prog qs) (ch : chain 𝒟(qs)⁻) n:
+    ⦗ S, n ⦘ [@] (lim→∞ (ch)) = lim→∞ (deSemN_point_map_chain S ch n).
+Proof. 
+    apply fmap_continuous.
+Qed.
+(*
+    (* 
+    apply subset_asymm.
+    apply chain_limit_lub => i.
+    rewrite /deSemN_point_map_chain /deSemN_point_map_chain_obj {1}/chain_obj.
+    apply f_map_mor_sub => //. apply chain_limit_ub.
     *)
 
-    (* induction step, case on program [S] *)
-    move => n IHn. case.
+    (* case on [(lim→∞ (ch)) = ∅]. process the empty set first *)
+    case (em_classic (lim→∞ (ch))). 
+    move => H. rewrite H lim_ch_em_deSemN_point_em //. by rewrite f_map_em.
+    
+    move => H.
+    elim: n.
+
+    (* induction basis *)
+    rewrite [in LHS]/deSemN_point /f_map. rewrite f_map_rei //.
+    symmetry. apply repeat_chain_limit => i.
+    rewrite /deSemN_point_map_chain /deSemN_point_map_chain_obj.
+    rewrite /deSemN_point /f_map {1}/chain_obj.
+    rewrite f_map_rei //.
+    by apply lim_ch_nem_chi_nem.
+
+    (* induction step *)
+    move => n IHn. symmetry.
+    rewrite fmap_continuous.
+
+
+    
+    rewrite /deSemN_point_map_chain /deSemN_point_map_chain_obj.
+
+    case S.
 
     (* skip *)
-    move => ch.
-    rewrite /deSemN_chain /deSemN_chain_obj deSemN_skip. f_equal. 
-    apply /chain_eqP. by rewrite /chain_obj deSemN_skip_fun.
+    rewrite /f_map /deSemN_point.
 
-    (* abort *) 
-    move => ch.
-    rewrite deSemN_abort. case (em_classic (lim→∞ (ch))).
+Admitted.
+*)
 
-    move => H. rewrite rho_s_em_em //. rewrite lim_ch_em_deSemN_em //.
-    
-    move => H. rewrite rho_s_nem_U //. apply PDenSetOrder_asymm.
-    by []. apply chain_limit_lub => i //=. rewrite /deSemN_chain_obj.
-    rewrite deSemN_abort rho_s_nem_U //. by apply lim_ch_nem_chi_nem. 
 
-    (* init *)
-    move => ch qv. 
-    rewrite /deSemN_chain /deSemN_chain_obj deSemN_init init_continuous. 
-    f_equal. apply /chain_eqP. by rewrite /chain_obj deSemN_init_fun.
 
-    (* unitary *)
-    move => ch qv U. rewrite /deSemN_chain /deSemN_chain_obj.
-    rewrite deSemN_unitary unitary_continuous. f_equal. 
-    apply /chain_eqP. by rewrite /chain_obj deSemN_unitary_fun.
-
-    (* if *)
-    move => qv_m m S0 S1 ch. rewrite deSemN_if.
-    rewrite !mea_continuous !IHn add_continuous. f_equal. 
-    rewrite chain_eqP //.
-    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_if_fun.
-    
-    (* While *)
-    move => qv_m m S0 ch. rewrite deSemN_while.
-    rewrite !mea_continuous IHn add_continuous. f_equal.     
-    rewrite chain_eqP //.
-    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_while_fun.
-
-    (* Seq *)
-    move => S1 S2 ch. rewrite deSemN_seq.
-    rewrite !IHn. f_equal.     
-    rewrite chain_eqP //.
-    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_seq_fun.
-
-    (* probability *)
-    move => p S1 S2 ch. rewrite deSemN_prob.
-    rewrite !IHn cvcomb_continuous. f_equal.
-    rewrite chain_eqP //.
-    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_prob_fun.
-
-    (* nondeterminism *)
-    move => S1 S2 ch. rewrite deSemN_nondet.
-    rewrite !IHn union_continuous. f_equal. 
-    rewrite chain_eqP //.
-    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. by rewrite deSemN_nondet_fun.
- 
-    (* atom *)
-    move => S0 ch. rewrite deSemN_atom.
-    rewrite IHn. f_equal. by apply /chain_eqP.
-
-    (* parallel *)
-    move => S1 S2 ch. rewrite deSemN_parallel.
-    rewrite !IHn union_continuous. f_equal.     
-    rewrite chain_eqP //.
-    rewrite /deSemN_chain /deSemN_chain_obj /chain_obj. 
-    by rewrite deSemN_parallel_fun.
+(** TODO #8 *)
+Theorem deSemN_continuous (qs : QvarScope) (S : prog qs) (ch : chain 𝒟(qs)⁻) n:
+        ⟦ S, n ⟧ (lim→∞ (ch)) = lim→∞ (deSemN_chain S ch n).
+Proof.
+    rewrite /deSemN.
+    rewrite deSemN_point_continuous bigU_continuous.
+    by rewrite deSem_chain_decompose.
 Qed.
 
 

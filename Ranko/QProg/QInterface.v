@@ -296,6 +296,15 @@ Proof.
     by apply (temp O).
 Qed.
 
+Lemma repeat_chain_limit (T : Type) (ch : chain T) x :
+    (forall i, ch _[i] = x) -> lim→∞ (ch) = x.
+Proof. move => H.
+    apply subset_asymm.
+    transitivity (ch _[1]). by apply chain_limit_ub. by rewrite H.
+    apply chain_limit_lub. move => i. by rewrite H.
+Qed.
+
+
 
 (* chain_add *)
 Definition chain_add_obj (H : HilbertSpace) 
@@ -418,27 +427,44 @@ Axiom mea_continuous : forall {qs : QvarScope}
     MapplyS M r (lim→∞ (ch)) = lim→∞ (Mapply_chain M r ch).
 
 
-(*
+
 
 (* The chain of UapplyS U ch *)
-Definition bigU_chain_obj 
-    {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain qs) :=
-    fun i => UapplyS U (ch _[i]).
-Lemma Uapply_chain_prop 
-    {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain qs)
-    : forall i, Uapply_chain_obj U ch i ⊑♯ Uapply_chain_obj U ch i.+1.
+Definition bigU_chain_obj (T : Type) (ch : chain 𝒫(T)) :=
+    fun i => ⋃ (ch _[i]).
+Lemma bigU_chain_prop (T : Type) (ch : chain 𝒫(T))
+    : forall i, bigU_chain_obj ch i ⊇ bigU_chain_obj ch i.+1.
 Proof.
-    rewrite /Uapply_chain_obj => i. apply PDenSetOrder_U. by apply ch.
+    rewrite /bigU_chain_obj => i. apply big_union_mor_sub. by apply ch.
 Qed.
-Arguments Uapply_chain_prop {qs} {qv} U ch.
+Arguments bigU_chain_prop {T} ch.
 
-Definition Uapply_chain 
-    {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain qs) :=
-    mk_chain (Uapply_chain_prop U ch).
+Definition bigU_chain (T : Type) (ch : chain 𝒫(T)) :=
+    mk_chain (bigU_chain_prop ch).
 
-(** We still need the assumption that addition is continuous *)
-Axiom unitary_continuous : 
-    forall {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain qs),
-    UapplyS U (lim→∞ (ch)) = lim→∞ (Uapply_chain U ch).
-*)
+(** We still need the assumption that big_union is continuous *)
+Axiom bigU_continuous : 
+    forall (T : Type) (ch : chain 𝒫(T)),
+    ⋃ (lim→∞ (ch)) = lim→∞ (bigU_chain ch).
+
+
+(* The chain of f_map *)
+Definition fmap_chain_obj (T V: Type) (f : T -> V) (ch : chain T):=
+    fun i => f [@] (ch _[i]).
+Lemma fmap_chain_prop (T V: Type) (f : T -> V) (ch : chain T)
+    : forall i, fmap_chain_obj f ch i ⊇ fmap_chain_obj f ch i.+1.
+Proof.
+    move => i. apply f_map_mor_sub => //. by apply ch.
+Qed.
+Arguments fmap_chain_prop {T V} f ch.
+
+Definition fmap_chain (T V: Type) (f : T -> V) (ch : chain T) :=
+    mk_chain (fmap_chain_prop f ch).
+
+(** We still need the assumption that big_union is continuous *)
+Axiom fmap_continuous : 
+    forall (T V: Type) (f : T -> V) (ch : chain T),
+        f [@] (lim→∞ (ch)) = lim→∞ (fmap_chain f ch).
+    
+
 End QTheorySetType.
