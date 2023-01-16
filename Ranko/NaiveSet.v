@@ -562,7 +562,9 @@ Proof.
 Qed.
 
 Lemma big_union_dist (X : Type) (A : 𝒫(𝒫(𝒫(X)))) :
+
     ⋃ { ⋃ a , a | a ∈ A } = ⋃ (⋃ A).
+    
 Proof.
     rewrite /big_union. apply /seteqP => x. split.
 
