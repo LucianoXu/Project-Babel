@@ -1,5 +1,5 @@
-(** Function.v *)
-
+(** function.v *)
+(* 想要改名为大写首字母，但在Windows系统下还是不行啊。将就一下吧！*)
 From mathcomp Require Export all_ssreflect.
 Require Export Coq.Unicode.Utf8_core.
 

@@ -49,7 +49,7 @@ Notation " 'If' m [[ qv_m ]] 'Then' S0 'Else' S1 'End' " :=
     (@if_ _ qv_m m S0 S1) (at level 90) : QPP_scope.
 Notation " 'While' m [[ qv_m ]] 'Do' S0 'End' " := 
     (@while_ _ qv_m m S0) (at level 90) : QPP_scope.
-Notation " S1 ;; S2 " := (@seq_ _ S1 S2) 
+Notation " S1 ; S2 " := (@seq_ _ S1 S2) 
     (at level 95, right associativity) : QPP_scope.
 Notation " S1 [ p ⊕ ] S2 " := (@prob_ _ p S1 S2) 
     (format "S1  [ p  ⊕ ]  S2"): QPP_scope.
@@ -62,7 +62,7 @@ Fixpoint non_parallel {qs : QvarScope} (P : prog qs) : bool :=
     | [S1 // S2] => false
     | If m [[ qv_m ]] Then S0 Else S1 End => non_parallel S0 && non_parallel S1
     | While m [[ qv_m ]] Do S0 End => non_parallel S0
-    | S1 ;; S2 => non_parallel S1 && non_parallel S2
+    | S1 ; S2 => non_parallel S1 && non_parallel S2
     | _ => true
     end.
 
@@ -77,7 +77,7 @@ Fixpoint qvar_of_prog {qs : QvarScope} (S0 : prog qs) : qs :=
         => qv_m [+] (qvar_of_prog S0) [+] (qvar_of_prog S1)
     | While _ [[ qv_m ]] Do S0 End
         => qv_m [+] (qvar_of_prog S0)
-    | S1;;S2 => (qvar_of_prog S1) [+] (qvar_of_prog S2)
+    | S1;S2 => (qvar_of_prog S1) [+] (qvar_of_prog S2)
     | S1 [ p ⊕ ] S2 => (qvar_of_prog S1) [+] (qvar_of_prog S2)
     | S1 □ S2 =>(qvar_of_prog S1) [+] (qvar_of_prog S2)
     | <<S0>> => qvar_of_prog S0
@@ -88,14 +88,14 @@ Coercion qvar_of_prog : prog >-> Qvar.
 
 Fixpoint seq_Head {qs : QvarScope} (S0 : prog qs) : prog qs :=
     match S0 with
-    | P0 ;; P1 => seq_Head P0
+    | P0 ; P1 => seq_Head P0
     | _ => S0
     end.
 Fixpoint seq_Tail {qs : QvarScope} (S0 : prog qs) : option (prog qs) :=
     match S0 with
-    | P0 ;; P1 => match seq_Tail P0 with
+    | P0 ; P1 => match seq_Tail P0 with
                   | None => Some P1
-                  | Some Q => Some (Q ;; P1)
+                  | Some Q => Some (Q ; P1)
                   end
     | _ => None
     end.
@@ -110,15 +110,15 @@ Definition Step {qs : QvarScope} (S1 S2: prog qs)
             | If m [[ qv_m ]] Then P0 Else P1 End => 
                 If m [[ qv_m ]] Then [ P0 // S2 ] Else [ P1 // S2 ] End
             | While m [[ qv_m ]] Do P0 End =>
-                If m [[ qv_m ]] Then [ P0 ;; While m [[qv_m]] Do P0 End // S2 ]
+                If m [[ qv_m ]] Then [ P0 ; While m [[qv_m]] Do P0 End // S2 ]
                                 Else [ Skip // S2] End
-            | _ => S1 ;; [ Skip // S2 ]
+            | _ => S1 ; [ Skip // S2 ]
             end 
         (** Note that here we give a different interpretation of 
             nested parallel composition 
             We consider the inner parallel composition as a 'atomic' action
             performed in parallel *)
-        | Some Q => seq_Head S1 ;; [ Q // S2 ]
+        | Some Q => seq_Head S1 ; [ Q // S2 ]
         end
     else
         match seq_Tail S2 with
@@ -127,13 +127,13 @@ Definition Step {qs : QvarScope} (S1 S2: prog qs)
             | If m [[ qv_m ]] Then P0 Else P1 End => 
                 If m [[ qv_m ]] Then [ S1 // P0 ] Else [ S1 // P1 ] End
             | While m [[ qv_m ]] Do P0 End =>
-                If m [[ qv_m ]] Then [ S1 // P0 ;; While m [[qv_m]] Do P0 End ]
+                If m [[ qv_m ]] Then [ S1 // P0 ; While m [[qv_m]] Do P0 End ]
                                 Else [ S1 // Skip] End
-            | _ => S2 ;; [ S1 // Skip ]
+            | _ => S2 ; [ S1 // Skip ]
             end 
         (** Note that here we give a different interpretation of 
             nested parallel composition *)
-        | Some Q => seq_Head S2 ;; [ S1 // Q ]
+        | Some Q => seq_Head S2 ; [ S1 // Q ]
     end.
 
 (* ############################################################ *)
@@ -175,7 +175,7 @@ Inductive opSem_trans qs : cfg qs -> cfg qs -> Prop :=
 
 | while_step_Y qv_m m S0 rho:
     <{ While m [[qv_m]] Do S0 End, rho }>
-        -=> <{ S0 ;; While m [[qv_m]] Do S0 End, Mapply m true rho }>
+        -=> <{ S0 ; While m [[qv_m]] Do S0 End, Mapply m true rho }>
 
 | while_step_N qv_m m S0 rho:
     <{ While m [[qv_m]] Do S0 End, rho }>
@@ -183,11 +183,11 @@ Inductive opSem_trans qs : cfg qs -> cfg qs -> Prop :=
 
 | seq_step_p S0 St S1 rho0 rho1:
     <{ S0, rho0 }> -=> <{ St, rho1 }>
-    -> <{ S0 ;; S1, rho0 }> -=> <{ St ;; S1, rho1 }>
+    -> <{ S0 ; S1, rho0 }> -=> <{ St ; S1, rho1 }>
 
 | seq_step_t S0 S1 rho0 rho1:
     <{ S0, rho0 }> -=> <{ ↓, rho1 }>
-        -> <{ S0 ;; S1, rho0 }> -=> <{ S1, rho1 }>
+        -> <{ S0 ; S1, rho0 }> -=> <{ S1, rho1 }>
 
 | atom_step S0 rho0 rho1 :
     <{ S0, rho0 }> -=>* <{ ↓, rho1 }>
@@ -251,10 +251,10 @@ Fixpoint deSemN_point {qs : QvarScope} (P : option (prog qs)) (n : nat)
                 + (⦗ P1, n' ⦘ ( Mapply m false rho ))
 
             | While m [[ qv_m ]] Do P0 End  =>
-                ⦗ P0;; While m [[ qv_m ]] Do P0 End, n' ⦘ (Mapply m true rho)
+                ⦗ P0; While m [[ qv_m ]] Do P0 End, n' ⦘ (Mapply m true rho)
                 + {{ Mapply m false rho }}
 
-            | S1 ;; S2 => 
+            | S1 ; S2 => 
                 ⋃ { ⦗ S2, n' ⦘ (rho') , rho' | rho' ∈ ⦗ S1, n' ⦘ (rho) }
 
             | S1 [ p ⊕ ] S2 =>
@@ -356,14 +356,14 @@ Proof. by []. Qed.
 Lemma deSemN_while_point qv_m m S0:
 
             ⦗ While m [[ qv_m ]] Do S0 End, n.+1 ⦘ (rho) = 
-                (⦗ S0 ;; While m [[ qv_m ]] Do S0 End, n ⦘ ( Mapply m true rho ))
+                (⦗ S0 ; While m [[ qv_m ]] Do S0 End, n ⦘ ( Mapply m true rho ))
                 + {{ Mapply m false rho }}.
 
 Proof. by []. Qed.
 
 Lemma deSemN_seq_point S1 S2:
 
-    ⦗ S1 ;; S2, n.+1 ⦘ (rho) = 
+    ⦗ S1 ; S2, n.+1 ⦘ (rho) = 
         ⋃ { ⦗ S2, n ⦘ (rho') , rho' | rho' ∈ ⦗ S1, n ⦘ (rho) }.
 
 Proof. by []. Qed.
@@ -371,7 +371,7 @@ Proof. by []. Qed.
 
 Lemma deSemN_seq_point_fun (S1 S2 : prog qs):
 
-    ⦗ S1 ;; S2, n.+1 ⦘ = 
+    ⦗ S1 ; S2, n.+1 ⦘ = 
         fun rho => ⋃ { ⦗ S2, n ⦘ (rho') , rho' | rho' ∈ ⦗ S1, n ⦘ (rho) }.
 
 Proof. by []. Qed.
@@ -381,7 +381,7 @@ Lemma deSemN_while {qs : QvarScope} qv_m m S0:
         forall (rho_s : 𝒫(𝒟( qs )⁻)) n, 
         
             ⟦ While m [[ qv_m ]] Do S0 End, n.+1 ⟧(rho_s)
-            = ⟦ S0;; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
+            = ⟦ S0; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
                 + (MapplyS m false rho_s).
 
 Proof. by []. Qed.
@@ -518,7 +518,7 @@ Abort.
 Lemma deSemN_while qv_m m S0 n:
 
             ⟦ While m [[ qv_m ]] Do S0 End, n.+1 ⟧ (rho_s) 
-            = ( ⟦ S0 ;; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
+            = ( ⟦ S0 ; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
             + MapplyS m false rho_s )%QTS.
 
 Proof.
@@ -527,7 +527,7 @@ Abort.
 
 Lemma deSemN_seq S0 S1 n:
 
-            ⟦ S0 ;; S1, n.+1 ⟧ (rho_s) = ⟦ S1 , n ⟧ (⟦ S0, n ⟧ (rho_s)).
+            ⟦ S0 ; S1, n.+1 ⟧ (rho_s) = ⟦ S1 , n ⟧ (⟦ S0, n ⟧ (rho_s)).
 
 Proof.
     rewrite /deSemN /f_map.
@@ -626,7 +626,7 @@ Lemma deSemN_while_fun (qv_m : qs) m S0 n:
 
             ⟦ While m [[ qv_m ]] Do S0 End, n.+1 ⟧
             = fun rho_s => 
-                ( ⟦ S0 ;; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
+                ( ⟦ S0 ; While m [[ qv_m ]] Do S0 End, n ⟧ (MapplyS m true rho_s)
                 + MapplyS m false rho_s )%QTS.
 
 Proof.
@@ -634,7 +634,7 @@ Abort.
 
 Lemma deSemN_seq_fun (S0 S1 : prog qs) n:
 
-            ⟦ S0 ;; S1, n.+1 ⟧ = ⟦ S1 , n ⟧ ◦ ⟦ S0, n ⟧.
+            ⟦ S0 ; S1, n.+1 ⟧ = ⟦ S1 , n ⟧ ◦ ⟦ S0, n ⟧.
 
 Proof.
     apply functional_extensionality => x.
@@ -957,7 +957,7 @@ Abort.
 Lemma DeSem_while {qs : QvarScope} qv_m m S0 (rho_s : 𝒫(𝒟( qs )⁻)):
     rho_s <> ∅ ->
     ⟦ While m [[qv_m]] Do S0 End ⟧ (rho_s) 
-        = ⟦ S0 ;; While m [[qv_m]] Do S0 End ⟧ (MapplyS m true rho_s) 
+        = ⟦ S0 ; While m [[qv_m]] Do S0 End ⟧ (MapplyS m true rho_s) 
             + MapplyS m false rho_s.
 Proof.
     (*
@@ -1130,7 +1130,7 @@ Qed.
 
 
 Lemma DeSem_seq {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
-    ⟦ S1 ;; S2 ⟧ (rho_s) =  ⟦ S2 ⟧ ( ⟦ S1 ⟧ (rho_s) ).
+    ⟦ S1 ; S2 ⟧ (rho_s) =  ⟦ S2 ⟧ ( ⟦ S1 ⟧ (rho_s) ).
 Proof.
     apply PDenSetOrder_asymm.
 
@@ -1149,8 +1149,8 @@ Proof.
     rewrite [⟦ S1 ⟧(_)]/DeSem. rewrite deSemN_continuous.
     apply chain_limit_lub => i.
     rewrite /deSemN_chain /deSemN_chain_obj.
-    (* using [max i n] steps in [S1 ;; S2] *)
-    move : (DeSem_ub (max i n).+1 (S1;;S2) rho_s).
+    (* using [max i n] steps in [S1 ; S2] *)
+    move : (DeSem_ub (max i n).+1 (S1;S2) rho_s).
     case E : (i <= n)%nat. 
     { move /leP : E => E. rewrite (max_r _ _ E) => H.
     transitivity (⟦ S2, n ⟧ (⟦ S1, n ⟧(rho_s))).
