@@ -30,8 +30,7 @@ Reserved Notation " A '∪' B " (at level 43).
 Reserved Notation " A '∩' B " (at level 42).
 Reserved Notation " '∁' A" (at level 39). 
 
-Reserved Notation "'⋃' A" (at level 45).
-Reserved Notation "'⋂' A" (at level 44).
+Reserved Notation "'⋃'".
 Reserved Notation " f [@] " (at level 30, right associativity).
 Reserved Notation " f [@] A" (at level 30, right associativity, only printing).
 Reserved Notation " A [*] f [*] B " (at level 30).
@@ -267,14 +266,13 @@ Qed.
 
 Definition big_union (T : Type) (A : 𝒫(𝒫(T))) : 𝒫(T) :=
     { x | exists X, X ∈ A /\ x ∈ X }.
-Notation "'⋃' A" := (big_union A) : NSet_scope.
-Notation "⋃" := big_union (only printing) : NSet_scope.
+(** The existence of two notations allows the writing of [⋃ ⋃ A] to be interpreted as [⋃ (⋃ A)]*)
+Notation "⋃" := big_union : NSet_scope.
 
 
 Definition big_itsct (T : Type) (A : 𝒫(𝒫(T))) : 𝒫(T) :=
     { x | forall X, X ∈ A -> x ∈ X }.
-Notation "'⋂' A" := (big_itsct A) : NSet_scope.
-Notation "⋂" := big_itsct (only printing) : NSet_scope.
+Notation "⋂" := big_itsct : NSet_scope.
 
 
 Definition f_map (X Y: Type) (f : X -> Y) (A : 𝒫(X)) : 𝒫(Y) :=
@@ -542,7 +540,7 @@ Proof.
 Qed.
 
 Lemma big_union_dist (X : Type) (A : 𝒫(𝒫(𝒫(X)))) :
-    ⋃ { ⋃ a , a | a ∈ A } = ⋃ ⋃ A.
+    ⋃ { ⋃ a , a | a ∈ A } = ⋃ (⋃ A).
 Proof.
     rewrite /big_union. apply /seteqP => x. split.
 
@@ -557,7 +555,7 @@ Qed.
 
 
 Lemma big_union_fun_dist (X Y: Type) (A : 𝒫(X)) (f : X -> 𝒫(𝒫(Y))):
-    ⋃ { ⋃ f a , a | a ∈ A } = ⋃ ⋃ f [@] A.
+    ⋃ { ⋃ (f a) , a | a ∈ A } = ⋃ (⋃ (f [@] A)).
 Proof.
     rewrite -sep_union_dist.
     by rewrite big_union_dist.
@@ -566,7 +564,7 @@ Qed.
 
 Lemma big_union_sep_dist (X Y: Type) (A : 𝒫(𝒫(X))) (f : X -> 𝒫(Y)) :
 
-    ⋃ { ⋃ f [@] a , a | a ∈ A } = ⋃ ⋃ { f [@] a , a | a ∈ A }.
+    ⋃ { ⋃ (f [@] a) , a | a ∈ A } = ⋃ (⋃ { f [@] a , a | a ∈ A }).
 
 Proof. by rewrite big_union_fun_dist. Qed.
 

@@ -246,9 +246,10 @@ Axiom PDenSetOrder_M :
 (* chain and CPO conclusions *)
 
 (** Define the increasing set and least upper bound *)
-Record chain (H : HilbertSpace) := mk_chain {
-    chain_obj : nat -> 𝒫(𝒟( H )⁻);
-    chain_prop : forall n, chain_obj n ⊑♯ chain_obj n.+1;
+Record chain (T : Type) := mk_chain {
+    chain_obj : nat -> 𝒫(T);
+    (** Here for simplicity we take the inverse direction *)
+    chain_prop : forall n, chain_obj n ⊇ chain_obj n.+1;
 }.
 Notation " ch _[ n ] " := (chain_obj ch n) (at level 40) : QTheorySet_scope.
 
@@ -262,7 +263,7 @@ Lemma singleton_chain_prop {H : HilbertSpace} (rho_s : PDensitySet H)
 Proof. rewrite /singleton_chain_obj => n => //=. Qed.
 Arguments singleton_chain_prop {H} rho_s.
 
-Definition singleton_chain {H : HilbertSpace} rho_s : chain H :=
+Definition singleton_chain {H : HilbertSpace} rho_s : chain 𝒟( H )⁻ :=
     mk_chain (singleton_chain_prop rho_s).
 
 Coercion singleton_chain : PDensitySet >-> chain.
@@ -275,15 +276,15 @@ Proof. split. by move => -> //.
     move : p1 p2. rewrite Heq => p1 p2. by rewrite (proof_irrelevance _ p1 p2).
 Qed.
 
-Axiom chain_limit : forall H (ch : chain H), 𝒫(𝒟( H )⁻).
+Axiom chain_limit : forall T (ch : chain T), 𝒫(T).
 Notation " 'lim→∞' ( ch ) " := (@chain_limit _ ch) 
     (at level 200) : QTheorySet_scope.
 
-Axiom chain_limit_ub : forall H (ch : chain H) n,
-    ch _[n] ⊑♯ lim→∞ (ch).
+Axiom chain_limit_ub : forall T (ch : chain T) n,
+    ch _[n] ⊇ lim→∞ (ch).
 
-Axiom chain_limit_lub : forall H (ch : chain H) rho_ub,
-    (forall n, ch _[n] ⊑♯ rho_ub) -> lim→∞ (ch) ⊑♯ rho_ub.
+Axiom chain_limit_lub : forall T (ch : chain T) rho_ub,
+    (forall n, ch _[n] ⊇ rho_ub) -> lim→∞ (ch) ⊇ rho_ub.
 
 Lemma singleton_chain_limit (H : HilbertSpace) (rho_s : PDensitySet H) :
     lim→∞ (rho_s) = rho_s.
@@ -300,7 +301,7 @@ Qed.
 Definition chain_add_obj (H : HilbertSpace) 
     (ch_obj1 ch_obj2 : nat -> PDensitySet H) :=
     fun n => ch_obj1 n + ch_obj2 n.
-Lemma chain_add_prop (H : HilbertSpace) (ch1 ch2 : chain H) :
+Lemma chain_add_prop (H : HilbertSpace) (ch1 ch2 : chain 𝒟( H )⁻) :
     let ch := chain_add_obj (chain_obj ch1) (chain_obj ch2) in 
         forall n, ch n ⊑♯ ch n.+1.
 Proof. move => ch n. rewrite /ch /chain_add_obj. apply PDenSetOrder_add_split.
@@ -308,11 +309,11 @@ Proof. move => ch n. rewrite /ch /chain_add_obj. apply PDenSetOrder_add_split.
 Qed.
 Arguments chain_add_prop {H} ch1 ch2.
 
-Definition chain_add H (ch1 ch2 : chain H) : chain H :=
+Definition chain_add H (ch1 ch2 : chain 𝒟( H )⁻) : chain 𝒟( H )⁻ :=
     mk_chain (chain_add_prop ch1 ch2).
 
 (** We still need the assumption that addition is continuous *)
-Axiom add_continuous : forall H (ch1 ch2 : chain H),
+Axiom add_continuous : forall H (ch1 ch2 : chain 𝒟( H )⁻),
     (lim→∞(ch1)) + (lim→∞(ch2)) = lim→∞ (chain_add ch1 ch2).
 
 
@@ -320,7 +321,7 @@ Axiom add_continuous : forall H (ch1 ch2 : chain H),
 Definition chain_cvcomb_obj (H : HilbertSpace) p
     (ch_obj1 ch_obj2 : nat -> PDensitySet H) :=
     fun n => (ch_obj1 n) [p⊕] (ch_obj2 n).
-Lemma chain_cvcomb_prop (H : HilbertSpace) p (ch1 ch2 : chain H) :
+Lemma chain_cvcomb_prop (H : HilbertSpace) p (ch1 ch2 : chain 𝒟( H )⁻) :
     let ch := chain_cvcomb_obj p (chain_obj ch1) (chain_obj ch2) in 
         forall n, ch n ⊑♯ ch n.+1.
 Proof. move => ch n. rewrite /ch /chain_cvcomb_obj. 
@@ -329,18 +330,18 @@ Proof. move => ch n. rewrite /ch /chain_cvcomb_obj.
 Qed.
 Arguments chain_cvcomb_prop {H} p ch1 ch2.
 
-Definition chain_cvcomb H p (ch1 ch2 : chain H) : chain H :=
+Definition chain_cvcomb H p (ch1 ch2 : chain 𝒟( H )⁻) : chain 𝒟( H )⁻ :=
     mk_chain (chain_cvcomb_prop p ch1 ch2).
 
 (** We still need the assumption that addition is continuous *)
-Axiom cvcomb_continuous : forall H p (ch1 ch2 : chain H),
+Axiom cvcomb_continuous : forall H p (ch1 ch2 : chain 𝒟( H )⁻),
     (lim→∞(ch1)) [p⊕] (lim→∞(ch2)) = lim→∞ (chain_cvcomb p ch1 ch2).
 
 
 (* chain_union *)
-Definition chain_union_obj (H : HilbertSpace) (ch1 ch2 : chain H) :=
+Definition chain_union_obj (H : HilbertSpace) (ch1 ch2 : chain 𝒟( H )⁻) :=
     fun n => (ch1 _[n]) ∪ (ch2 _[n]).
-Lemma chain_union_prop (H : HilbertSpace) (ch1 ch2 : chain H) :
+Lemma chain_union_prop (H : HilbertSpace) (ch1 ch2 : chain 𝒟( H )⁻) :
     forall n, chain_union_obj ch1 ch2 n ⊑♯ chain_union_obj ch1 ch2 n.+1.
 Proof. move => n. rewrite /chain_union_obj. apply PDenSetOrder_union_split.
     by apply ch1. by apply ch2.
@@ -348,33 +349,79 @@ Qed.
 Arguments chain_union_prop {H} ch1 ch2.
 
 (** union chain is needed for proving parallel statement *)
-Definition chain_union H (ch1 ch2 : chain H) : chain H :=
+Definition chain_union H (ch1 ch2 : chain 𝒟( H )⁻) : chain 𝒟( H )⁻ :=
     mk_chain (chain_union_prop ch1 ch2).
 
 (** We still need the assumption that union is continuous *)
-Axiom union_continuous : forall H (ch1 ch2 : chain H),
+Axiom union_continuous : forall H (ch1 ch2 : chain 𝒟( H )⁻),
     (lim→∞(ch1)) ∪ (lim→∞(ch2)) = lim→∞ (chain_union ch1 ch2).
 
 
 (* The chain of InitSttS ch *)
-Definition InitStt_chain_obj {qs : QvarScope} (qv : qs) (ch : chain qs) :=
+Definition InitStt_chain_obj {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻) :=
     fun i => InitSttS qv (ch _[i]).
-Lemma InitStt_chain_prop {qs : QvarScope} (qv : qs) (ch : chain qs)
+Lemma InitStt_chain_prop {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻)
     : forall i, InitStt_chain_obj qv ch i ⊑♯ InitStt_chain_obj qv ch i.+1.
 Proof.
     rewrite /InitStt_chain_obj => i. apply PDenSetOrder_Init. by apply ch.
 Qed.
 Arguments InitStt_chain_prop {qs} qv ch.
 
-Definition InitStt_chain {qs : QvarScope} (qv : qs) (ch : chain qs) :=
+Definition InitStt_chain {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻) :=
     mk_chain (InitStt_chain_prop qv ch).
 
 (** We still need the assumption that addition is continuous *)
-Axiom init_continuous : forall {qs : QvarScope} (qv : qs) (ch : chain qs),
+Axiom init_continuous : forall {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻),
     InitSttS qv (lim→∞ (ch)) = lim→∞ (InitStt_chain qv ch).
 
 (* The chain of UapplyS U ch *)
 Definition Uapply_chain_obj 
+    {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻) :=
+    fun i => UapplyS U (ch _[i]).
+Lemma Uapply_chain_prop 
+    {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻)
+    : forall i, Uapply_chain_obj U ch i ⊑♯ Uapply_chain_obj U ch i.+1.
+Proof.
+    rewrite /Uapply_chain_obj => i. apply PDenSetOrder_U. by apply ch.
+Qed.
+Arguments Uapply_chain_prop {qs} {qv} U ch.
+
+Definition Uapply_chain 
+    {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻) :=
+    mk_chain (Uapply_chain_prop U ch).
+
+(** We still need the assumption that addition is continuous *)
+Axiom unitary_continuous : 
+    forall {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻),
+    UapplyS U (lim→∞ (ch)) = lim→∞ (Uapply_chain U ch).
+
+
+(* The chain of MapplyS M ch result *)
+Definition Mapply_chain_obj 
+    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain 𝒟(qs)⁻) :=
+    fun i => MapplyS M r (ch _[i]).
+Lemma Mapply_chain_prop 
+    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (ch : chain 𝒟(qs)⁻) (r : bool)
+    : forall i, Mapply_chain_obj M r ch i ⊑♯ Mapply_chain_obj M r ch i.+1.
+Proof.
+    rewrite /Mapply_chain_obj => i. apply PDenSetOrder_M. by apply ch.
+Qed.
+Arguments Mapply_chain_prop {qs} {qv} M ch r.
+
+Definition Mapply_chain 
+    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain 𝒟(qs)⁻) :=
+    mk_chain (Mapply_chain_prop M ch r).
+
+(** We still need the assumption that addition is continuous *)
+Axiom mea_continuous : forall {qs : QvarScope} 
+    (qv : qs) (M : MeaOpt qv) (ch : chain 𝒟(qs)⁻) (r : bool),
+    MapplyS M r (lim→∞ (ch)) = lim→∞ (Mapply_chain M r ch).
+
+
+(*
+
+(* The chain of UapplyS U ch *)
+Definition bigU_chain_obj 
     {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain qs) :=
     fun i => UapplyS U (ch _[i]).
 Lemma Uapply_chain_prop 
@@ -393,27 +440,5 @@ Definition Uapply_chain
 Axiom unitary_continuous : 
     forall {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain qs),
     UapplyS U (lim→∞ (ch)) = lim→∞ (Uapply_chain U ch).
-
-
-(* The chain of MapplyS M ch result *)
-Definition Mapply_chain_obj 
-    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain qs) :=
-    fun i => MapplyS M r (ch _[i]).
-Lemma Mapply_chain_prop 
-    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (ch : chain qs) (r : bool)
-    : forall i, Mapply_chain_obj M r ch i ⊑♯ Mapply_chain_obj M r ch i.+1.
-Proof.
-    rewrite /Mapply_chain_obj => i. apply PDenSetOrder_M. by apply ch.
-Qed.
-Arguments Mapply_chain_prop {qs} {qv} M ch r.
-
-Definition Mapply_chain 
-    {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain qs) :=
-    mk_chain (Mapply_chain_prop M ch r).
-
-(** We still need the assumption that addition is continuous *)
-Axiom mea_continuous : forall {qs : QvarScope} 
-    (qv : qs) (M : MeaOpt qv) (ch : chain qs) (r : bool),
-    MapplyS M r (lim→∞ (ch)) = lim→∞ (Mapply_chain M r ch).
-
+*)
 End QTheorySetType.
