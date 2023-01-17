@@ -117,7 +117,7 @@ Definition union_set : forall {H : HilbertSpace},
         
 Definition add_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
-        fun _ a b => ⋃ { add_PDenOpt x [@] b, x | x ∈ a }.
+        fun _ a b => ⋃ { add_PDenOpt x [<] b, x | x ∈ a }.
 
 (* Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope. *)
 Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
@@ -138,18 +138,18 @@ Axiom add_set_uni_r : forall {H : HilbertSpace} (s : 𝒫(𝒟( H )⁻)),
 *)
 
 Definition InitSttS {qs : QvarScope} qv rho_s : 𝒫(𝒟( qs )⁻) :=
-    (InitStt qv) [@] rho_s.
+    (InitStt qv) [<] rho_s.
 
 (* Notation "'𝒮ℯ𝓉⁰_'" := InitStt. *)
 
 Definition UapplyS {qs : QvarScope} (qv_U : qs) (U : UnitaryOpt qv_U) rho_s :
      𝒫(𝒟( qs )⁻) :=
-    (Uapply U) [@] rho_s.
+    (Uapply U) [<] rho_s.
 (* Notation "'𝒰_'" := Uapply. *)
 
 Definition MapplyS (qs : QvarScope) (qv_M : qs) (m : MeaOpt qv_M) (r : bool)
     rho_s : 𝒫(𝒟( qs )⁻) :=
-    (Mapply m r) [@] rho_s.
+    (Mapply m r) [<] rho_s.
 (* Notation "'𝒫_'" := Mapply. *)
 
 Parameter scalar_convex_combS : forall (H : HilbertSpace), 
@@ -448,13 +448,13 @@ Axiom bigU_continuous :
     ⋃ (lim→∞ (ch)) = lim→∞ (bigU_chain ch).
 
 
-(* The chain of f_map *)
+(* The chain of mapR *)
 Definition fmap_chain_obj (T V: Type) (f : T -> V) (ch : chain T):=
-    fun i => f [@] (ch _[i]).
+    fun i => f [<] (ch _[i]).
 Lemma fmap_chain_prop (T V: Type) (f : T -> V) (ch : chain T)
     : forall i, fmap_chain_obj f ch i ⊇ fmap_chain_obj f ch i.+1.
 Proof.
-    move => i. apply f_map_mor_sub => //. by apply ch.
+    move => i. apply mapR_mor_sub => //. by apply ch.
 Qed.
 Arguments fmap_chain_prop {T V} f ch.
 
@@ -464,7 +464,7 @@ Definition fmap_chain (T V: Type) (f : T -> V) (ch : chain T) :=
 (** We still need the assumption that big_union is continuous *)
 Axiom fmap_continuous : 
     forall (T V: Type) (f : T -> V) (ch : chain T),
-        f [@] (lim→∞ (ch)) = lim→∞ (fmap_chain f ch).
+        f [<] (lim→∞ (ch)) = lim→∞ (fmap_chain f ch).
     
 
 End QTheorySetType.

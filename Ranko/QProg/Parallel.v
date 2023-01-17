@@ -100,6 +100,7 @@ Fixpoint seq_Tail {qs : QvarScope} (S0 : prog qs) : option (prog qs) :=
     | _ => None
     end.
 
+(** Refine the step statement *)
 (** make a choice for the parallel component program *)
 Definition Step {qs : QvarScope} (S1 S2: prog qs) 
               (b : bool) : prog qs :=
@@ -283,7 +284,7 @@ Notation " ⦗ ↓ ⦘ " := (deSemN_point None _ ) :QPP_scope.
 
 
 Definition deSemN {qs : QvarScope} (P : prog qs) (n : nat) :=
-    fun rho_s => ⋃ (⦗ P, n ⦘ [@] rho_s).
+    fun rho_s => ⋃ (⦗ P, n ⦘ [<] rho_s).
 
 
 Notation " ⟦ P , n ⟧ " := (deSemN P n)
@@ -299,7 +300,7 @@ Lemma deSem0_nem (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)) :
     rho_s <> ∅ -> ⟦ P , 0 ⟧ (rho_s) = 𝕌.
 
 Proof.
-    rewrite /deSemN /deSemN_point /f_map //=. by apply big_union_sgl_nem.
+    rewrite /deSemN /deSemN_point /mapR //=. by apply bigU_sgl_nem.
 Qed.
 
 Lemma deSem0_em (qs : QvarScope) (P : prog qs) n:
@@ -437,7 +438,7 @@ Lemma deSemN_skip n:
 Proof. 
     rewrite /deSemN. case (em_classic rho_s).
     move => ->. apply deSem0_em.
-    rewrite /f_map => H //=. by apply big_union_rei.
+    rewrite /mapR => H //=. by apply bigU_rei.
 Qed.
 
 
@@ -475,13 +476,13 @@ Lemma deSemN_abort n:
 
 Proof. 
     rewrite /deSemN.
-    rewrite /f_map => //=.
+    rewrite /mapR => //=.
     case (em_classic rho_s).
 
-    move => H. rewrite big_union_sgl_em //.
+    move => H. rewrite bigU_sgl_em //.
     by rewrite rho_s_em_em.
 
-    move => H. rewrite big_union_sgl_nem //.
+    move => H. rewrite bigU_sgl_nem //.
     by rewrite rho_s_nem_U.
 Qed.
 
@@ -490,8 +491,8 @@ Lemma deSemN_init qv n:
             ⟦ qv <-0 , n.+1 ⟧(rho_s) = InitSttS qv rho_s.
 
 Proof. 
-    rewrite /InitSttS /deSemN /f_map //=. 
-    by apply big_union_fun_rei.
+    rewrite /InitSttS /deSemN /mapR //=. 
+    by apply bigU_fun_rei.
 Qed.
 
 Lemma deSemN_unitary qv U n:
@@ -499,8 +500,8 @@ Lemma deSemN_unitary qv U n:
             ⟦ qv *= U , n.+1 ⟧(rho_s) = UapplyS U rho_s.
 
 Proof. 
-    rewrite /UapplyS /deSemN /f_map //=. 
-    by apply big_union_fun_rei.
+    rewrite /UapplyS /deSemN /mapR //=. 
+    by apply bigU_fun_rei.
 Qed.
 
 Lemma deSemN_if qv_m m S0 S1 n:
@@ -530,14 +531,14 @@ Lemma deSemN_seq S0 S1 n:
             ⟦ S0 ; S1, n.+1 ⟧ (rho_s) = ⟦ S1 , n ⟧ (⟦ S0, n ⟧ (rho_s)).
 
 Proof.
-    rewrite /deSemN /f_map.
-    rewrite deSemN_seq_point_fun /f_map.
+    rewrite /deSemN.
+    rewrite deSemN_seq_point_fun /mapR.
 
-    rewrite sep_big_union_dist /f_map.
-    rewrite -sep_union_dist /f_map.
+    rewrite sep_big_union_dist /mapR.
+    rewrite -sep_union_dist /mapR.
 
     rewrite big_union_dist.
-    by rewrite big_union_sep_sep_dist.
+    by rewrite sep_union_dist.
 Qed.
 
 Lemma deSemN_prob p S1 S2 n:
@@ -551,8 +552,8 @@ Abort.
 Lemma deSemN_nondet S1 S2 n:
         ⟦ S1 □ S2, n.+1 ⟧(rho_s) = ⟦ S1, n ⟧(rho_s) ∪ ⟦ S2, n ⟧(rho_s).
 Proof.
-    rewrite /deSemN /f_map => //=.
-    by rewrite union_big_union_dist.
+    rewrite /deSemN /mapR => //=.
+    by rewrite union_bigU_mapR_dist.
 Qed.
 
 Lemma deSemN_atom P n:
@@ -564,8 +565,8 @@ Lemma deSemN_parallel S1 S2 n:
         ⟦ [ S1 // S2], n.+1 ⟧(rho_s) 
         =  (⟦ Step S1 S2 true, n ⟧(rho_s)) ∪ (⟦ Step S1 S2 false, n ⟧(rho_s)).
 Proof.
-    rewrite /deSemN /f_map.
-    by rewrite union_big_union_dist.
+    rewrite /deSemN /mapR.
+    by rewrite union_bigU_mapR_dist.
 Qed.
 
 End DeSemStep.
@@ -680,7 +681,7 @@ Lemma deSem0 (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)) :
 Proof. 
     case (em_classic rho_s).
     move => H. rewrite [in LHS]H. rewrite deSem0_em rho_s_em_em //. 
-    rewrite //= /f_map //= => H. rewrite rho_s_nem_U //.
+    rewrite //= /mapR //= => H. rewrite rho_s_nem_U //.
     by rewrite deSem0_nem //.
 Qed.
 
@@ -741,7 +742,7 @@ Proof.
     by apply IHn.
     (* sequence *)
     move => S1 S2. rewrite !deSemN_seq_point. 
-    apply big_union_sep_mor_sub.
+    apply bigU_mapR_mor_sub.
     by apply IHn. 
     move => t. by apply IHn.
     (* probability *)
@@ -769,7 +770,7 @@ Lemma deSemN_monotonic_strong {qs : QvarScope}:
         (i <= n)%nat -> r1 ⊑♯ r2 -> ⟦ S0, i ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
 Proof. 
     rewrite /deSemN => S0 r1 r2 n i Hi Hr1r2.
-    apply big_union_sep_mor_sub => // t.
+    apply bigU_mapR_mor_sub => // t.
     by apply deSemN_point_monotonic_strong.
 Qed.
 
@@ -898,7 +899,7 @@ Proof.
     apply DeSem_lub. case. 
 
         case (em_classic rho_s).
-            rewrite /InitSttS => ->. by rewrite f_map_em.
+            rewrite /InitSttS => ->. by rewrite mapR_em.
             move => H. by rewrite deSem0_nem //.
         move => H. by rewrite deSemN_init.
         
@@ -913,7 +914,7 @@ Proof.
     apply DeSem_lub. case.
 
     case (em_classic rho_s).
-        rewrite /UapplyS => ->. by rewrite f_map_em.
+        rewrite /UapplyS => ->. by rewrite mapR_em.
         move => H. by rewrite deSem0_nem //.
     move => H. by rewrite deSemN_unitary.
 
@@ -1073,7 +1074,7 @@ Qed.
 
 Theorem deSemN_point_continuous 
     (qs : QvarScope) (S : prog qs) (ch : chain 𝒟(qs)⁻) n:
-    ⦗ S, n ⦘ [@] (lim→∞ (ch)) = lim→∞ (deSemN_point_map_chain S ch n).
+    ⦗ S, n ⦘ [<] (lim→∞ (ch)) = lim→∞ (deSemN_point_map_chain S ch n).
 Proof. 
     apply fmap_continuous.
 Qed.
@@ -1082,22 +1083,22 @@ Qed.
     apply subset_asymm.
     apply chain_limit_lub => i.
     rewrite /deSemN_point_map_chain /deSemN_point_map_chain_obj {1}/chain_obj.
-    apply f_map_mor_sub => //. apply chain_limit_ub.
+    apply mapR_mor_sub => //. apply chain_limit_ub.
     *)
 
     (* case on [(lim→∞ (ch)) = ∅]. process the empty set first *)
     case (em_classic (lim→∞ (ch))). 
-    move => H. rewrite H lim_ch_em_deSemN_point_em //. by rewrite f_map_em.
+    move => H. rewrite H lim_ch_em_deSemN_point_em //. by rewrite mapR_em.
     
     move => H.
     elim: n.
 
     (* induction basis *)
-    rewrite [in LHS]/deSemN_point /f_map. rewrite f_map_rei //.
+    rewrite [in LHS]/deSemN_point /mapR. rewrite mapR_rei //.
     symmetry. apply repeat_chain_limit => i.
     rewrite /deSemN_point_map_chain /deSemN_point_map_chain_obj.
-    rewrite /deSemN_point /f_map {1}/chain_obj.
-    rewrite f_map_rei //.
+    rewrite /deSemN_point /mapR {1}/chain_obj.
+    rewrite mapR_rei //.
     by apply lim_ch_nem_chi_nem.
 
     (* induction step *)
@@ -1111,7 +1112,7 @@ Qed.
     case S.
 
     (* skip *)
-    rewrite /f_map /deSemN_point.
+    rewrite /mapR /deSemN_point.
 
 Admitted.
 *)

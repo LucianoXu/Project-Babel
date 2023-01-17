@@ -2,6 +2,9 @@ From mathcomp Require Import all_ssreflect all_algebra.
 
 (* Local Open Scope nat_scope. *)
 (* Local Open Scope bool_scope. *)
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 Section sec1.
 
@@ -71,8 +74,11 @@ Check iter1.
 End iterators.
 Check iter1.
 
-Compute iter1 _ 3 predn 5.
-Compute foldr1 _ _ addn 0 [:: 1; 2].
+Fail Compute iter1 _ 3 predn 5.
+Fail Compute foldr1 _ _ addn 0 [:: 1; 2].
+
+Compute iter1 3 predn 5.
+Compute foldr1 addn 0 [:: 1; 2].
 
 Section iterators.
 (* context can be implicit *)
@@ -163,7 +169,7 @@ Qed.
 (*      that is, tactic => ...  === tactic; move=> ... *)
 (*      this is backward *)
 
-Lemma example3 : forall m n : nat, m + n = n + m.
+Goal forall m n : nat, m + n = n + m.
 Proof.
 move=>m.
 Restart.
@@ -171,7 +177,7 @@ move=>m n.
 by rewrite addnC.
 Qed.
 
-Lemma example3' (m n p: nat) (H : m = n) : m = p -> m + p = n + n.
+Lemma example3 (m n p: nat) (H : m = n) : m = p -> m + p = n + n.
 Proof.
 rewrite H=>E.
 Restart.
@@ -181,7 +187,7 @@ Qed.
 (* -> : after move=> mode, rewrite and clear the hypothesis *)
 (* <- : after move=> mode, rewrite <- and clear the hypothesis *)
 
-Lemma example4 : forall m n : nat, m = n -> m + n = m + m.
+Lemma example4 : forall (m n : nat), m = n -> m + n = m + m.
 Proof.
 move=>m n.
 move=>H; rewrite H; clear H.
@@ -273,18 +279,34 @@ Restart.
 by move=>/H/eqP->.
 Qed.
 
+(* => + : skip and move=> the next term *)
+Goal (forall y, 1 < y -> y < 2 -> exists x, x > 0).
+move=>y + ylt2.
+move=>ygt1.
+exists y.
+apply: leq_trans _ ygt1.
+by [].
+Qed.
+
 (* rewrite H ---- rewrite -> H *)
+Goal forall x z, x = z -> x + x + x = z.
+move=>x z H.
+rewrite {-3}H.
+Abort.
+
 (* rewrite -H ---- rewrite <- H *)
 (* rewrite !H ---- rewrite !H : repeat the rewrite (at least one time) *)
 (* rewrite ?H ---- rewrite ?H : repeat the rewrite (zero or more times) *)
 (* rewrite n ?H / rewrite n !H ---- repear the rewrite for at most n times *)
 (* rewrite H1 H2 ---- rewrite H1; H2 : sequentially rewrite the hyps *)
 (* rewrite {}H --- rewrite H and clear H from hypothesis *)
+(* rewrite {1 3}H. *)
 (* pattern *)
 (* rewrite [pattern]H : rewrite H in the subterm that matchs pattern *)
 (* LHS : Left Hand Side   RHS : Right Hand Side *)
 (* _ + _ , x * _ : pattern without meta-variable *)
 (* X in X == _ : pattern match goals and return the first X as the subterm *)
+(* LHS === X in X = _ ; RHS === X in _ = X *)
 (* in LHS , in RHS , in X in _ + X    :  rewrite in the subterm *)
 (* rewrite [LHS]H ---- rewrite H for LHS, works when LHS matchs H *)
 (* rewrite [RHS]H ---- rewrite H for RHS, works when RHS matchs H *)
@@ -308,40 +330,48 @@ rewrite 2?H.
 Restart.
 rewrite 2!H.
 Restart.
+move=>{H}.
+Undo.
+clear H.
+Undo.
 rewrite {}H.
 Restart.
 rewrite [LHS]H.
 Restart.
 rewrite [in RHS]H.
 Restart.
-rewrite [_ + (m + p)]H.
+rewrite [_ + (m + p)]H. (* m + n + (m + p) *)
 Restart.
 rewrite [X in _ = X + q]H.
 Restart.
-rewrite [in X in X = _]H.
+rewrite ![in X in X = _]H.
 Restart.
 by rewrite !H.
 Qed.
 
 (* /= ---- simpl *)
-(* //= ---- // /= : auto simpl *)
+(* //= ---- // /= : try (auto simpl) *)
 (* rewrite /xxx ---- unfold xxx *)
 (* rewrite -/xxx ---- fold xxx *)
 (* rewrite {1 2}H ---- rewrite H for the 1 and 2 occurrences *)
 (* rewrite -[x]/(y) ---- replace x with y where x = y is trivial *)
-Lemma example15 : size [:: true] = 1.
+Goal size [:: true] = 1.
 Proof.
 rewrite /=.
 Restart.
 move=>/=.
 Restart.
 rewrite //=.
+Restart.
+by [].
 Qed.
 
 Lemma example16 m n1 n2 :
   (m * n1 <= m * n2) = (m == 0) || (n1 <= n2).
 Proof.
-rewrite [in LHS]/leq.
+(* Set Printing All. *)
+Print leq.
+rewrite [in RHS]/leq.
 Undo.
 rewrite /leq.
 rewrite -/leq.
@@ -353,13 +383,16 @@ rewrite {1}/leq.
 Undo.
 rewrite {1 2}/leq.
 Undo.
-rewrite -{1}[n1]/(0 + n1).
+rewrite -[n1]/(0 + n1). (* n1 = 0 + n1 *)
+Undo.
+rewrite -{1}[_ * n1]/(0 + _ * n1).
 Restart.
 by rewrite /leq -mulnBr muln_eq0.
 Qed.
 
 (* case: x ---- destruct x *)
 (* case E: x ---- destruct x eqn: E *)
+(* case --- injection *)
 (* case: x / E ---- if E is a = x, then replace all x with a *)
 (* case/spec : x ---- destruct x according to the specification spec *)
 
@@ -380,6 +413,9 @@ Proof. by case: a; case: b. Qed.
 
 Lemma negb_and' a b : ~~ (a && b) = ~~ a || ~~ b.
 Proof. by case: a; case: b. Qed.
+
+Goal forall x y, (x, y) = (1, 2) -> True.
+Proof. move=>x y. case=>Hx Hy. apply: I. Qed.
 
 Lemma example10 (m n : nat) (H : m = n) : m + n = m + m.
 Proof.
@@ -412,13 +448,15 @@ Variant eqn0_xor_gt0 n : bool -> bool -> Set :=
   | Eq0NotPos of n = 0 : eqn0_xor_gt0 n true false
   | PosNotEq0 of n > 0 : eqn0_xor_gt0 n false true.
 
+(* Print eqn0_xor_gt0_ind. *)
+
 Lemma posnP n : eqn0_xor_gt0 n (n == 0) (0 < n).
 Proof. by case: n; constructor. Qed.
 
 Lemma example12 n (P : nat -> Prop) : P n.
 Proof.
 case: (posnP n).
-Admitted.
+Abort.
 
 End case_nat.
 
@@ -442,15 +480,20 @@ Qed.
 
 Lemma example13 (u : seq T) (P : seq T -> Prop) : P u.
 Proof.
+(* case: u. *)
 case/seqNP: u.
-Admitted.
+Abort.
 
 End case_seq.
 
+(* elim ---- induction on first bound variable *)
 (* elim: x ---- induction x *)
 (* elim: x y ... ---- move: y ..., induction x *)
 (* elim: x => [...|...] ---- induction x as [...|...] *)
 (* elim/ind: x ---- induction x using ind *)
+
+Goal forall n : nat, n = n.
+Proof. by elim. Qed.
 
 Lemma example13' (m n k : nat) : m + (n + k) = m + n + k.
 Proof.
@@ -460,7 +503,124 @@ elim: m n k.
 Restart.
 elim: m n k=>[|m IH n k].
 Restart.
+elim/nat_ind: m n k=>[|m IH n k].
+Restart.
 by elim: m n k=>[//|m IH n k]; rewrite !addSn IH.
+Qed.
+
+(* pose --- add a defined constant to a proof context. *)
+Goal forall x y : nat, x + y = y + x.
+Proof.
+move=>x y.
+pose t := x + y.
+rewrite -/t.
+rewrite /t.
+Undo.
+pose f x y := x + y.
+Undo.
+pose fix f (x y : nat) {struct x} : nat :=
+  if x is S p then S (f p y) else 0.
+Undo.
+pose f := _ + 1.
+pose f' n := n + 1.
+Undo.
+Undo.
+pose f x := x + _.
+pose f' n x := x + n.
+Undo.
+Undo.
+pose f x y := (x, y).
+Undo.
+pose f := _ + _.
+pose f' x y := x + y.
+Undo.
+Undo.
+exact: addnC.
+Qed.
+
+(* set *)
+Goal forall f (x y : nat), f x = f y -> f y = f x -> 
+  f x + f x + f y = f x + f y + f x.
+Proof.
+Fail set t := _ + _.
+(* set t := _ + _. *) (* error: bound variable *)
+move=>f x y H1 H2.
+set t := f x.
+Undo.
+set t := f _. (* support implicit matching, match the first one *)
+Undo.
+set t := _ x.
+Undo.
+set t := _ + _.
+Undo.
+set t := f 1. (* if it's a constant, similar to pose *)
+Undo.
+set t := {3}(f _). (* first match f _, so f x, then replace the third occurence *)
+Undo.
+set t := {1 3}(f _).
+Undo.
+set t := {-2}(f _).
+Undo.
+set t := {-2 3}(f _).
+Undo.
+set t := {-}(f _). (* Useful if f _ is very long *)
+Undo.
+set t := f x in H1.
+Undo.
+set t := f x in H1 *.
+Undo.
+set t := f x in H1 H2 *.
+Undo.
+ring.
+Qed.
+
+Goal forall x y z, x + y = x + y + z.
+move=>x y z.
+set t := {2}(_ + _). (* why? *)
+Abort.
+
+Goal forall x y z, (x + y) + (z + z) = z + z.
+move=>x y z.
+(* set t := (_ + _). *)
+Fail set t := {2}(_ + _). (* why? *)
+Abort.
+
+Goal (let f x y z := x + y + z in f 1) 2 3 = 6.
+Proof.
+set t := (let g y z := y.+1 + z in g) 2.
+Eval simpl in  (let f x y z := x + y + z in f 1) 2.
+Eval simpl in (let g y z := y.+1 + z in g) 2.
+by [].
+Qed.
+
+(* apply ---- powerful than the standard apply *)
+(* intro top; first [refine top | refine (top _) | refine (top _ _) |...]; clear top. *)
+(* *)
+
+Goal (forall y, 1 < y -> 0 < y).
+move=>y ygt1.
+apply leq_trans with (n := 1).
+Undo.
+Fail apply leq_trans.
+refine (leq_trans _ ygt1).
+Undo.
+apply: leq_trans _ ygt1.
+by [].
+Qed.
+
+Goal (forall y, 1 < y -> y < 3 -> exists x : 'I_3, x > 0).
+Proof.
+move=> y ygt1 ylt3.
+apply: (ex_intro _ (@Ordinal 3 y ylt3)).
+(* proof irrelavant; not only try to search implicit argument, but also proofs that can be closed by trivial *)
+Undo.
+apply: (ex_intro _ (@Ordinal _ y _)).
+by apply: leq_trans _ ygt1.
+Restart.
+move=>*.
+apply: (ex_intro _ (@Ordinal _ 1 _)).
+(* apply: (ex_intro _ (@Ordinal _ 1 H)) H : 1 < 3 which can by proved by trivial *)
+by [].
 Qed.
 
 (* rearrange the order of subgoals *)
@@ -487,7 +647,9 @@ Qed.
 (* suff ... : xxx ---- have ... : xxx *)
 (*     but defer the proof after the current goal *)
 (* have := xxx ---- move: xxx *)
+(* have E : xxx := yyy ---- xxx and yyy are matchable (by simpl), then have E : xxx *)
 (* have tac := xxx ---- move: xxx=>tac *)
+(* have tac : xxx := yyy ---- xxx and yyy are matchable (by simpl), then have tac : xxx *)
 
 Lemma example17 m n k : (n + m) * k = (m + n) * k.
 Proof.
@@ -521,6 +683,21 @@ Undo.
 have [?|/ltnW ?] := leqP m n.
 Restart.
 exact: addnC.
+Qed.
+
+Lemma example19 (a b : bool) (pab : a && b) : b.
+Proof.
+have t : true && (a && b) := pab.
+Undo.
+have: true && (a && b) := pab.
+move=>{pab}.
+move=>/=.
+Print andP.
+move=>/andP.
+move=>[_].
+by [].
+Restart.
+have {pab} /= /andP [] //: true && (a && b) := pab.
 Qed.
 
 (* examples from mathcomp book *)
@@ -620,4 +797,4 @@ Qed.
 
 End Chinese.
 
-(* name convention : see page 66 *)
+(* name convention : see page mathcomp book page 66 *)

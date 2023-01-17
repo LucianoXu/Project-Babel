@@ -564,7 +564,7 @@ Qed.
 Lemma big_union_dist (X : Type) (A : 𝒫(𝒫(𝒫(X)))) :
 
     ⋃ { ⋃ a , a | a ∈ A } = ⋃ (⋃ A).
-    
+
 Proof.
     rewrite /big_union. apply /seteqP => x. split.
 
@@ -584,28 +584,6 @@ Proof.
     rewrite -sep_union_dist.
     by rewrite big_union_dist.
 Qed.
-
-
-Lemma big_union_sep_dist (X Y: Type) (A : 𝒫(𝒫(X))) (f : X -> 𝒫(Y)) :
-
-    ⋃ { ⋃ (f [@] a) , a | a ∈ A } = ⋃ (⋃ { f [@] a , a | a ∈ A }).
-
-Proof. by rewrite big_union_fun_dist. Qed.
-
-
-Lemma big_union_sep_sep_dist (X Y Z: Type) 
-    (A : 𝒫(X)) (g : X -> 𝒫(Y)) (f : Y -> 𝒫(Z)) :
-        { f[@] (g a), a | a ∈ A }
-        =  { f[@] a , a | a ∈ g[@] A }.
-
-(*  Another form of this equality is : ?
-*)
-
-Proof.
-    rewrite separate_dist.
-    rewrite f_mapP. by [].
-Qed.
-
 
 (*
 

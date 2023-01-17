@@ -50,9 +50,9 @@ Proof.
 
     (* set equality *)
     rewrite sep_big_union_dist.
-    rewrite -big_union_sep_dist.
+    rewrite -big_union_fun_dist.
     rewrite sep_union_dist.
-    rewrite /f_map.
+    rewrite /mapR.
     by [].
 Qed.
     
