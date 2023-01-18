@@ -117,7 +117,7 @@ Definition union_set : forall {H : HilbertSpace},
         
 Definition add_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
-        fun _ a b => ⋃ { add_PDenOpt x [<] b, x | x ∈ a }.
+        fun _ a b => ⋃ { (add_PDenOpt x) [<] b, x | x ∈ a }.
 
 (* Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope. *)
 Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
