@@ -19,10 +19,12 @@ Unset Printing Implicit Defensive.
 Declare Scope NSet_scope.
 Open Scope NSet_scope.
 
-Reserved Notation " {  expr , x .. y | cond  } " (x binder, at level 0, expr at level 99).
+Reserved Notation " '𝒫(' T ) " (format "'𝒫(' T )").
 Reserved Notation " s '∈' S " (at level 50).
 Reserved Notation " s '∉' S " (at level 50).
+Reserved Notation " {  expr , x .. y | cond  } " (x binder, at level 0, expr at level 99).
 Reserved Notation "∅".
+Reserved Notation " '𝒫(' T ')₊' ".
 Reserved Notation "'𝕌'".
 Reserved Notation " A '⊆' B " (at level 49).
 Reserved Notation " A '⊇' B " (at level 49).
@@ -31,9 +33,12 @@ Reserved Notation " A '∩' B " (at level 42).
 Reserved Notation " '∁' A" (at level 39). 
 
 Reserved Notation "'⋃'".
-Reserved Notation " f [@] " (at level 30, right associativity).
-Reserved Notation " f [@] A" (at level 30, right associativity, only printing).
-Reserved Notation " A [*] f [*] B " (at level 30).
+Reserved Notation " f [<] " (at level 1, left associativity).
+Reserved Notation " f [<] ( A )" (at level 1, left associativity).
+Reserved Notation " F [>] " (at level 30, right associativity).
+Reserved Notation " F [>] x" (at level 30, right associativity, only printing).
+Reserved Notation " F [@] " (at level 30, right associativity).
+Reserved Notation " F [@] A" (at level 30, right associativity, only printing).
 
 Reserved Notation "'forall'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
 Reserved Notation "'exists'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
@@ -47,7 +52,7 @@ Reserved Notation " {{ x , .. , y }} " (at level 20).
 (** ** Set Definition *)
 
 (** The equivalence between predicates. *)
-Lemma predeqP (T : Type) (p q : T -> Prop) : p = q <-> (forall x, p x <-> q x).
+Lemma predeqP {T : Type} (p q : T -> Prop) : p = q <-> (forall x, p x <-> q x).
 Proof. split.
     by move => ->.
     move => H. apply functional_extensionality => x.
@@ -55,7 +60,7 @@ Proof. split.
 Qed.
 
 (** set *)
-Record set T := mk_set { 
+Record set (T : Type) := mk_set { 
     chac : T -> Prop;
 }.
 (** This notation means 'power set'. *)
@@ -68,15 +73,15 @@ Notation "{ expr , x .. y | cond }" :=
     { a | (exists x, .. (exists y, cond /\ expr = a ) ..) } : NSet_scope.
 
 (** TODO We should add a lemma to move the binder right and left in the set description 
-    { f a b , a b | a ∈ A /\ b ∈ B } = { f a [@] B , a | a ∈ A }
+    { f a b , a b | a ∈ A /\ b ∈ B } = { f a [<] B , a | a ∈ A }
 *)
 
 (** The equivalence between sets. *)
-Lemma seteq_predP (T : Type) (A B : 𝒫(T)) : A = B <-> chac A = chac B.
+Lemma seteq_predP {T : Type} (A B : 𝒫(T)) : A = B <-> chac A = chac B.
 Proof. split. by move => ->. destruct A, B => /= -> //. Qed.
 
 (** The equivalence between sets (2). *)
-Lemma seteqP (T : Type) (A B : 𝒫(T)) : 
+Lemma seteqP {T : Type} (A B : 𝒫(T)) : 
     A = B <-> (forall x, x ∈ A <-> x ∈ B).
 Proof. 
     split. by move => ->. 
@@ -89,7 +94,7 @@ Qed.
 Coercion set2sigma (T : Type) (A : 𝒫(T)) : Type := sig (chac A).
 
 
-Lemma belongs_to (T : Type) : forall (A : 𝒫(T)) (a : A), proj1_sig a ∈ A.
+Lemma belongs_to [T : Type] : forall (A : 𝒫(T)) (a : A), proj1_sig a ∈ A.
 Proof. move => A a. by apply (proj2_sig a). Qed.
 
 
@@ -97,14 +102,17 @@ Proof. move => A a. by apply (proj2_sig a). Qed.
 Definition set_em (T : Type) : 𝒫(T) := { x | False }.
 Notation "∅" := (set_em _).
 
-Lemma in_set_em_F (T : Type) : 
+Lemma in_set_em_F [T : Type] : 
     forall (A : 𝒫(T)) (x : T), x ∈ A -> A = ∅ -> False.
 Proof. move => A x Hx HA. rewrite HA in Hx. by destruct Hx. Qed.
 
+
+(** TODO add the special structure *)
 Record nem_set (T : Type) := mk_nem_set {
     nem_set_obj :> 𝒫(T);
     nem_set_class : nem_set_obj <> ∅;
 }.
+
 Notation " '𝒫(' T ')₊' " := (nem_set T) (format "'𝒫(' T )₊") : NSet_scope.
 
 
@@ -113,7 +121,7 @@ Definition set_uni (T : Type) : 𝒫(T) := { x | True }.
 Notation "'𝕌'" := (set_uni _).
 
 (** The set is nonempty *)
-Lemma nonemptyP (T : Type) (A : 𝒫(T)) :  A <> ∅ <-> exists x, x ∈ A.
+Lemma nonemptyP {T : Type} (A : 𝒫(T)) :  A <> ∅ <-> exists x, x ∈ A.
 Proof. split; last first.
 
     move => [x Hx] H. move: Hx H. by apply in_set_em_F.
@@ -125,24 +133,26 @@ Proof. split; last first.
 
 Qed.
 
-Lemma em_classic (T : Type) (A : 𝒫(T)) : A = ∅ \/ A <> ∅.
+
+(* This one uses classical logic. *)
+Lemma em_classic {T : Type} (A : 𝒫(T)) : A = ∅ \/ A <> ∅.
 Proof. apply classic. Qed.
 
 
 (** subset relation *)
-Definition subset (T : Type) (A B : 𝒫(T)) : Prop :=
+Definition subset {T : Type} (A B : 𝒫(T)) : Prop :=
     forall x, x ∈ A -> x ∈ B.
 Notation " A '⊆' B " := (subset A B) : NSet_scope.
 
 (** supset relation, which is dual to subset *)
-Definition supset (T : Type) (A B : 𝒫(T)) : Prop := B ⊆ A.
+Definition supset {T : Type} (A B : 𝒫(T)) : Prop := B ⊆ A.
 Notation " A '⊇' B " := (supset A B) : NSet_scope.
 
-Lemma subsupP (T : Type) (A B : 𝒫(T)) : A ⊆ B <-> B ⊇ A.
+Lemma subsupP {T : Type} (A B : 𝒫(T)) : A ⊆ B <-> B ⊇ A.
 Proof. split; auto. Qed.
 
 (* 
-Lemma set_trichotomy (T : Type) (A B : 𝒫(T)) :
+Lemma set_trichotomy {T : Type} (A B : 𝒫(T)) :
     A = B \/ A ⊆ B \/ A ⊇ B.
 Proof.
 *)
@@ -150,11 +160,11 @@ Proof.
 (** subset relation *)
 
 (** subset_refl : A ⊆ A *)
-Lemma subset_refl (T : Type): Relation_Definitions.reflexive _ (@subset T).
+Lemma subset_refl {T : Type}: Relation_Definitions.reflexive _ (@subset T).
 Proof. unfold Relation_Definitions.reflexive, subset. auto. Qed.
 
 (** subset_trans : A ⊆ B -> B ⊆ C -> A ⊆ C *)
-Lemma subset_trans (T : Type): Relation_Definitions.transitive _ (@subset T).
+Lemma subset_trans {T : Type}: Relation_Definitions.transitive _ (@subset T).
 Proof.
     unfold Relation_Definitions.transitive, subset. 
     intros A B C HAinB HBinC. intros x HxinA.
@@ -162,7 +172,7 @@ Proof.
 Qed.
 
 (** subset_asymm : A ⊆ B -> B ⊆ A -> A = B *)
-Lemma subset_asymm (T : Type): Relation_Definitions.antisymmetric _ (@subset T).
+Lemma subset_asymm {T : Type}: Relation_Definitions.antisymmetric _ (@subset T).
 Proof.
     rewrite /Relation_Definitions.antisymmetric => A B HAinB HBinA.
     apply /seteqP => x. split.
@@ -176,18 +186,18 @@ Add Parametric Relation {T : Type} : _ (@subset T)
 
 (** supset relation *)
 
-Lemma supset_refl (T : Type): Relation_Definitions.reflexive _ (@supset T).
+Lemma supset_refl {T : Type}: Relation_Definitions.reflexive _ (@supset T).
 Proof. unfold Relation_Definitions.reflexive, supset, subset. auto. Qed.
 
 
-Lemma supset_trans (T : Type): Relation_Definitions.transitive _ (@supset T).
+Lemma supset_trans {T : Type}: Relation_Definitions.transitive _ (@supset T).
 Proof.
     unfold Relation_Definitions.transitive, supset, subset. 
     intros A B C HBinA HCinB. intros x HxinC.
     apply HBinA. apply HCinB. apply HxinC.
 Qed.
 
-Lemma supset_asymm (T : Type): Relation_Definitions.antisymmetric _ (@subset T).
+Lemma supset_asymm {T : Type}: Relation_Definitions.antisymmetric _ (@subset T).
 Proof.
     rewrite /Relation_Definitions.antisymmetric => A B HAinB HBinA.
     apply /seteqP => x. split.
@@ -201,29 +211,39 @@ Add Parametric Relation {T : Type} : _ (@supset T)
 
 
 (** subset_em : ∅ ⊆ A *)
-Lemma em_subset (T : Type): forall (A : 𝒫(T)), ∅ ⊆ A.
-Proof. unfold subset. unfold set_em. simpl. intros. destruct H. Qed.
+Lemma em_subset {T : Type}: forall (A : 𝒫(T)), ∅ ⊆ A.
+Proof. by move => ?. Qed.
 
-Lemma subset_emP (T : Type): forall (A : 𝒫(T)), A ⊆ ∅ <-> A = ∅.
+Lemma subset_emP {T : Type}: forall (A : 𝒫(T)), A ⊆ ∅ <-> A = ∅.
 Proof.
     move => A. split.
     move => HAin. apply /seteqP => x. split.
-    by apply HAin. by move => Hxin; destruct Hxin.
+    by apply HAin. by move => [].
     by move => ->.
+Qed.
+
+Lemma subset_uni {T : Type}: forall (A : 𝒫(T)), A ⊆ 𝕌.
+Proof. by move => ?. Qed.
+
+Lemma uni_subsetP {T : Type}: forall (A : 𝒫(T)), 𝕌 ⊆ A <-> A = 𝕌.
+Proof.
+    move => A. split.
+    move => HAin. apply seteqP => x. split.
+    by []. by apply HAin. by move => ->.
 Qed.
 
 
 (* some calculations between sets *)
-Definition union (T : Type) (A B : 𝒫(T)) : 𝒫(T) := { x | x ∈ A \/ x ∈ B }.
+Definition union {T : Type} (A B : 𝒫(T)) : 𝒫(T) := { x | x ∈ A \/ x ∈ B }.
 Notation " A '∪' B " := (union A B) : NSet_scope.
 
-Definition itsct (T : Type) (A B : 𝒫(T)) : 𝒫(T) := { x | x ∈ A /\ x ∈ B }.
+Definition itsct {T : Type} (A B : 𝒫(T)) : 𝒫(T) := { x | x ∈ A /\ x ∈ B }.
 Notation " A '∩' B " := (itsct A B) : NSet_scope.
 
-Definition complement (T : Type) (A : 𝒫(T)) : 𝒫(T) := { x | x ∉ A }.
+Definition complement {T : Type} (A : 𝒫(T)) : 𝒫(T) := { x | x ∉ A }.
 Notation " '∁' A" := (complement A) : NSet_scope. 
 
-Definition diff (T : Type) (A B: 𝒫(T)) : 𝒫(T) := { x | x ∈ A /\ x ∉ B }.
+Definition diff {T : Type} (A B: 𝒫(T)) : 𝒫(T) := { x | x ∈ A /\ x ∉ B }.
 Notation " A / B " := (diff A B) : NSet_scope.
 
 
@@ -264,26 +284,64 @@ Proof.
 Qed.
 
 
-Definition big_union (T : Type) (A : 𝒫(𝒫(T))) : 𝒫(T) :=
+
+
+
+
+
+(** This part, especially [mapL] [mapR] needs the notion of function, base on set. *)
+
+Definition big_union {T : Type} (A : 𝒫(𝒫(T))) : 𝒫(T) :=
     { x | exists X, X ∈ A /\ x ∈ X }.
-(** The existence of two notations allows the writing of [⋃ ⋃ A] to be interpreted as [⋃ (⋃ A)]*)
 Notation "⋃" := big_union : NSet_scope.
 
+Add Parametric Morphism {X : Type} : (@big_union X)
+    with signature (@subset (set X)) ==> (@subset X) as big_union_mor_sub.
+Proof.
+    intros M N HMinN. unfold big_union, subset. simpl.
+    intros x [S HS]. exists S. split. apply HMinN. apply HS. apply HS.
+Qed.
 
-Definition big_itsct (T : Type) (A : 𝒫(𝒫(T))) : 𝒫(T) :=
+
+
+Definition big_itsct {T : Type} (A : 𝒫(𝒫(T))) : 𝒫(T) :=
     { x | forall X, X ∈ A -> x ∈ X }.
 Notation "⋂" := big_itsct : NSet_scope.
 
 
-Definition f_map (X Y: Type) (f : X -> Y) (A : 𝒫(X)) : 𝒫(Y) :=
-    { f x , x | x ∈ A }.
-Notation " f [@] " := (@f_map _ _ f) : NSet_scope.
-Notation " f [@] A" := (@f_map _ _ f A) : NSet_scope.
+(** As is also confirmned in mathematica, this operation can be considered as a
+    map. This [mapR] can be considered as the operator to lift a function.
+*)
+Definition mapR {X Y: Type} (f : X -> Y) : 𝒫(X) -> 𝒫(Y) :=
+    fun A => { f x , x | x ∈ A }.
+Notation " f [<] " := (@mapR _ _ f) : NSet_scope.
+Notation " f [<] ( A ) " := (@mapR _ _ f A) : NSet_scope.
 
-Definition f_outer (X Y Z : Type)(f : X -> Y -> Z)(A : 𝒫(X))(B : 𝒫(Y)): 𝒫(Z) :=
-    ⋃ ((fun a => { f a b, b | b ∈ B } ) [@] A).
-Notation " A [*] f [*] B " := (@f_outer _ _ _ A B f) : NSet_scope.
+Lemma mapR_fold (X Y: Type) (f : X -> Y) A : 
+    { f a , a | a ∈ A } = f [<] A.
+Proof. by []. Qed.
 
+Add Parametric Morphism {X Y : Type} : (@mapR X Y)
+    with signature eq ==> (@subset X) ==> (@subset Y) as mapR_mor_sub.
+Proof.
+    intros f M N HMinN. unfold mapR, subset. simpl.
+    intros y [x Hxin]. exists x. split. apply HMinN. by apply Hxin. by apply Hxin.
+Qed.
+
+
+Definition mapL {X Y: Type} (F : 𝒫(X -> Y)) : X -> 𝒫(Y) :=
+    fun x => { f x , f | f ∈ F }.
+
+Notation " F [>] " := (@mapL _ _ F) : NSet_scope.
+(* Notation " F [>] x" := (@mapL _ _ F x) : NSet_scope. *)
+
+
+
+Definition mapLR {X Y: Type} (F : 𝒫(X -> Y)) : 𝒫(X) -> 𝒫(Y) :=
+    fun A => ⋃ (F [>][<] A).
+
+Notation " F [@] " := (@mapLR _ _ F) : NSet_scope.
+(* Notation " F [@] A" := (@mapLR _ _ F A) : NSet_scope. *)
 
 Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr) : NSet_scope.
 Notation "'exists'' x '∈' A , expr" := (exists x , x ∈ A /\ expr) : NSet_scope.
@@ -294,19 +352,6 @@ Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_sco
 Notation "{{ x , .. , y }} " := 
     ({ a | (a = x \/ .. (a = y \/ False) .. )}) : NSet_scope.
 
-Add Parametric Morphism {X : Type} : (@big_union X)
-    with signature (@subset (set X)) ==> (@subset X) as big_union_mor_sub.
-Proof.
-    intros M N HMinN. unfold big_union, subset. simpl.
-    intros x [S HS]. exists S. split. apply HMinN. apply HS. apply HS.
-Qed.
-
-Add Parametric Morphism {X Y : Type} : (@f_map X Y)
-    with signature eq ==> (@subset X) ==> (@subset Y) as f_map_mor_sub.
-Proof.
-    intros f M N HMinN. unfold f_map, subset. simpl.
-    intros y [x Hxin]. exists x. split. apply HMinN. by apply Hxin. by apply Hxin.
-Qed.
 
 
 
@@ -317,7 +362,7 @@ Variable (T: Type).
 
 Lemma singletonP (a x : T): x ∈ {{ a }} <-> x = a.
 Proof. split.
-    move => [] //.
+    by move => [].
     move => H. by left.
 Qed.
 
@@ -384,12 +429,12 @@ End SetTheory.
 
 
 
+(** Theories about big operators and mappings. *)
+Section AdvancedTheory.
 
+Lemma big_union_em {T : Type} :
 
-
-Lemma big_union_em (T : Type) :
-
-    ⋃ ∅ = set_em T.
+        ⋃ ∅ = set_em T.
 
 Proof.
     rewrite /big_union. apply seteqP => x. split.
@@ -398,33 +443,27 @@ Proof.
 Qed.
 
 
-(** subset morphism of separation set *)
+(** subset morphism of ⋃ ◦ (f [<]) set *)
 (** Here a more precise description of the relation between f and g is 
     something like 'subfunction' *)
-(** TODO #6 (We have identified, f_map is actually the sepraration set construction!)*)
-Lemma big_union_sep_mor_sub (T V: Type) (f g: T -> 𝒫(V)) (A B: 𝒫(T)):
+Lemma bigU_mapR_mor_sub {X Y: Type} (f g: X -> 𝒫(Y)) (A B: 𝒫(X)):
     A ⊆ B -> (forall t, f t ⊆ g t) ->
-        ⋃ { f x, x | x ∈ A } ⊆ ⋃ { g x, x | x ∈ B }.
-Proof. rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
-    have H := Hfleg t v. rewrite HSveq in H. have H' := H Hvin.
-    exists (g t). split => //. exists t. split => //. by apply HAinB.
-Qed.
 
-(** combine theses results into the morphism! *)
-(*
-Lemma sep_mor_sub (T V: Type) (f g: T -> 𝒫(V)) (A B: 𝒫(T)):
-    A ⊆ B -> (forall t, f t ⊆ g t) -> f [@] A ⊆ g [@] B.
+        ⋃ (f [<] A) ⊆ ⋃ (g [<] B).
+
 Proof. rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
     have H := Hfleg t v. rewrite HSveq in H. have H' := H Hvin.
     exists (g t). split => //. exists t. split => //. by apply HAinB.
 Qed.
-*)
 
         
 (** About big opertor and mappings *)
 
-Lemma f_map_rei (X Y : Type) (A : 𝒫(X)) (y : Y) :
+(** This method requires that the type of [y] is not dependent on [A]. *)
+Lemma mapR_rei {X Y : Type} (A : 𝒫(X)) (y : Y) :
+
     A <> ∅ -> { y , a | a ∈ A } = {{ y }} .
+
 Proof. move => /nonemptyP [a Hain]. apply seteqP => x. split.
     move => [x0] [Hx0in] Heq. rewrite Heq. by apply singletonP.
     move => [Heq|].
@@ -432,21 +471,21 @@ Proof. move => /nonemptyP [a Hain]. apply seteqP => x. split.
     by move => [].
 Qed.
 
-Lemma f_map_em (X Y: Type) (f : X -> Y) :
+Lemma mapR_em {X Y: Type} (f : X -> Y) :
 
-        f [@] ∅ = ∅.
+        f [<] ∅ = ∅.
 
-Proof. rewrite /f_map. apply seteqP => x. split.
+Proof. rewrite /mapR. apply seteqP => x. split.
     by move => [?] [[]].
     by move => [].
 Qed.
 
 
-Lemma big_union_fun_rei (X Y: Type) (A : 𝒫(X)) (f : X -> Y):
+Lemma bigU_fun_rei {X Y: Type} (A : 𝒫(X)) (f : X -> Y):
 
-            ⋃ { {{ f a }}, a | a ∈ A } = f [@] A.
+        ⋃ { {{ f a }}, a | a ∈ A } = f [<] A.
     
-Proof. rewrite /f_map /big_union. apply seteqP => x. split.
+Proof. rewrite /mapR /big_union. apply seteqP => x. split.
     move => [Sy] [[x0 [Hx0in HSyeq]]]. rewrite -{}HSyeq.
     rewrite singletonP => ->. exists x0. by split.
     move => [x0 [Hx0in Hxeq]].
@@ -455,8 +494,10 @@ Proof. rewrite /f_map /big_union. apply seteqP => x. split.
 Qed.
     
 
-Lemma big_union_rei (X : Type) (A : 𝒫(X)) :
-    ⋃ { {{ a }}, a | a ∈ A } = A.
+Lemma bigU_rei {X : Type} (A : 𝒫(X)) :
+
+        ⋃ { {{ a }}, a | a ∈ A } = A.
+
 Proof. rewrite /big_union. apply seteqP => x. split.
     move => [Sx] [[x0 [Hx0in HSxeq]]]. rewrite -{}HSxeq. 
     by rewrite singletonP => ->.
@@ -465,8 +506,10 @@ Proof. rewrite /big_union. apply seteqP => x. split.
 Qed.
 
 
-Lemma big_union_sgl_nem (X Y: Type) (A : 𝒫(X)) (a : 𝒫(Y)) : 
-    A <> ∅ -> ⋃ { a, x | x ∈ A } = a.
+Lemma bigU_sgl_nem {X Y: Type} (A : 𝒫(X)) (a : 𝒫(Y)) : 
+
+        A <> ∅ -> ⋃ { a, x | x ∈ A } = a.
+
 Proof.
     rewrite /big_union => /nonemptyP HAnem. apply seteqP => x. split.
 
@@ -478,17 +521,33 @@ Proof.
     move => Hx. exists a. split => //. eexists x0. split => //=.
 Qed.
 
-Lemma big_union_sgl_em (X Y: Type) (A : 𝒫(X)) (a : 𝒫(Y)) : 
-    A = ∅ -> ⋃ { a, x | x ∈ A } = ∅.
+Lemma bigU_sgl_em {X Y: Type} (A : 𝒫(X)) (a : 𝒫(Y)) : 
+
+        A = ∅ -> ⋃ { a, x | x ∈ A } = ∅.
+
 Proof.
     rewrite /big_union => ->. apply seteqP => x. split.
     move => [Sy] [[y0] [Hy0in HSyeq]]. destruct Hy0in.
     move => Hx. destruct Hx.
 Qed.
 
-Lemma union_big_union_dist (X Y : Type) (A : 𝒫(X)) (f g : X -> 𝒫(Y)) :
-    (⋃ { f x, x | x ∈ A }) ∪ (⋃ { g x, x | x ∈ A })
-    = ⋃ { f x ∪ g x, x | x ∈ A }.
+Lemma bigU_union_dist {X : Type} (A B: 𝒫(𝒫(X))) :
+    
+        ⋃ (A ∪ B) = (⋃ A) ∪ (⋃ B).
+
+Proof.
+    rewrite /union /big_union. apply seteqP => x. split.
+    by move => [SX] [[HSXin|HSXin]] Hxin ; [left|right]; exists SX; split.
+    by move => [[SX [HSXin Hxin]]|[SX [HSXin Hxin]]]; exists SX; split => //;
+    [left|right] => //.
+Qed.
+
+
+(** Note: The following one is also a unique lemma. *)
+Lemma union_bigU_mapR_dist {X Y : Type} (A : 𝒫(X)) (f g : X -> 𝒫(Y)) :
+
+        (⋃ (f [<] A) ) ∪ (⋃ (g [<] A)) = ⋃ { f x ∪ g x, x | x ∈ A }.
+
 Proof.
     rewrite /union /big_union. apply seteqP => x. split.
     move => [].
@@ -509,30 +568,25 @@ Proof.
 Qed.
 
 
-
-
-
-Lemma f_mapP (X Y: Type) (A : 𝒫(X)) (f : X -> Y) :
-
-        { f x , x | x ∈ A } = f [@] A.
-
-Proof. by []. Qed.
-
-
-Lemma f_map_in (X Y : Type) (A : 𝒫(X)) (f : X -> Y) :
+Lemma mapR_in {X Y : Type} (A : 𝒫(X)) (f : X -> Y) :
     forall x : X, 
 
-        x ∈ A -> f x ∈ f [@] A.
+        x ∈ A -> f x ∈ f [<] A.
 
-Proof. rewrite /f_map => x ? //=. by exists x. Qed.
+Proof. rewrite /mapR => x ? //=. by exists x. Qed.
 
 
-Lemma sep_big_union_dist (X Y : Type) (A : 𝒫(𝒫(X))) (f : X -> Y) :
 
-    { f x, x | x ∈ (⋃ A) } = ⋃ { f [@] a , a | a ∈ A }.
+(*************************)
+(** ESPECIALLY IMPORTANT *)
+(*************************)
+
+Lemma mapR_bigU_swap {X Y : Type} (f : X -> Y) (A : 𝒫(𝒫(X))):
+    
+        { f x, x | x ∈ (⋃ A) } = ⋃ { f [<] a , a | a ∈ A }.
 
 Proof.
-    rewrite /big_union /f_map. apply /seteqP => x //=. split.
+    rewrite /big_union /mapR. apply /seteqP => x //=. split.
 
     move => [x0] [[a [Hain Hx0in]]] Hfeq.
     eexists. split. exists a. split => //.
@@ -544,26 +598,50 @@ Proof.
 Qed.
 
 
-Lemma separate_dist (X Y Z : Type) (A : 𝒫(X)) (g : X -> Y) (f : Y -> Z) :
-        { f (g a), a | a ∈ A } = f [@] (g [@] A).
+Lemma mapR_bigU_swap_fun {X Y : Type} (f : X -> Y) :
+
+        (f [<]) ◦ ⋃ = ⋃ ◦ ((f [<])[<]).
+
 Proof.
-    rewrite /f_map. apply /seteqP => x //=. split.
+    apply functional_extensionality => A.
+    by apply mapR_bigU_swap.
+Qed.
 
-    move => [a] [Hain Hxeq]. exists (g a). split => //=. by exists a.
 
+(*************************)
+(** ESPECIALLY IMPORTANT *)
+(*************************)
+
+
+Lemma double_mapR {X Y Z : Type} (g : X -> Y) (f : Y -> Z) (A : 𝒫(X)) :
+
+        { f b , b | b ∈ g [<] A } = { f (g a), a | a ∈ A }.
+
+Proof.
+    rewrite /mapR. apply /seteqP => x //=. split.
     move => [v] [[a [Hain Hveq]] Hxeq]. exists a. rewrite Hveq. by split.
+    move => [a] [Hain Hxeq]. exists (g a). split => //=. by exists a.
 Qed.
 
-Lemma sep_union_dist (X Y Z: Type) (A : 𝒫(X)) (g : X -> Y) (f : Y -> Z) :
-    { f b, b | b ∈ g [@] A} = { f (g a), a | a ∈ A }.
+Lemma double_mapR_fun {X Y Z : Type} (g : X -> Y) (f : Y -> Z) :
+    
+        f[<] ◦ g[<] = (f ◦ g)[<].
+
 Proof.
-    rewrite [RHS]separate_dist.
-    by rewrite f_mapP.
+    apply functional_extensionality => x.
+    move : (double_mapR g f x).
+    rewrite !mapR_fold. rewrite fun_compP.
+    by [].
 Qed.
+    
 
-Lemma big_union_dist (X : Type) (A : 𝒫(𝒫(𝒫(X)))) :
+(*************************)
+(** ESPECIALLY IMPORTANT *)
+(*************************)
 
-    ⋃ { ⋃ a , a | a ∈ A } = ⋃ (⋃ A).
+Lemma bigU_swap {X : Type} (A : 𝒫(𝒫(𝒫(X)))) :
+
+        ⋃ { ⋃ a , a | a ∈ A } = ⋃ (⋃ A).
 
 Proof.
     rewrite /big_union. apply /seteqP => x. split.
@@ -577,13 +655,43 @@ Proof.
     apply HSSxin. split. apply HSxin. by apply Hxin.
 Qed.
 
+Lemma bigU_swap_fun {X : Type}  :
 
-Lemma big_union_fun_dist (X Y: Type) (A : 𝒫(X)) (f : X -> 𝒫(𝒫(Y))):
-    ⋃ { ⋃ (f a) , a | a ∈ A } = ⋃ (⋃ (f [@] A)).
+        (@big_union X) ◦ (⋃[<]) = ⋃ ◦ ⋃.
+
 Proof.
-    rewrite -sep_union_dist.
-    by rewrite big_union_dist.
+    apply functional_extensionality => x.
+    by apply bigU_swap.
 Qed.
+
+
+Lemma bigU_fun_dist {X Y: Type} (f : X -> 𝒫(𝒫(Y))) (A : 𝒫(X)):
+
+        ⋃ { ⋃ (f a) , a | a ∈ A } = ⋃ (⋃ (f [<] A)).
+
+Proof.
+    
+    (** transform into the function equality *)
+    rewrite mapR_fold. 
+    equal_f_comp A.
+
+    rewrite -[RHS]fun_comp_assoc.
+    rewrite -bigU_swap_fun.
+    rewrite fun_comp_assoc.
+    by rewrite -double_mapR_fun.
+Qed.
+
+Lemma bigU_fun_dist_fun {X Y: Type} (f : X -> 𝒫(𝒫(Y))):
+
+        ⋃ ◦ (⋃ ◦ f)[<] = ⋃ ◦ ⋃ ◦ f[<].
+
+Proof.
+    apply functional_extensionality => x.
+    by apply bigU_fun_dist.
+Qed.
+
+
+End AdvancedTheory.
 
 (*
 

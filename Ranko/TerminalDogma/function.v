@@ -95,17 +95,51 @@ Admitted.
 
 
 
-(** function Composition *)
-Definition fun_comp (X Y Z : Type) (f : X -> Y) (g : Y -> Z) : X -> Z :=
+(** function Composition 
+    [fun_comp g f] : Apply [f] first, and then apply [g].
+    We use a definition encapsulation to avoid the automatic simplification of
+    [ g ◦ f ] *)
+Definition fun_comp {X Y Z : Type} (g : Y -> Z) (f : X -> Y) : X -> Z :=
     fun x => g (f x).
 
-Notation " g '◦' f " := (fun x => g (f x)) (at level 40).
+(** Note : This notation is right associate. *)
+Notation " g ◦ f " := (fun_comp g f) (at level 4, right associativity).
 
+(** The equivalence between the function compostion defined here and that in
+    Coq. *)
+Lemma fun_compP {X Y Z : Type} (g : Y -> Z) (f : X -> Y) :
+    (fun x => g (f x)) = g ◦ f.
+Proof. by []. Qed.
 
 (** Composition is associative *)
 Lemma fun_comp_assoc (X Y Z W : Type) (f : X -> Y) (g : Y -> Z) (h : Z -> W) :
-    h ◦ (g ◦ f) = (h ◦ g) ◦ f.
+    (h ◦ g) ◦ f = h ◦ g ◦ f.
 Proof. by []. Qed.
+
+(** This definition can be used togher with [equal_f] and [equal_f_dep] in 
+    [Coq.Logic.FunctionalExtensionality]. 
+    
+    Here are the identical definitions. 
+*)
+Lemma equal_f : forall {A B : Type} {f g : A -> B},
+    f = g -> forall x, f x = g x.
+Proof.
+    intros A B f g H x.
+    rewrite H.
+    auto.
+Qed.
+
+Lemma equal_f_dep : forall {A B} {f g : forall (x : A), B x},
+    f = g -> forall x, f x = g x.
+Proof.
+    intros A B f g <- H; reflexivity.
+Qed.
+      
+
+Ltac equal_f_comp A := 
+    generalize dependent A; 
+    apply equal_f;
+    repeat rewrite fun_compP.
 
 
 Lemma comp_injective (X Y Z : Type) (f : X -> Y) (g : Y -> Z) :
