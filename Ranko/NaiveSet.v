@@ -598,7 +598,7 @@ Proof.
 Qed.
 
 
-Lemma mapR_bigU_swap_fun {X Y : Type} (f : X -> Y) :
+Lemma mapR_bigU_swapF {X Y : Type} (f : X -> Y) :
 
         (f [<]) ◦ ⋃ = ⋃ ◦ ((f [<])[<]).
 
@@ -623,7 +623,7 @@ Proof.
     move => [a] [Hain Hxeq]. exists (g a). split => //=. by exists a.
 Qed.
 
-Lemma double_mapR_fun {X Y Z : Type} (g : X -> Y) (f : Y -> Z) :
+Lemma double_mapRF {X Y Z : Type} (g : X -> Y) (f : Y -> Z) :
     
         f[<] ◦ g[<] = (f ◦ g)[<].
 
@@ -655,7 +655,7 @@ Proof.
     apply HSSxin. split. apply HSxin. by apply Hxin.
 Qed.
 
-Lemma bigU_swap_fun {X : Type}  :
+Lemma bigU_swapF {X : Type}  :
 
         (@big_union X) ◦ (⋃[<]) = ⋃ ◦ ⋃.
 
@@ -675,13 +675,13 @@ Proof.
     rewrite mapR_fold. 
     equal_f_comp A.
 
-    rewrite -[RHS]fun_comp_assoc.
-    rewrite -bigU_swap_fun.
-    rewrite fun_comp_assoc.
-    by rewrite -double_mapR_fun.
+    rewrite -[RHS]fun_assoc.
+    rewrite -bigU_swapF.
+    rewrite fun_assoc.
+    by rewrite -double_mapRF.
 Qed.
 
-Lemma bigU_fun_dist_fun {X Y: Type} (f : X -> 𝒫(𝒫(Y))):
+Lemma bigU_fun_distF {X Y: Type} (f : X -> 𝒫(𝒫(Y))):
 
         ⋃ ◦ (⋃ ◦ f)[<] = ⋃ ◦ ⋃ ◦ f[<].
 

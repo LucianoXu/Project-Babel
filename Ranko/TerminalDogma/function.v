@@ -112,7 +112,7 @@ Lemma fun_compP {X Y Z : Type} (g : Y -> Z) (f : X -> Y) :
 Proof. by []. Qed.
 
 (** Composition is associative *)
-Lemma fun_comp_assoc (X Y Z W : Type) (f : X -> Y) (g : Y -> Z) (h : Z -> W) :
+Lemma fun_assoc (X Y Z W : Type) (f : X -> Y) (g : Y -> Z) (h : Z -> W) :
     (h ◦ g) ◦ f = h ◦ g ◦ f.
 Proof. by []. Qed.
 
