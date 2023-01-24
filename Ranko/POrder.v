@@ -6,7 +6,10 @@ From Ranko Require Import TerminalDogma.premises
                           NaiveSet.
 
 
-From Coq Require Import Classical Relation_Definitions.
+From Ranko Require Import NaiveSet.
+
+From Coq Require Import Relations Classical.
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -18,9 +21,9 @@ Declare Scope POrder_scope.
 Open Scope POrder_scope.
 
 Reserved Notation " f '=r' ( X ) g " (at level 50).
-Reserved Notation " a '⊑' ( p )  b " (at level 60, format " a  '⊑' ( p )  b ").
+Reserved Notation " a ⊑ ( p ) b " (at level 60, format " a  ⊑ ( p )  b ").
 Reserved Notation " A '=po' B " (at level 60).
-Reserved Notation " A '⊆po' B " (at level 60).
+Reserved Notation " A ⊆po B " (at level 60).
 Reserved Notation " f '†r' " (at level 20).
 Reserved Notation " P '†po' " (at level 10).
 
@@ -30,12 +33,64 @@ Reserved Notation " cL1 '=cL' cL2 " (at level 60).
 Reserved Notation " L1 '⊆cL' L2 " (at level 60).
 Reserved Notation " cL '†cL' " (at level 10).
 
+(** subrelation 
+    R1 is the sub relation of R2 *)
+Module SubRel.
+Record type {T : Type} {A B : 𝒫(T)} 
+    (R1 : relation A) (R2 : relation B) : Prop := Pack {
+    AinB : A ⊆ B;
+    subrel : forall x y, R1 x y <-> R2 [x in AinB] [y in AinB];
+}.
+Module Exports.
+Notation subRel := type.
+End Exports.
 
-(** relation, this definition copies the design of [eqType] in MathComp.
-    for [order], see [Coq.Relation_Definitions] 
+End SubRel.
+Export SubRel.Exports.
+
+(** get the subrelation *)
+Definition rel_restrict {T : Type} {A B : 𝒫(T)} (R : relation B)
+    (HAB : A ⊆ B) : relation A :=
+    fun x y => R [x in HAB] [y in HAB].
+
+Lemma rel_restrict_sub {T : Type} {A B : 𝒫(T)} (R : relation B) (HAB : A ⊆ B) :
+    subRel (rel_restrict R HAB) R.
+Proof. rewrite /rel_restrict. econstructor => x y. reflexivity. Qed.
+
+
+
+
+
+(** dual relation 
+    R1 is the dual relation of R2 *)
+
+Definition rel_dual {T : Type} (R1 R2 : relation T) : Prop := 
+    forall a b, R1 a b <-> R2 b a.
+
+Lemma rel_dual_comm {T : Type} (R1 R2 : relation T) :
+    rel_dual R1 R2 <-> rel_dual R2 R1.
+Proof. rewrite /rel_dual. by split; move => H a b; symmetry; apply H. Qed.
+
+(** get the dual relation *)
+Definition dualRel {T : Type} (R1 : relation T) : relation T :=
+    fun a b => R1 b a.
+Notation " f '†r' " := (dualRel f) : NSet_scope.
+
+Lemma dual_dualRel {T : Type} (R1 : relation T) :
+    rel_dual R1 (R1 †r).
+Proof. by rewrite /rel_dual /dualRel. Qed.
+
+
+
+(** Poset, partial-order set.
+    Here we consider every order relation to be a poset.
+
+    This definition copies the design of [eqType] in MathComp.
+    For [relation], we use the definition in [Coq.Relations].
+    For [order], see [Coq.Relation_Definitions] 
     *)
 
-Module OrderRel.
+Module Poset.
 
 Structure mixin_of T R := Mixin { _ : order T R }.
 Notation class_of := mixin_of (only parsing).
@@ -50,21 +105,31 @@ Definition class (T : Type) (cT : type T) :=
 End ClassDef.
 
 Module Exports.
-Coercion o_rel : type >-> relation.
-Notation orderRel := type.
-Notation orderRelMixin := Mixin.
-Notation OrderRel T m := (@Pack _ T m).
-Notation "[ 'orderRelMixin' 'of' T ]" := (class _ : mixin_of T)
-  (at level 0, format "[ 'orderRelMixin'  'of'  T ]") : POrder_scope.
-Notation "[ 'orderRel' 'of' T ]" := ([get r | rel r ~ T ])
-  (at level 0, format "[ 'orderRel'  'of'  T ]") : POrder_scope.
+Notation poset := type.
+Notation posetMixin := Mixin.
+Notation Poset T m := (@Pack _ T m).
+Notation "[ 'posetMixin' 'of' R ]" := (class _ : mixin_of R)
+  (at level 0, format "[ 'posetMixin'  'of'  R ]") : POrder_scope.
+Notation "[ 'poset' 'of' R ]" := ([get r | o_rel r ~ R ])
+  (at level 0, format "[ 'poset'  'of'  R ]") : POrder_scope.
+
+(** This coercion allows us to use [poset] directly as predicates. *)
+Definition poset_op T (cT : poset T) : T -> T -> Prop
+    := o_rel cT.
+Coercion poset_op : poset >-> Funclass.
+Notation " a ⊑ ( p ) b " := (@poset_op _ p a b).
+
 End Exports.
 
-End OrderRel.
-Export OrderRel.Exports.
+End Poset.
+Export Poset.Exports.
+
+Lemma poset_order {T : Type} (po : poset T) : order T po.
+Proof. destruct po. destruct m => //=. Qed.
 
 
-Lemma orderRel_eqP (T : Type) (R1 R2 : orderRel T) :
+(** The (extensional) equality between posets. *)
+Lemma poset_eqP (T : Type) (R1 R2 : poset T) :
     R1 = R2 <-> (R1 : relation _) = (R2 : relation _).
 Proof. split. by move=> ->.
     move => H. destruct R1 as [r1 [Hr1]], R2 as [r2 [Hr2]] => //=.
@@ -74,117 +139,60 @@ Qed.
 
 
 
+(** subposet, base on sub relation 
+    (This part of theory only works for sets, not for types) *)
+Definition subposet {T : Type} {A B : 𝒫(T)} 
+    (po1 : poset A) (po2 : poset B) : Prop :=
+    subRel po1 po2.
+Notation " A ⊆po B " := (subposet A B).
 
 
-
-
-
-Record poset (T : Type) := mk_poset {
-    po_rel : relation T;
-    po_order : order _ po_rel;
-}.
-Notation " [poset 'of' R ] " := ([get x | po_rel x ~ R])
-    (format "[poset  'of'  R ]") : POrder_scope.
-
-Notation " a '⊑' ( p ) b " := (po_rel p a b) : POrder_scope.
-
-Lemma poseteqP (T : Type) (A B : poset T) : A = B <-> po_rel A = po_rel B.
-Proof. split. by move => ->.
-    destruct A as [ra oa], B as [rb ob] => //= => H.
-    move : oa ob. rewrite H => oa ob. f_equal. by apply proof_irrelevance.
+(** If a relation is a [order], then any subrelations of ia must also be 
+    [order]s. *)
+Lemma sub_order {T : Type} {A B : 𝒫(T)} (R1 : relation A) (R2 : relation B)
+    (HsubR : subRel R1 R2) : order _ R2 -> order _ R1.
+Proof. move => H. destruct HsubR. constructor.
+    rewrite /reflexive => x. rewrite subrel. by apply H.
+    rewrite /transitive => x y z. rewrite !subrel. by apply H.
+    rewrite /antisymmetric => x y. rewrite !subrel => Hxy Hyx. 
+    apply (eq_in_subset AinB). by apply H.
 Qed.
 
+(* get a subposet from a existing poset *)
+Definition poset_restrict {T : Type} {A B : 𝒫(T)} (po : poset B) (HAB : A ⊆ B) :
+    poset A := Poset _ (posetMixin 
+        (sub_order (rel_restrict_sub po HAB) (poset_order po))).
+
+Definition poset_restrict_sub {T : Type} {A B : 𝒫(T)} (po : poset B) 
+    (HAB : A ⊆ B) : poset_restrict po HAB ⊆po po.
+Proof. rewrite /poset_restrict /subposet //=. by apply rel_restrict_sub. Qed.
 
 
 
+(** dual relation and dual poset *)
+Definition poset_dual {T : Type} (po1 po2 : poset T) :=
+    rel_dual po1 po2.
 
-
-Lemma le_order: order _ le. Admitted.
-
-Definition poset_le : poset nat :=
-    mk_poset le_order.
-
-Canonical Structure poset_le.
-
-Compute [poset of le].
-
-Check (1 ⊑([poset of le]) 2).
-
-
-Check (test_refl le).
-
-Definition test (T : Type) (a : poset T) := po_order a.
-
-Check (test nat).
-
-
-Lemma sub
-
-
-Definition subposet (A B : poset) :=
-    (A ⊆ B) /\ ((po_rel A) =r (A) (po_rel B)).
-Notation " A '⊆po' B " := (subposet A B).
-
-Lemma subposet_eq (P Q: poset) : P =po Q <-> P ⊆po Q /\ Q ⊆po P.
-Proof.
-    unfold subposet. split.
-    { intros HPeqQ. destruct HPeqQ as [Hseteq Hreleq]. 
-    split. split. by rewrite Hseteq.
-    by []. split. by rewrite Hseteq. rewrite <-Hseteq. by symmetry. }
-    { intros [[HPinQset HPinQrel] [HQinPset HQinPrel]].
-     split. apply subset_eq. by split. by[]. }
+Lemma dual_order {T : Type} (R : relation T) : order _ R -> order _ (R †r).
+Proof. rewrite /dualRel => [H]. constructor.
+    by apply H. 
+    rewrite /transitive => x y z Hxy Hyz. move: Hyz Hxy. by apply H.
+    rewrite /antisymmetric => x y Hxy Hyx. by apply H.
 Qed.
 
-Lemma subposet_refl : reflexive _ subposet.
-Proof. unfold reflexive, subposet. intros P. by split. Qed.
+(** get the dual poset *)
+Definition dualPoset {T : Type} (po : poset T) : poset T :=
+    Poset _ (posetMixin (dual_order (poset_order po))).
+Notation " P '†po' " := (dualPoset P).
 
 
-Lemma subposet_trans : transitive _ subposet.
-Proof.
-    unfold transitive, subposet. 
-    intros P Q R [HPinQset HPinQrel] [HQinRset HQinRrel].
-    split. by transitivity Q.  transitivity (po_rel Q).
-    by []. by apply releq_mor_subset with (Y := Q).
-Qed.
-
-
-
-Section get_subposet.
-
-(* Rrefl_subset : r reflexive on X -> A ⊆ X -> r reflexive on A *)
-Lemma Rrefl_subset (X : set T) : forall r, Rrefl X r -> forall' A ⊆ X, Rrefl A r.
-Proof.
-    unfold Rrefl. intros r Hr_refl A HAinX t HtinA. apply Hr_refl. apply HAinX. apply HtinA.
-Qed.
-
-(* Rtrans_subset : r transitive on X -> A ⊆ X -> r transitive on A *)
-Lemma Rtrans_subset (X : set T) : forall r, Rtrans X r -> forall' A ⊆ X, Rtrans A r.
-Proof.
-    unfold Rtrans. intros ??????????. by apply H; apply H0.
-Qed.
-
-(* Rasymm_subset : r anti-symmetric on X -> A ⊆ X -> r anti-symmetric on A *)
-Lemma Rasymm_subset (X : set T) : forall r, Rasymm X r -> forall' A ⊆ X, Rasymm A r.
-Proof.
-    unfold Rasymm. intros ????????. by apply H; apply H0.
-Qed.
-
-(* the subposet *)
-Definition sub_poset (po : poset) (A : set T) (HAinX : A ⊆ po) : poset :=
-    mk_poset (Rrefl_subset po HAinX) 
-        (Rtrans_subset po HAinX) (Rasymm_subset po HAinX).
-
-(* verify the properties defined by subposets *)
-Lemma sub_poset_sub (po : poset) (A : set T) (HAinX : A ⊆ po_set po) :
-    sub_poset po HAinX ⊆po po.
-Proof. unfold sub_poset, subposet. simpl. by split. Qed.
     
-End get_subposet.
+(*
 
+notions to be considered:
 
-(* the dual relation*)
-Definition dual_rel (r : relation T) : relation T := (fun a b : T => r b a).
-Notation " f '†r' " := (dual_rel f).
+- upper set and lower set
+- ..
 
 (* dual_rel_inv : x ⊑ y -> x ⊑ y (in the dual relation) *)
 Lemma dual_rel_inv {x y : T} {r : relation T} (Hxley : r x y)
@@ -196,56 +204,10 @@ Lemma dual_dual_releq (X : set T) (f : relation T) : f †r †r =r(X) f.
 Proof. unfold dual_rel, releq. by intros. Qed.
 
 
-(* The dual relation preserves reflexivity, transivity and anti-symmetricity. *)
-
-(* dual_rel_Rrefl : Rrefl X r -> Rrefl X (r †) *)
-Lemma dual_rel_Rrefl (X : set T) (r : relation T) : Rrefl X r -> Rrefl X (r †r).
-Proof. unfold Rrefl, dual_rel. by intros ?. Qed.
-
-(* dual_rel_Rtrans : Rtrans X r -> Rtrans X (r †) *)
-Lemma dual_rel_Rtrans (X : set T) (r : relation T) : Rtrans X r -> Rtrans X (r †r).
-Proof. unfold Rtrans, dual_rel. intros. by apply H with (y := y). Qed.
-
-(* dual_rel_Rasymm : Rasymm X r -> Rasymm X (r †) *)
-Lemma dual_rel_Rasymm (X : set T) (r : relation T) : Rasymm X r -> Rasymm X (r †r).
-Proof. unfold Rasymm, dual_rel. intros. by apply H. Qed.
-
-(** the dual poset 
-    This acts as a important proof technique in poset. *)
-Definition dual_poset (po : poset) : poset :=
-    mk_poset (dual_rel_Rrefl po) 
-        (dual_rel_Rtrans po) (dual_rel_Rasymm po).
-Notation " P '†po' " := (dual_poset P).
-
 Lemma dual_dual_poseteq (po : poset) : po †po †po =po po.
 Proof.
     unfold dual_poset, poseteq. simpl. split. by[]. by apply dual_dual_releq.
 Qed.
-
-End PosetDef.
-
-Notation " a '⊑' ( p ) b " := (po_rel p a b).
-Notation " f '†r' " := (dual_rel f).
-Notation " A '=po' B " := (poseteq A B).
-Notation " A '⊆po' B " := (subposet A B).
-Notation " P '†po' " := (dual_poset P).
-
-Add Parametric Morphism {T : Type} {X : set T}: (@dual_rel T)
-    with signature (@releq T X) ==> (@releq T X) as dual_rel_mor_eq.
-Proof.
-    intros r l Hreql.
-    unfold dual_rel, releq. intros. by apply Hreql. 
-Qed.    
-
-Add Parametric Relation {T : Type} : (poset T) (@poseteq T)
-  reflexivity proved by (@poseteq_refl T)
-  symmetry proved by (@poseteq_symm T)
-  transitivity proved by (@poseteq_trans T)
-  as eq_poset_rel.
-
-Add Parametric Morphism {T : Type} : (@po_set T)
-    with signature (@poseteq T) ==> (@seteq T) as po_set_mor_eq.
-Proof. intros P Q HPeqQ. by destruct HPeqQ. Qed.
 
 Add Parametric Relation {T : Type} : (poset T) (@subposet T)
   reflexivity proved by (@subposet_refl T)
@@ -2471,3 +2433,4 @@ End PosetExamples.
 
 *)
 
+*)

@@ -15,7 +15,7 @@ Axiom isomorphic_extensionality : IsomorphicExtensionality.
     logic assumptions? (I believe the answer is Yes.) *)
 
 Definition transport_iso (A B : Type) : A ≅ B -> A -> B.
-Proof. move => H. apply isomorphic_extensionality in H. by apply transport.
+Proof. move => H a. apply isomorphic_extensionality in H. by exact ([a by H]).
 Qed.
         
         

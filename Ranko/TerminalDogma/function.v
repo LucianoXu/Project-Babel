@@ -10,6 +10,9 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
+Declare Scope TerminalDogma_scope.
+Open Scope TerminalDogma_scope.
+
 (** injection *)
 
 Definition injective (X Y : Type) (f : X -> Y) := 
@@ -103,7 +106,8 @@ Definition fun_comp {X Y Z : Type} (g : Y -> Z) (f : X -> Y) : X -> Z :=
     fun x => g (f x).
 
 (** Note : This notation is right associate. *)
-Notation " g ◦ f " := (fun_comp g f) (at level 4, right associativity).
+Notation " g ◦ f " := (fun_comp g f) (at level 4, right associativity)
+    : TerminalDogma_scope.
 
 (** The equivalence between the function compostion defined here and that in
     Coq. *)

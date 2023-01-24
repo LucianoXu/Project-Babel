@@ -209,6 +209,26 @@ Add Parametric Relation {T : Type} : _ (@supset T)
     transitivity proved by (@supset_trans T)
     as supset_rel.
 
+(** tranform an element into the super set *)
+Definition into_supset {T : Type} {A B : 𝒫(T)} (a : A) (HAB : A ⊆ B) : B.
+Proof. 
+    destruct a.
+    rewrite /set2sigma. refine (exist _ x _). by apply HAB.
+Defined.
+
+Notation "[ a 'in' HAB ]" := (into_supset a HAB) : NSet_scope.
+
+
+Lemma eq_in_subset {T : Type} {A B : 𝒫(T)}  
+    (x y : A) (HAB : A ⊆ B) : [x in HAB] = [y in HAB] -> x = y.
+Proof.
+    rewrite /into_supset => H.
+    destruct x as [x0 Hx0in], y as [y0 Hy0in].
+    inversion H. move : Hx0in Hy0in H. rewrite H1.
+    move => Hx0in Hy0in _. replace Hx0in with Hy0in => //.
+    by apply proof_irrelevance.
+Qed.
+Arguments eq_in_subset {T A B} [x y] (HAB).
 
 (** subset_em : ∅ ⊆ A *)
 Lemma em_subset {T : Type}: forall (A : 𝒫(T)), ∅ ⊆ A.
@@ -715,3 +735,11 @@ Qed.
 
 *)
 
+
+(** I am not sure whether this axiom is consistent. 
+    TODO #10 *)
+Module TypeSetEquivalence.
+
+Axiom type_eq_set : forall (T: Type), T = (set_uni T : Type).
+
+End TypeSetEquivalence.
