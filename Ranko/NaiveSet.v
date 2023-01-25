@@ -59,12 +59,15 @@ Proof. split.
     apply propositional_extensionality. by apply H.
 Qed.
 
-(** set *)
-Record set (T : Type) := mk_set { 
+(** powerset 
+    The type [powerset T] is indeed the power powerset of T, because every element of it
+    has the [chac] function, which corresponds to a [sig] type. And the [sig]
+    type further corresponds to subsets in maths. *)
+Record powerset (T : Type) := mk_set { 
     chac : T -> Prop;
 }.
 (** This notation means 'power set'. *)
-Notation " '𝒫(' T ) " := (set T) (format "'𝒫(' T )") : NSet_scope.
+Notation " '𝒫(' T ) " := (powerset T) (format "'𝒫(' T )") : NSet_scope.
 Notation " s '∈' S " := ((chac S) s) : NSet_scope.
 Notation " s '∉' S " := (~ s ∈ S) : NSet_scope.
 Notation "{  x : A | P  }" := (mk_set (T:=A) (fun x => P)) : NSet_scope.
@@ -88,9 +91,9 @@ Proof.
     move => H. by apply /seteq_predP /predeqP.
 Qed.
 
+
 (** The set we defined can be converted into a sigma type, which corresponds to
     the subset in type system. *)
-
 Coercion set2sigma (T : Type) (A : 𝒫(T)) : Type := sig (chac A).
 
 
@@ -209,6 +212,7 @@ Add Parametric Relation {T : Type} : _ (@supset T)
     transitivity proved by (@supset_trans T)
     as supset_rel.
 
+
 (** tranform an element into the super set *)
 Definition into_supset {T : Type} {A B : 𝒫(T)} (a : A) (HAB : A ⊆ B) : B.
 Proof. 
@@ -217,7 +221,6 @@ Proof.
 Defined.
 
 Notation "[ a 'in' HAB ]" := (into_supset a HAB) : NSet_scope.
-
 
 Lemma eq_in_subset {T : Type} {A B : 𝒫(T)}  
     (x y : A) (HAB : A ⊆ B) : [x in HAB] = [y in HAB] -> x = y.
@@ -229,6 +232,7 @@ Proof.
     by apply proof_irrelevance.
 Qed.
 Arguments eq_in_subset {T A B} [x y] (HAB).
+
 
 (** subset_em : ∅ ⊆ A *)
 Lemma em_subset {T : Type}: forall (A : 𝒫(T)), ∅ ⊆ A.
@@ -316,7 +320,7 @@ Definition big_union {T : Type} (A : 𝒫(𝒫(T))) : 𝒫(T) :=
 Notation "⋃" := big_union : NSet_scope.
 
 Add Parametric Morphism {X : Type} : (@big_union X)
-    with signature (@subset (set X)) ==> (@subset X) as big_union_mor_sub.
+    with signature (@subset (powerset X)) ==> (@subset X) as big_union_mor_sub.
 Proof.
     intros M N HMinN. unfold big_union, subset. simpl.
     intros x [S HS]. exists S. split. apply HMinN. apply HS. apply HS.
@@ -741,5 +745,8 @@ Qed.
 Module TypeSetEquivalence.
 
 Axiom type_eq_set : forall (T: Type), T = (set_uni T : Type).
+
+(** shoule we add a axiom saying that the sigma type of a sigma type can be 
+    simplified? *)
 
 End TypeSetEquivalence.
