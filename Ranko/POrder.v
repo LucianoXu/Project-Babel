@@ -5,9 +5,6 @@ From Ranko Require Import TerminalDogma.premises
                           TerminalDogma.Extensionality
                           NaiveSet.
 
-
-From Ranko Require Import NaiveSet.
-
 From Coq Require Import Relations Classical.
 
 
@@ -36,6 +33,8 @@ Reserved Notation " L '†L' " (at level 10).
 Reserved Notation " cL '†cL' " (at level 10).
 *)
 
+Reserved Notation "⊔ A " (at level 40).
+Reserved Notation "'cpo⊔' A" (at level 40).
 
 (** dual relation 
     R1 is the dual relation of R2 *)
@@ -366,8 +365,23 @@ Qed.
     because the supremum does not always exists. *)
 Definition supremum (T : poset) (A : 𝒫(T)) (x : T) := least (ub A) x.
 
-(* x is the infimum of A *)
+(** x is the infimum of A *)
 Definition infimum (T : poset) (A : 𝒫(T)) (x : T) := largest (lb A) x.
+
+(** Another view of supremum (least upper bound). *)
+Lemma lubP (T : poset) (A : 𝒫(T)) (x : T) :
+    supremum A x <-> (forall' a ∈ A, a ⊑ x) 
+                    /\ (forall u, (forall' a ∈ A, a ⊑ u) -> x ⊑ u).
+Proof. by rewrite /supremum /least /ub //=. Qed.
+
+(** Another view of infimum (greatest lower bound). *)
+Lemma glbP (T : poset) (A : 𝒫(T)) (x : T) :
+    infimum A x <-> (forall' a ∈ A, x ⊑ a) 
+                    /\ (forall u, (forall' a ∈ A, u ⊑ a) -> u ⊑ x).
+Proof.
+    have Hdual := @lubP (T †po).
+    by apply Hdual.
+Qed.
 
 (* sup_unique : supremum is unique *)
 Lemma sup_unique (T : poset) (A : 𝒫(T)) (a b : T)
@@ -559,7 +573,7 @@ Canonical em_is_chain (T : poset) := Chain ∅ (@em_chain_mixin T).
 
 
 (** CPO - existence version 
-    The union operator is not necessary. This class only requires the existence
+    The join operator is not necessary. This class only requires the existence
     of supremums. *)
 Module CPO_ex.
 
@@ -594,7 +608,7 @@ Export CPO_ex.Exports.
 
 
 
-(** **** CPO_bottom: every CPO has the least element *)
+(** **** CPO_ex_bottom: every CPO has the least element *)
 Lemma CPO_ex_bottom (C : cpo_ex) : exists x : C, least 𝕌 x.
 Proof.
     have Hbot := CPO_ex.class [chain of (set_em C)]. simpl in Hbot.
@@ -602,6 +616,58 @@ Proof.
     exists y. by apply sup_em_iff_lea_uni.
 Qed.
 
+
+
+(** CPO (with the join operator) *)
+Module CPO.
+
+Structure mixin_of (T : poset) := Mixin {
+    join_op : chain T -> T;
+    join_prop : forall A : chain T, supremum A (join_op A);
+}.
+Notation class_of := mixin_of (only parsing).
+
+Section ClassDef.
+
+Structure type := Pack {
+    sort : poset;
+    _ : class_of sort;
+}.
+
+Definition class cT := 
+    let: Pack _ c := cT return class_of (sort cT) in c.
+
+End ClassDef.
+
+
+Notation join_of A := (join_op (@class _) [chain of A : 𝒫(_)]).
+
+Module Exports.
+Coercion sort : type >-> poset.
+Notation cpo := type.
+Notation cpoMixin := Mixin.
+Notation CPO t m := (@Pack t m).
+Notation "[ 'cpo' 'of' T ]" := ([get c | sort c ~ T ])
+    (at level 0, format "[ 'cpo'  'of'  T ]") : POrder_scope.
+Notation "[ 'cpoMixin' 'of' T ]" := (@class [ cpo_ex of T ])
+    (at level 0, format "[ 'cpoMixin'  'of'  T ]") : POrder_scope.
+Notation "'cpo⊔' A" := (join_op (@class _) [chain of A : 𝒫(_)]) : 
+    POrder_scope.
+Notation "⊔ A " := (join_op (@class _) A) 
+    (only printing) : POrder_scope.
+End Exports.
+
+End CPO.
+Export CPO.Exports.
+
+
+(** **** CPO_bottom: every CPO has the least element *)
+Lemma CPO_bottom (C : cpo) : least 𝕌 (cpo⊔ (set_em C)).
+Proof.
+    apply sup_em_iff_lea_uni.
+    have Hbot := CPO.join_prop (CPO.class C).
+    by apply Hbot.
+Qed.
 
 (*######################################################################*)
 (** lattice *)

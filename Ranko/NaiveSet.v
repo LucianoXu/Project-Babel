@@ -40,6 +40,7 @@ Reserved Notation " F [>] x" (at level 30, right associativity, only printing).
 Reserved Notation " F [@] " (at level 30, right associativity).
 Reserved Notation " F [@] A" (at level 30, right associativity, only printing).
 
+(** TODO #11 *)
 Reserved Notation "'forall'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
 Reserved Notation "'exists'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
 Reserved Notation "'forall'' A '⊆' B , expr" (at level 80, A at level 20, B at level 80, expr at level 80).
@@ -455,6 +456,22 @@ End SetTheory.
 
 (** Theories about big operators and mappings. *)
 Section AdvancedTheory.
+
+(** bigU is the least upper bound in the sense of subset order. *)
+Lemma bigU_ub (T : Type) (A : 𝒫(𝒫(T))) :
+    forall' X ∈ A, X ⊆ ⋃ A.
+Proof. 
+    rewrite /big_union /subset => //= X HX x Hx.
+    exists X. by split.
+Qed.
+
+Lemma bigU_lub (T : Type) (A : 𝒫(𝒫(T))) (X : 𝒫(T)):
+    (forall' a ∈ A, a ⊆ X) -> ⋃ A ⊆ X.
+Proof.
+    rewrite /big_union /subset => //= H a [Y [HYin Hain]].
+    by apply (H Y) => //.
+Qed.
+
 
 Lemma big_union_em {T : Type} :
 
