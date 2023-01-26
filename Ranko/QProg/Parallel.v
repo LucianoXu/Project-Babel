@@ -3,7 +3,7 @@
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Import QTheory POrder POrderSet.
+From Ranko Require Import QTheory POrder POrderSet POrderNat.
 
 From Coq Require Import Classical Arith Relations Reals.
 
@@ -55,7 +55,7 @@ Notation " S1 [ p ⊕ ] S2 " := (@prob_ _ p S1 S2)
     (format "S1  [ p  ⊕ ]  S2"): QPP_scope.
 Notation " S1 □ S2 " := (@nondet_ _ S1 S2) (at level 3): QPP_scope.
 Notation " << P >> " := (@atom_ _ P) : QPP_scope.
-Notation " [ S1 // S2 ] " := (@parallel_ _ S1 S2) (at level 5) : QPP_scope.
+Notation " [ S1 // S2 ] " := (@parallel_ _ S1 S2) (at level 0) : QPP_scope.
 
 Fixpoint non_parallel {qs : QvarScope} (P : prog qs) : bool :=
     match P with 
@@ -284,7 +284,7 @@ Arguments deSemN_point : simpl nomatch.
 Notation " ⦗ ↓ ⦘ ( rho ) " := (deSemN_point None _ rho) :QPP_scope.
 Notation " ⦗ ↓ ⦘ " := (deSemN_point None _ ) :QPP_scope.
 
-
+(** lift to set input *)
 Definition deSemN {qs : QvarScope} (P : prog qs) (n : nat) := ⋃ ◦ ⦗ P, n ⦘ [<].
 
 
@@ -600,21 +600,26 @@ Proof. move => n. by apply deSemN_monotonic_strong. Qed.
 Arguments deSemN_monotonic_step {qs} P rho_s.
 
 
+(** use the number order *)
+Import NatLePoset.CanonicalStruct.
+Import SupsetOrder.CanonicalStruct.
 
-(** Some preparatings of order theory *)
+(** Construct the monotonic structure *)
+Definition deSemN_n {qs : QvarScope} (P : prog qs) rho_s n := deSemN P n rho_s.
 
-(* TODO #4
-Definition f_chain_obj {H : HilbertSpace} (f : 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻))
-    (ch : chain H) : nat -> 𝒫(𝒟( H )⁻) :=
-        fun n => f (ch _[n]).
-
-Lemma f_chain_inc {H : HilbertSpace} (f : 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻))
-    (ch : chain H) :
-    forall n 
-    forall n, f_chain_obj f ch n ⊑ f_chain_obj f ch n.+1.
+Lemma deSemN_n_monotonicMixin 
+    {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)) : 
+    MonotonicFun.class_of (deSemN_n P rho_s).
 Proof.
-    move => n. apply 
-*)
+    rewrite /MonotonicFun.mixin_of => x y Hxy.
+    rewrite /deSemN_n. apply deSemN_monotonic_N. apply /leP. by apply Hxy.
+Defined.
+
+Canonical deSemN_n_monotonic 
+    {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)) := 
+    MonotonicFun _ (@deSemN_n_monotonicMixin _ P rho_s).
+
+(*
 
 
 (** Define the operationa semantics (infinite step) *)
@@ -629,26 +634,34 @@ Definition chain_deSemN {qs : QvarScope} (P : prog qs) rho_s : chain 𝒟(qs)⁻
 Lemma chain_deSemN_n {qs : QvarScope} (P : prog qs) rho_s n :
         chain_deSemN P rho_s _[n] = ⟦ P, n ⟧ (rho_s).
 Proof. by []. Qed.
+*)
 
-
-Definition DeSem {qs : QvarScope} (P : prog qs) rho_s : 𝒫(𝒟( qs )⁻) :=
-    lim→∞ (chain_deSemN P rho_s).
+Definition DeSem 
+    {qs : QvarScope} (P : prog qs) (rho_s :𝒫(𝒟( qs )⁻)) : 𝒫(𝒟( qs )⁻) := 
+        
+        cpo⊔ (deSemN_n P rho_s) [<] 𝕌.
 
 Notation " ⟦ P ⟧ ( rho_s ) " := (@DeSem _ P rho_s) 
     (at level 10, format "⟦  P  ⟧ ( rho_s )"): QPP_scope.
 
+(* 
 Lemma DeSem_ub : forall {qs : QvarScope} n (P : prog qs) rho_s, 
     ⟦ P, n ⟧ (rho_s) ⊑ ⟦ P ⟧ (rho_s).
-Proof. 
-    rewrite /DeSem => qs n P rho_s. rewrite -chain_deSemN_n. 
-    by apply chain_limit_ub.
+Proof.
+    rewrite /DeSem => qs n P rho_s //=.
+    have t := CPO.join_prop (CPO.class _ ) [chain of ((deSemN_n P rho_s) [<] (𝕌))].
+    apply t => //=.
+    exists n. by split.
 Qed.
 Arguments DeSem_ub {qs} n P rho_s.
 
 Lemma DeSem_lub : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
     (forall n, ⟦ P, n ⟧(rho_s) ⊑ rho_ub) -> ⟦ P ⟧ (rho_s) ⊑ rho_ub.
 Proof.
-    rewrite /DeSem => qs P rho_s rho_ub H. apply chain_limit_lub. by apply H.
+    rewrite /DeSem => qs P rho_s rho_ub H //=.
+    have t := CPO.join_prop (CPO.class _ ) [chain of ((deSemN_n P rho_s) [<] (𝕌))].
+    apply t => //=.
+
 Qed.
 
 Lemma DeSem_lubP : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
@@ -657,6 +670,8 @@ Proof. split. by apply DeSem_lub.
     move => HP n. transitivity (⟦ P ⟧ (rho_s)) => //. 
     by apply DeSem_ub.
 Qed.
+*)
+
 
 Lemma DeSem_em {qs : QvarScope} (P : prog qs) :
         ⟦ P ⟧ (∅) = ∅.
@@ -665,12 +680,25 @@ Admitted.
 
 
 
+
+(*
+
 (** Properties of Denotational Semantics *)
 
 Lemma DeSem_skip {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ Skip ⟧ (rho_s) = rho_s.
 Proof.
-    apply poset_antisym.
+    rewrite /DeSem //=. apply poset_antisym.
+
+    apply bigI_glb. move => a [] i [] _ <-.
+    rewrite /deSemN_n /deSemN -fun_compP.
+    case: i.
+    case (em_classic)
+    rewrite /deSemN_point. rewrite /mapR.
+    rewrite bigU_sgl_nem //=. 
+
+
+    
     apply DeSem_lub. case. 
         case (em_classic rho_s).
             by move => ->.
@@ -965,5 +993,7 @@ Proof.
     rewrite /chain_union /chain_union_obj /chain_deSemN /chain_obj => //.
     rewrite -deSemN_parallel. by apply DeSem_ub.
 Qed.
-
+*)
 End QParallelProg.
+
+

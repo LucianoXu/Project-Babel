@@ -32,7 +32,8 @@ Reserved Notation " A '∪' B " (at level 43).
 Reserved Notation " A '∩' B " (at level 42).
 Reserved Notation " '∁' A" (at level 39). 
 
-Reserved Notation "'⋃'".
+Reserved Notation "⋃".
+Reserved Notation "⋂".
 Reserved Notation " f [<] " (at level 1, left associativity).
 Reserved Notation " f [<] ( A )" (at level 1, left associativity).
 Reserved Notation " F [>] " (at level 30, right associativity).
@@ -111,13 +112,6 @@ Lemma in_set_em_F [T : Type] :
 Proof. move => A x Hx HA. rewrite HA in Hx. by destruct Hx. Qed.
 
 
-(** TODO add the special structure *)
-Record nem_set (T : Type) := mk_nem_set {
-    nem_set_obj :> 𝒫(T);
-    nem_set_class : nem_set_obj <> ∅;
-}.
-
-Notation " '𝒫(' T ')₊' " := (nem_set T) (format "'𝒫(' T )₊") : NSet_scope.
 
 
 (** The universal set (of type T). *)
@@ -137,6 +131,10 @@ Proof. split; last first.
 
 Qed.
 
+
+(** In a inhabited type, 𝕌 ≠ ∅. *)
+Lemma uni_neq_em (T : iType) : set_uni T <> set_em T.
+Proof. apply nonemptyP. by exists [witness of T]. Qed.
 
 (* This one uses classical logic. *)
 Lemma em_classic {T : Type} (A : 𝒫(T)) : A = ∅ \/ A <> ∅.
@@ -433,6 +431,27 @@ Proof. rewrite /union seteqP // => x. by apply and_comm. Qed.
 Lemma itsct_assoc (A B C: 𝒫(T)) : (A ∩ B) ∩ C = A ∩ (B ∩ C).
 Proof. rewrite /union seteqP // => x. by apply and_assoc. Qed.
 
+Lemma union_uni (A : 𝒫(T)) : A ∪ 𝕌 = 𝕌.
+Proof. rewrite /union seteqP //= => x. split => //=.
+    by move => _; right.
+Qed.
+
+Lemma union_em (A : 𝒫(T)) : A ∪ ∅ = A.
+Proof. rewrite /union seteqP //= => x. split.
+    by case. by move => H; left.
+Qed.
+
+Lemma itsct_uni (A : 𝒫(T)) : A ∩ 𝕌 = A.
+Proof. rewrite /itsct seteqP //= => x. split.
+    by move => [] ? _. by move => ?; split.
+Qed.
+
+Lemma itsct_em (A : 𝒫(T)) : A ∩ ∅ = ∅.
+Proof. rewrite /itsct seteqP //= => x. split => //=.
+    by move => [].
+Qed.
+
+
 Lemma diff_subset (X Y: 𝒫(T)) : X / Y ⊆ X.
 Proof. unfold diff, subset; simpl. intros x Hx. by apply Hx. Qed.
 
@@ -486,6 +505,7 @@ Proof.
     rewrite /big_union /subset => //= H a [Y [HYin Hain]].
     by apply (H Y) => //.
 Qed.
+
 
 
 Lemma big_union_em {T : Type} :

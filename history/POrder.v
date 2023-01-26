@@ -853,112 +853,7 @@ Definition clatt_interval
 End DerivedLattice.
 
 
-
-Section PosetFunction.
-
-(* We don't set T as the variable, because here we may have functions
-    between different Types. *)
-
-(* the definition of a fixpoint *)
-Definition fp (T : Type) (X : set T) (f : T -> T) (x : T) := x ∈ X /\ f x = x.
-
-(* set of fixpoints *)
-Definition fp_s (T : Type) (X : set T) (f : T -> T) := { x : fp X f x }.
-
-(* fp_s_in_X : fp_s f ⊆ X *)
-Lemma fp_s_in_X (T : Type) (X : set T) : forall f, fp_s X f ⊆ X.
-Proof.
-    unfold fp_s, fp. unfold subset. simpl. intros. apply H.
-Qed.
-
-(* pre-fixpoint *)
-Definition pre_fp (T : Type) (po : poset T) (f : T -> T) (x : T) := 
-    let X := po_set po in
-    x ∈ X /\ f x ∈ X /\ po_rel po x (f x).
-
-(* pre-fixpoint set *)
-Definition pre_fp_s (T : Type) (po : poset T) (f : T -> T) := 
-    { x : pre_fp po f x }.
-
-(* pre_fp_s_in_X : pre_fp_s f ⊆ X *)
-Lemma pre_fp_s_in_X (T : Type) (po : poset T) : forall f, pre_fp_s po f ⊆ po_set po.
-Proof.
-    unfold pre_fp_s. unfold subset. simpl. intros. apply H.
-Qed.
-
-(* post-fixpoint *)
-Definition post_fp (T : Type) (po : poset T) (f : T -> T) (x : T) := 
-    let X := po_set po in
-    x ∈ X /\ f x ∈ X /\ po_rel po (f x) x.
-
-(* post-fixpoint set *)
-Definition post_fp_s (T : Type) (po : poset T) (f : T -> T) := 
-    { x : post_fp po f x }.
-
-(* post_fp_s_in_X : post_fp_s f ⊆ X *)
-Lemma post_fp_s_in_X (T : Type) (po : poset T) : forall f, post_fp_s po f ⊆ po_set po.
-Proof.
-    assert (Hdual := @pre_fp_s_in_X _ (dual_poset po)).
-    by apply Hdual.
-Qed.
-
-(* fp_in_pre_fp : fp_s f ⊆ pre_fp_s f *)
-Lemma fp_in_pre_fp (T : Type) (po : poset T) : forall f, fp_s (po_set po) f ⊆ pre_fp_s po f.
-Proof.
-    intros f. unfold subset. simpl. intros x Hxin.
-    unfold pre_fp. split. apply Hxin. split. destruct Hxin. rewrite H0. apply H.
-    destruct Hxin. rewrite H0. apply (rel_Rrefl po). apply H.
-Qed.
-
-(* fp_in_post_fp : fp_s f ⊆ post_fp_s f *)
-Lemma fp_in_post_fp (T : Type) (po : poset T) : forall f, fp_s (po_set po) f ⊆ post_fp_s po f.
-Proof.
-    assert (Hdual := @fp_in_pre_fp _ (dual_poset po)).
-    by apply Hdual.
-Qed.
-
-
-(* a is the least fixpoint of f greater than x *)
-Definition lfp_x (T : Type) (po : poset T) (f : T -> T) (x a : T) := 
-    least po ({ y : y ∈ fp_s (po_set po) f /\ po_rel po x y }) a.
-
-(* a is the least fixpoint of f *)
-Definition lfp (T : Type) (po : poset T) (f : T -> T) (a : T) := 
-    least po (fp_s (po_set po) f) a.
-    
-(* a is the greatest fixpoint of f smaller than x *)
-Definition gfp_x (T : Type) (po : poset T) (f : T -> T) (x a : T) := 
-    largest po ({ y : y ∈ fp_s (po_set po) f /\ po_rel po y x }) a.
-
-(* a is the greatest fixpoint of f *)
-Definition gfp (T : Type) (po : poset T) (f : T -> T) (a : T) := 
-    largest po (fp_s (po_set po) f) a.
-
-(* monotonic *)
-Definition monotonic (T T' : Type)
-        (po : poset T) (po' : poset T') (f : T -> T') :=
-    let X := po_set po in
-    let X' := po_set po' in
-    (f ~ X |-> X') /\ forall' x ∈ X, forall' y ∈ X, 
-        (po_rel po x y -> po_rel po' (f x) (f y)).
-
-(* dual_monotonic : monotonic po po' f -> monotonic (dual_poset po) (dual_poset po') f *)
-Lemma dual_monotonic (T T' : Type) (po : poset T) (po' : poset T') (f : T -> T') :
-    monotonic po po' f -> monotonic (dual_poset po) (dual_poset po') f.
-Proof.
-    unfold monotonic. intros Hmono. split.
-    by apply Hmono. intros x HxinX y HyinX. by apply Hmono.
-Qed.
-
-(* continuous *)
-Definition continuous (T T' : Type) 
-    (cpo : CPO T) (cpo' : CPO T') (f : T -> T') :=
-    let X := po_set (CPO_po cpo) in
-    let X' := po_set (CPO_po cpo') in
-    (f ~ X |-> X') /\ forall C : set T, 
-        chain (CPO_po cpo) C -> chain (CPO_po cpo') (f @ C) /\ 
-        f (CPO_join cpo C) = CPO_join cpo' (f @ C).
-
+(*
 (* join morphism *)
 Definition join_morphism (T T' : Type)
     (L : latt T) (L' : latt T') (f : T -> T') :=
@@ -984,8 +879,7 @@ Definition extensive (T : Type) (po : poset T) (f : T -> T) :=
 Definition reductive (T : Type) (po : poset T) (f : T -> T) := 
     let X := po_set po in
     (f ~ X |-> X) /\ forall' x ∈ X, po_rel po (f x) x.
-
-End PosetFunction.
+*)
 
 Add Parametric Morphism {T T': Type} : (@monotonic T T')
     with signature (@poseteq T) ==> (@poseteq T') ==> eq ==> iff as monotonic_mor_eq.

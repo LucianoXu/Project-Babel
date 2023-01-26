@@ -148,7 +148,7 @@ Notation " A [ p ⊕ ] B " := (@scalar_convex_combS _ p A B)
 
 
 (** Use inverse inclusion order *)
-Export PowersetPoset.SupsetCanonical.
+Export SupsetOrder.CanonicalStruct.
 
 
 
@@ -202,30 +202,40 @@ Proof.
 Qed.
 
 
-
-Lemma PDenSetOrder_Init : 
-    forall {qs : QvarScope} r1 r2 (qv : qs), 
-        r1 ⊑ r2 -> InitSttS qv r1 ⊑ InitSttS qv r2.
+(** The monotonicity of three operators *)
+Lemma InitSttS_monotonicMixin {qs : QvarScope} (qv : qs) :
+    MonotonicFun.class_of (InitSttS qv).
 Proof.
-    rewrite /InitSttS => qs r1 r2 qv Hr1r2.
+    rewrite /MonotonicFun.mixin_of => r1 r2 Hr1r2.
     by apply mapR_mor_sub.
 Qed.
 
-Lemma PDenSetOrder_U : 
-    forall {qs : QvarScope} r1 r2 (qv : qs) (U : UnitaryOpt qv),
-        r1 ⊑ r2 -> UapplyS U r1 ⊑ UapplyS U r2.
+Canonical InitSttS_monotonicfun {qs : QvarScope} (qv : qs) := 
+    MonotonicFun _ (@InitSttS_monotonicMixin _ qv).
+
+
+Lemma UapplyS_monotonicMixin {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) :
+    MonotonicFun.class_of (UapplyS U).
 Proof.
-    rewrite /UapplyS => qs r1 r2 qv U Hr1r2.
+    rewrite /MonotonicFun.mixin_of => r1 r2 Hr1r2.
     by apply mapR_mor_sub.
 Qed.
 
-Lemma PDenSetOrder_M : 
-    forall {qs : QvarScope} r1 r2 (qv_m : qs) (m : MeaOpt qv_m) (result : bool),
-        r1 ⊑ r2 -> MapplyS m result r1 ⊑ MapplyS m result r2.
+Canonical UapplyS_monotonicfun {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv)
+    := MonotonicFun _ (@UapplyS_monotonicMixin _ _ U).
+
+
+Lemma MapplyS_monotonicMixin 
+    {qs : QvarScope} (qv_m : qs) (m : MeaOpt qv_m) (result : bool) :
+    MonotonicFun.class_of (MapplyS m result).
 Proof.
-    rewrite /MapplyS => qs r1 r2 qv_m m result Hr1r2.
+    rewrite /MonotonicFun.mixin_of => r1 r2 Hr1r2.
     by apply mapR_mor_sub.
 Qed.
+
+Canonical MapplyS_monotonicfun 
+    {qs : QvarScope} (qv_m : qs) (m : MeaOpt qv_m) (result : bool) :=
+    MonotonicFun _ (@MapplyS_monotonicMixin _ _ m result).
 
 
 
@@ -359,7 +369,7 @@ Definition InitStt_chain_obj {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻)
 Lemma InitStt_chain_prop {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻)
     : forall i, InitStt_chain_obj qv ch i ⊑ InitStt_chain_obj qv ch i.+1.
 Proof.
-    rewrite /InitStt_chain_obj => i. apply PDenSetOrder_Init. by apply ch.
+    rewrite /InitStt_chain_obj => i. apply MonotonicFun.class. by apply ch.
 Qed.
 Arguments InitStt_chain_prop {qs} qv ch.
 
@@ -378,7 +388,7 @@ Lemma Uapply_chain_prop
     {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻)
     : forall i, Uapply_chain_obj U ch i ⊑ Uapply_chain_obj U ch i.+1.
 Proof.
-    rewrite /Uapply_chain_obj => i. apply PDenSetOrder_U. by apply ch.
+    rewrite /Uapply_chain_obj => i. apply MonotonicFun.class. by apply ch.
 Qed.
 Arguments Uapply_chain_prop {qs} {qv} U ch.
 
@@ -400,7 +410,7 @@ Lemma Mapply_chain_prop
     {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (ch : chain 𝒟(qs)⁻) (r : bool)
     : forall i, Mapply_chain_obj M r ch i ⊑ Mapply_chain_obj M r ch i.+1.
 Proof.
-    rewrite /Mapply_chain_obj => i. apply PDenSetOrder_M. by apply ch.
+    rewrite /Mapply_chain_obj => i. apply MonotonicFun.class. by apply ch.
 Qed.
 Arguments Mapply_chain_prop {qs} {qv} M ch r.
 

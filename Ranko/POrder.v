@@ -83,7 +83,10 @@ Coercion sort : type >-> Sortclass.
 Notation poset := type.
 Notation posetMixin := Mixin.
 Notation Poset T m := (@Pack T m).
-Notation "[ 'poset' 'of' T ]" := ([get r | sort r ~ T ])
+
+(** Here we conduct the explicit conversion by [T : Type], to allow the
+    downgrade of more complex structures, such as cpo and lattices. *)
+Notation "[ 'poset' 'of' T ]" := ([get r | sort r ~ T : Type ])
   (at level 0, format "[ 'poset'  'of'  T ]") : POrder_scope.
 Notation "[ 'posetMixin' 'of' T ]" := (@class [ poset of T ])
   (at level 0, format "[ 'posetMixin'  'of'  T ]") : POrder_scope.
@@ -527,9 +530,10 @@ End ClassDef.
 
 Module Exports.
 Coercion set : type >-> powerset.
+Arguments class [T] cT.
 Notation chain := type.
 Notation Chain s m := (@Pack _ s m).
-Notation "[ 'chain' 'of' A ]" := ([get c | set c ~ A])
+Notation "[ 'chain' 'of' A ]" := ([get c | set c ~ A : 𝒫(_)])
   (at level 0, format "[ 'chain'  'of'  A ]"): POrder_scope.
 Notation "[ 'chainMixin' 'of' A ]" := (@class _ [ chain of A ])
   (at level 0, format "[ 'chainMixin'  'of'  A ]"): POrder_scope.
@@ -570,7 +574,7 @@ Module Exports.
 Coercion sort : type >-> poset.
 Notation cpo_ex := type.
 Notation CPO_ex t m := (@Pack t m).
-Notation "[ 'cpo_ex' 'of' T ]" := ([get c | sort c ~ T ])
+Notation "[ 'cpo_ex' 'of' T ]" := ([get c | sort c ~ [poset of T] ])
   (at level 0, format "[ 'cpo_ex'  'of'  T ]") : POrder_scope.
 Notation "[ 'cpo_exMixin' 'of' T ]" := (@class [ cpo_ex of T ])
   (at level 0, format "[ 'cpo_exMixin'  'of'  T ]") : POrder_scope.
@@ -621,11 +625,11 @@ Coercion sort : type >-> poset.
 Notation cpo := type.
 Notation cpoMixin := Mixin.
 Notation CPO t m := (@Pack t m).
-Notation "[ 'cpo' 'of' T ]" := ([get c | sort c ~ T ])
+Notation "[ 'cpo' 'of' T ]" := ([get c | sort c ~ [poset of T] ])
     (at level 0, format "[ 'cpo'  'of'  T ]") : POrder_scope.
 Notation "[ 'cpoMixin' 'of' T ]" := (@class [ cpo_ex of T ])
     (at level 0, format "[ 'cpoMixin'  'of'  T ]") : POrder_scope.
-Notation "'cpo⊔' A" := (join_op (@class _) [chain of A : 𝒫(_)]) : 
+Notation "'cpo⊔' A" := (join_op (@class _) [chain of A]) : 
     POrder_scope.
 Notation "⊔ A " := (join_op (@class _) A) 
     (only printing) : POrder_scope.
@@ -673,7 +677,7 @@ Notation latt_ex := type.
 Notation Latt_exMixin := Mixin.
 Notation Latt_ex t m := (@Pack t m).
 
-Notation "[ 'latt_ex' 'of' T ]" := ([get r | sort r ~ T ])
+Notation "[ 'latt_ex' 'of' T ]" := ([get r | sort r ~ [cpo_ex of T] ])
   (at level 0, format "[ 'latt_ex'  'of'  T ]") : POrder_scope.
 Notation "[ 'latt_exMixin' 'of' T ]" := (@class [latt_ex of T])
   (at level 0, format "[ 'latt_exMixin'  'of'  T ]") : POrder_scope.
@@ -730,7 +734,7 @@ Notation clatt_ex := type.
 Notation Clatt_exMixin := Mixin.
 Notation Clatt_ex T m := (@Pack T m).
 
-Notation "[ 'clatt_ex' 'of' T ]" := ([get r | sort r ~ T])
+Notation "[ 'clatt_ex' 'of' T ]" := ([get r | sort r ~ [ latt_ex of T ]])
     (at level 0, format "[ 'clatt_ex'  'of'  T ]") : POrder_scope.
 Notation "[ 'clatt_exMixin' 'of' T ]" := (@class [clatt_ex of T])
     (at level 0, format "[ 'clatt_exMixin'  'of'  T ]") : POrder_scope.
@@ -738,3 +742,159 @@ End Exports.
 
 End CLattice_ex.
 Export CLattice_ex.Exports.
+
+
+
+
+(*###################################################*)
+(** ** function in poset *)
+
+(* the definition of a fixpoint *)
+Definition fp (T : poset) (f : T -> T) (x : T) : Prop := f x = x.
+
+(* set of fixpoints *)
+Definition fp_s (T : poset) (f : T -> T) : 𝒫(T) := { x | fp f x }.
+
+(* pre-fixpoint *)
+Definition pre_fp (T : poset) (f : T -> T) (x : T) : Prop := x ⊑ f x.
+
+(* pre-fixpoint set *)
+Definition pre_fp_s (T : poset) (f : T -> T) : 𝒫(T) := { x | pre_fp f x }.
+
+(* post-fixpoint *)
+Definition post_fp (T : poset) (f : T -> T) (x : T) : Prop := f x ⊑ x.
+
+(* post-fixpoint set *)
+Definition post_fp_s (T : poset) (f : T -> T) : 𝒫(T) := { x | post_fp f x }.
+
+(* fp_in_pre_fp : fp_s f ⊆ pre_fp_s f *)
+Lemma fp_in_pre_fp (T : poset) : forall f : T -> T, fp_s f ⊆ pre_fp_s f.
+Proof.
+    rewrite /subset /fp_s /fp /pre_fp_s /pre_fp => //= f x ->.
+    by apply poset_refl.
+Qed.
+
+(* fp_in_post_fp : fp_s f ⊆ post_fp_s f *)
+Lemma fp_in_post_fp (T : poset) : forall f : T -> T, fp_s f ⊆ post_fp_s f.
+Proof.
+    have Hdual := @fp_in_pre_fp (T †po).
+    by apply Hdual.
+Qed.
+
+
+(* a is the least fixpoint of f greater than x *)
+Definition lfp_x (T : poset) (f : T -> T) (x a : T) := 
+    least ({ y | y ∈ fp_s f /\ x ⊑ y }) a.
+
+(* a is the least fixpoint of f *)
+Definition lfp (T : poset) (f : T -> T) (a : T) := 
+    least (fp_s f) a.
+    
+(* a is the greatest fixpoint of f smaller than x *)
+Definition gfp_x (T : poset) (f : T -> T) (x a : T) := 
+    largest ({ y | y ∈ fp_s f /\ y ⊑ x }) a.
+
+
+(* a is the greatest fixpoint of f *)
+Definition gfp (T : poset) (f : T -> T) (a : T) := 
+    largest (fp_s f) a.
+
+(** monotonic *)
+Module MonotonicFun.
+
+Definition mixin_of (T T' : poset) (f : T -> T') :=
+    forall x y : T, x ⊑ y -> f x ⊑ f y.
+Notation class_of := mixin_of (only parsing).
+
+Section ClassDef.
+
+Structure type (T T' : poset) := Pack {
+    obj : T -> T';
+    _ : class_of obj;
+}.
+
+Definition class T T' (cT : type T T') := 
+    let: Pack _ c := cT return class_of (obj cT) in c.
+
+End ClassDef.
+
+Module Exports.
+Coercion obj : type >-> Funclass.
+Notation monotonicfun := type.
+
+(** The special notation for monotonic function. *)
+Notation "[ A ↦ᵐ B ]" := (type [poset of A] [poset of B]) 
+    (at level 0, format "[ A  ↦ᵐ  B ]"): POrder_scope.
+
+Notation MonotonicFun T m := (@Pack _ _ T m).
+Notation "[ 'monotonicfun' 'of' T ]" := ([get f | obj f ~ (T : _ -> _) ])
+    (at level 0, format "[ 'monotonicfun'  'of'  T ]") : POrder_scope.
+Notation "[ 'monotonicMixin' 'of' T ]" := (class [ monotonicfun of T ])
+    (at level 0, format "[ 'monotonicMixin'  'of'  T ]") : POrder_scope.
+End Exports.
+    
+End MonotonicFun.
+Export MonotonicFun.Exports.
+
+
+Lemma monotonic_mapR_chainMixin 
+    (T T' : poset) (f : monotonicfun T T') (c : chain T) :
+    Chain.mixin_of (f [<] c).
+Proof.
+    rewrite /Chain.mixin_of => x [a [Hain Hxeq]] y [b [Hbin Hyeq]].
+    rewrite -Hxeq -Hyeq.
+    case (Chain.class c a Hain b Hbin) => H; 
+    [left | right]; by apply (MonotonicFun.class f).
+Qed.
+
+(** We make this a canonical structure, so we will get [f [<] c] as a chain if
+    [f] is monotonic and [c] is a chain. *)
+Canonical monotonic_chain (T T' : poset) (f : monotonicfun T T') (c : chain T) 
+    : chain T' :=
+    Chain (f [<] c) (@monotonic_mapR_chainMixin _ _ f c).
+
+
+
+
+
+
+
+(* continuous *)
+Module ContinuousFun.
+
+Definition mixin_of (T T' : cpo) (f : monotonicfun T T') :=
+    forall c : chain T, 
+        f (cpo⊔ c) = cpo⊔ (f [<] c).
+Notation class_of := mixin_of (only parsing).
+
+Section ClassDef.
+
+Structure type (T T' : cpo) := Pack {
+    obj : monotonicfun T T';
+    _ : class_of obj;
+}.
+
+Definition class T T' (cT : type T T') := 
+    let: Pack _ c := cT return class_of (obj cT) in c.
+
+End ClassDef.
+
+Module Exports.
+Coercion obj : type >-> monotonicfun.
+Notation continuousfun := type.
+
+(** The special notation for continuous function. *)
+Notation "[ A ↦ B ]" := (type [cpo of A] [cpo of B]) 
+    (at level 0, format "[ A  ↦  B ]"): POrder_scope.
+
+Notation ContinuousFun T m := (@Pack _ _ T m).
+Notation "[ 'continuousfun' 'of' T ]" := ([get f | obj f ~ [monotonicfun of T] ])
+    (at level 0, format "[ 'continuousfun'  'of'  T ]") : POrder_scope.
+Notation "[ 'continuousMixin' 'of' T ]" := (class [ continuousfun of T ])
+    (at level 0, format "[ 'continuousMixin'  'of'  T ]") : POrder_scope.
+End Exports.
+    
+End ContinuousFun.
+Export ContinuousFun.Exports.
+
+
