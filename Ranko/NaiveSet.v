@@ -5,7 +5,7 @@ From Ranko Require Import TerminalDogma.premises
                           TerminalDogma.Extensionality.
 
 
-From Coq Require Import Classical.
+From Coq Require Import Classical Relations.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -164,21 +164,21 @@ Proof.
 (** subset relation *)
 
 (** subset_refl : A ⊆ A *)
-Lemma subset_refl {T : Type}: Relation_Definitions.reflexive _ (@subset T).
-Proof. unfold Relation_Definitions.reflexive, subset. auto. Qed.
+Lemma subset_refl {T : Type}: reflexive _ (@subset T).
+Proof. unfold reflexive, subset. auto. Qed.
 
 (** subset_trans : A ⊆ B -> B ⊆ C -> A ⊆ C *)
-Lemma subset_trans {T : Type}: Relation_Definitions.transitive _ (@subset T).
+Lemma subset_trans {T : Type}: transitive _ (@subset T).
 Proof.
-    unfold Relation_Definitions.transitive, subset. 
+    unfold transitive, subset. 
     intros A B C HAinB HBinC. intros x HxinA.
     apply HBinC. apply HAinB. apply HxinA.
 Qed.
 
 (** subset_asymm : A ⊆ B -> B ⊆ A -> A = B *)
-Lemma subset_asymm {T : Type}: Relation_Definitions.antisymmetric _ (@subset T).
+Lemma subset_asymm {T : Type}: antisymmetric _ (@subset T).
 Proof.
-    rewrite /Relation_Definitions.antisymmetric => A B HAinB HBinA.
+    rewrite /antisymmetric => A B HAinB HBinA.
     apply /seteqP => x. split.
     by apply HAinB. by apply HBinA.
 Qed.
@@ -190,22 +190,22 @@ Add Parametric Relation {T : Type} : _ (@subset T)
 
 (** supset relation *)
 
-Lemma supset_refl {T : Type}: Relation_Definitions.reflexive _ (@supset T).
-Proof. unfold Relation_Definitions.reflexive, supset, subset. auto. Qed.
+Lemma supset_refl {T : Type}: reflexive _ (@supset T).
+Proof. unfold reflexive, supset, subset. auto. Qed.
 
 
-Lemma supset_trans {T : Type}: Relation_Definitions.transitive _ (@supset T).
+Lemma supset_trans {T : Type}: transitive _ (@supset T).
 Proof.
-    unfold Relation_Definitions.transitive, supset, subset. 
+    unfold transitive, supset, subset. 
     intros A B C HBinA HCinB. intros x HxinC.
     apply HBinA. apply HCinB. apply HxinC.
 Qed.
 
-Lemma supset_asymm {T : Type}: Relation_Definitions.antisymmetric _ (@subset T).
+Lemma supset_asymm {T : Type}: antisymmetric _ (@supset T).
 Proof.
-    rewrite /Relation_Definitions.antisymmetric => A B HAinB HBinA.
+    rewrite /antisymmetric => A B HAinB HBinA.
     apply /seteqP => x. split.
-    by apply HAinB. by apply HBinA.
+    by apply HBinA. by apply HAinB.
 Qed.
     
 Add Parametric Relation {T : Type} : _ (@supset T)
@@ -456,6 +456,21 @@ End SetTheory.
 
 (** Theories about big operators and mappings. *)
 Section AdvancedTheory.
+
+(** bigI is the greatest lower bound in the sense of subset order. *)
+Lemma bigI_lb (T : Type) (A : 𝒫(𝒫(T))) :
+    forall' X ∈ A, ⋂ A ⊆ X.
+Proof. 
+    rewrite /big_itsct /subset => //= X HX x Hx.
+    by apply Hx.
+Qed.
+
+Lemma bigI_glb (T : Type) (A : 𝒫(𝒫(T))) (X : 𝒫(T)):
+    (forall' a ∈ A, X ⊆ a) -> X ⊆ ⋂ A.
+Proof.
+    rewrite /big_itsct /subset => //= H x Hxin Y HYin.
+    by apply (H Y) => //.
+Qed.
 
 (** bigU is the least upper bound in the sense of subset order. *)
 Lemma bigU_ub (T : Type) (A : 𝒫(𝒫(T))) :

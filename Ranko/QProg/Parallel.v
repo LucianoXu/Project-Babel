@@ -3,7 +3,7 @@
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Import QTheory.
+From Ranko Require Import QTheory POrder POrderSet.
 
 From Coq Require Import Classical Arith Relations Reals.
 
@@ -501,14 +501,14 @@ Qed.
 Lemma deSem0_smaller {qs : QvarScope}:
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) (n : nat), 
 
-        r1 ⊑♯ r2 -> ⟦ S0, 0 ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
+        r1 ⊑ r2 -> ⟦ S0, 0 ⟧ (r1) ⊑ ⟦ S0, n ⟧ (r2).
 
 Proof. move => S0 r1 r2 n.
     case (em_classic r1).
     { move => -> /subset_emP ->.
         rewrite !deSem0_em //. }
     { move => Hr1. case (em_classic r2).
-        move => -> _. by rewrite [in X in _ ⊑♯ X]deSem0_em //.
+        move => -> _. by rewrite [in X in _ ⊑ X]deSem0_em //.
         move => Hr2. by rewrite !deSem0_nem //. }
 Qed.
 
@@ -517,7 +517,7 @@ Qed.
 (* The strong relation between opSemN and order *)
 Lemma deSemN_point_monotonic_strong {qs : QvarScope} :
     forall (S0 : prog qs) (rho : 𝒟( qs )⁻) n i, 
-        (i <= n)%nat -> ⦗ S0, i ⦘ (rho) ⊑♯ ⦗ S0, n ⦘ (rho).
+        (i <= n)%nat -> ⦗ S0, i ⦘ (rho) ⊑ ⦗ S0, n ⦘ (rho).
 Proof. 
     move => S0 rho n.
 
@@ -561,7 +561,7 @@ Proof.
 Qed.
 
 Lemma deSemN_point_monotonic_step {qs : QvarScope} (P : prog qs) rho: 
-    forall n, ⦗ P, n ⦘ (rho) ⊑♯ ⦗ P, n.+1 ⦘ (rho).
+    forall n, ⦗ P, n ⦘ (rho) ⊑ ⦗ P, n.+1 ⦘ (rho).
 Proof. move => n. by apply deSemN_point_monotonic_strong. Qed.
 Arguments deSemN_point_monotonic_step {qs} P rho.
 
@@ -569,7 +569,7 @@ Arguments deSemN_point_monotonic_step {qs} P rho.
 (* The strong relation between deSemN and order *)
 Lemma deSemN_monotonic_strong {qs : QvarScope}:
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) (n i : nat), 
-        (i <= n)%nat -> r1 ⊑♯ r2 -> ⟦ S0, i ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
+        (i <= n)%nat -> r1 ⊑ r2 -> ⟦ S0, i ⟧ (r1) ⊑ ⟦ S0, n ⟧ (r2).
 Proof. 
     rewrite /deSemN => S0 r1 r2 n i Hi Hr1r2.
     apply bigU_mapR_mor_sub => // t.
@@ -579,7 +579,7 @@ Qed.
 
 Lemma deSemN_monotonic_rho {qs : QvarScope} :
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) n, 
-        r1 ⊑♯ r2 -> ⟦ S0, n ⟧ (r1) ⊑♯ ⟦ S0, n ⟧ (r2).
+        r1 ⊑ r2 -> ⟦ S0, n ⟧ (r1) ⊑ ⟦ S0, n ⟧ (r2).
 Proof.
     move => S0 r1 r2 n.
     by apply (@deSemN_monotonic_strong qs S0 r1 r2 n n).
@@ -589,13 +589,13 @@ Qed.
 
 (** Prove that [opSemN c i] is increasing when i increases. *)
 Lemma deSemN_monotonic_N {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
-    forall i n, (i <= n)%nat -> ⟦ P, i ⟧ (rho_s) ⊑♯ ⟦ P, n ⟧ (rho_s).
+    forall i n, (i <= n)%nat -> ⟦ P, i ⟧ (rho_s) ⊑ ⟦ P, n ⟧ (rho_s).
 Proof. move => i n Hin. 
     by apply deSemN_monotonic_strong.
 Qed.
 
 Lemma deSemN_monotonic_step {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
-    forall n, ⟦ P, n ⟧ (rho_s) ⊑♯ ⟦ P, n.+1 ⟧ (rho_s).
+    forall n, ⟦ P, n ⟧ (rho_s) ⊑ ⟦ P, n.+1 ⟧ (rho_s).
 Proof. move => n. by apply deSemN_monotonic_strong. Qed.
 Arguments deSemN_monotonic_step {qs} P rho_s.
 
@@ -611,7 +611,7 @@ Definition f_chain_obj {H : HilbertSpace} (f : 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( 
 Lemma f_chain_inc {H : HilbertSpace} (f : 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻))
     (ch : chain H) :
     forall n 
-    forall n, f_chain_obj f ch n ⊑♯ f_chain_obj f ch n.+1.
+    forall n, f_chain_obj f ch n ⊑ f_chain_obj f ch n.+1.
 Proof.
     move => n. apply 
 *)
@@ -638,7 +638,7 @@ Notation " ⟦ P ⟧ ( rho_s ) " := (@DeSem _ P rho_s)
     (at level 10, format "⟦  P  ⟧ ( rho_s )"): QPP_scope.
 
 Lemma DeSem_ub : forall {qs : QvarScope} n (P : prog qs) rho_s, 
-    ⟦ P, n ⟧ (rho_s) ⊑♯ ⟦ P ⟧ (rho_s).
+    ⟦ P, n ⟧ (rho_s) ⊑ ⟦ P ⟧ (rho_s).
 Proof. 
     rewrite /DeSem => qs n P rho_s. rewrite -chain_deSemN_n. 
     by apply chain_limit_ub.
@@ -646,13 +646,13 @@ Qed.
 Arguments DeSem_ub {qs} n P rho_s.
 
 Lemma DeSem_lub : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
-    (forall n, ⟦ P, n ⟧(rho_s) ⊑♯ rho_ub) -> ⟦ P ⟧ (rho_s) ⊑♯ rho_ub.
+    (forall n, ⟦ P, n ⟧(rho_s) ⊑ rho_ub) -> ⟦ P ⟧ (rho_s) ⊑ rho_ub.
 Proof.
     rewrite /DeSem => qs P rho_s rho_ub H. apply chain_limit_lub. by apply H.
 Qed.
 
 Lemma DeSem_lubP : forall {qs : QvarScope} (P : prog qs) rho_s rho_ub, 
-    (forall n, ⟦ P, n ⟧(rho_s) ⊑♯ rho_ub) <-> ⟦ P ⟧ (rho_s) ⊑♯ rho_ub.
+    (forall n, ⟦ P, n ⟧(rho_s) ⊑ rho_ub) <-> ⟦ P ⟧ (rho_s) ⊑ rho_ub.
 Proof. split. by apply DeSem_lub.
     move => HP n. transitivity (⟦ P ⟧ (rho_s)) => //. 
     by apply DeSem_ub.
@@ -670,7 +670,7 @@ Admitted.
 Lemma DeSem_skip {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ Skip ⟧ (rho_s) = rho_s.
 Proof.
-    apply PDenSetOrder_asymm.
+    apply poset_antisym.
     apply DeSem_lub. case. 
         case (em_classic rho_s).
             by move => ->.
@@ -684,7 +684,7 @@ Qed.
 Lemma DeSem_abort {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ Abort ⟧ (rho_s) = { _ | rho_s <> ∅ }.
 Proof.
-    apply PDenSetOrder_asymm.
+    apply poset_antisym.
     apply DeSem_lub. case.
         case (em_classic rho_s).
             move => H. by rewrite rho_s_em_em //.
@@ -697,7 +697,7 @@ Qed.
 Lemma DeSem_init {qs : QvarScope} qv (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ qv <- 0 ⟧ (rho_s) = InitSttS qv rho_s.
 Proof.
-    apply PDenSetOrder_asymm.
+    apply poset_antisym.
     apply DeSem_lub. case. 
 
         case (em_classic rho_s).
@@ -712,7 +712,7 @@ Qed.
 Lemma DeSem_unitary {qs : QvarScope} qv U (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ qv *= U ⟧ (rho_s) = UapplyS U rho_s.
 Proof.
-    apply PDenSetOrder_asymm.
+    apply poset_antisym.
     apply DeSem_lub. case.
 
     case (em_classic rho_s).
@@ -730,7 +730,7 @@ Lemma DeSem_if {qs : QvarScope} qv_m m S0 S1 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ If m [[qv_m]] Then S0 Else S1 End ⟧ (rho_s) 
         = ⟦ S0 ⟧ (MapplyS m true rho_s) + ⟦ S1 ⟧ (MapplyS m false rho_s).
 Proof.
-    move => Hnem. apply PDenSetOrder_asymm.
+    move => Hnem. apply poset_antisym.
 
     (*
            ⟦S0⟧  ⟦S1⟧ ⟦IF⟧
@@ -789,7 +789,7 @@ Definition deSemN_chain_obj {qs : QvarScope} (S : prog qs) (ch : chain 𝒟(qs)�
     fun i => ⟦ S, n ⟧(ch _[i]).
 
 Lemma deSemN_chain_prop {qs : QvarScope} (S : prog qs) (ch : chain 𝒟(qs)⁻) n
-    : forall i, deSemN_chain_obj S ch n i ⊑♯ deSemN_chain_obj S ch n i.+1.
+    : forall i, deSemN_chain_obj S ch n i ⊑ deSemN_chain_obj S ch n i.+1.
 Proof. 
     rewrite /deSemN_chain_obj => i. apply deSemN_monotonic_rho.
     by apply ch.
@@ -867,7 +867,7 @@ Theorem deSem0_continuous (qs : QvarScope) (S : prog qs) (ch : chain 𝒟(qs)⁻
 Proof.
     case (em_classic (lim→∞ (ch))).
     move => H. rewrite H deSem0_em. rewrite lim_ch_em_deSemN_em //.
-    move => H. rewrite deSem0_nem //. apply PDenSetOrder_asymm => //.
+    move => H. rewrite deSem0_nem //. apply poset_antisym => //.
     apply chain_limit_lub => i. 
     rewrite /deSemN_chain /deSemN_chain_obj {1}/chain_obj. 
     rewrite deSem0_nem //. by apply lim_ch_nem_chi_nem.
@@ -897,7 +897,7 @@ Qed.
 Lemma DeSem_seq {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ S1 ; S2 ⟧ (rho_s) =  ⟦ S2 ⟧ ( ⟦ S1 ⟧ (rho_s) ).
 Proof.
-    apply PDenSetOrder_asymm.
+    apply poset_antisym.
 
     apply DeSem_lub. case. 
     (* induction basis, case on whether rho_s is empty *)
@@ -935,7 +935,7 @@ Lemma DeSem_atom {qs : QvarScope} P (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ <<P>> ⟧ (rho_s) =  ⟦ P ⟧ (rho_s).
 Proof.
 
-    apply PDenSetOrder_asymm.
+    apply poset_antisym.
 
     apply DeSem_lub. case. 
     case (em_classic rho_s).
@@ -950,7 +950,7 @@ Lemma DeSem_para {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
     ⟦ [S1 // S2] ⟧ (rho_s) = 
         ⟦ Step S1 S2 true ⟧ (rho_s) ∪ ⟦ Step S1 S2 false ⟧ (rho_s).
 Proof.
-    apply PDenSetOrder_asymm.
+    apply poset_antisym.
 
     apply DeSem_lub. case.
     case (em_classic rho_s).

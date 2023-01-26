@@ -36,37 +36,17 @@ Reserved Notation " cL '†cL' " (at level 10).
 Reserved Notation "⊔ A " (at level 40).
 Reserved Notation "'cpo⊔' A" (at level 40).
 
-(** dual relation 
-    R1 is the dual relation of R2 *)
-(** maybe we should give up this notion *)
-
-Record rel_dual {T1 T2: Type} (R1 : relation T1) (R2 : relation T2) := {
-    sort_eq : T1 = T2;
-    dual_prop : forall a b, R1 a b <-> R2 [b by sort_eq] [a by sort_eq];
-}.
-
-(*
-Lemma rel_dual_comm {T : Type} (R1 R2 : relation T) :
-    rel_dual R1 R2 <-> rel_dual R2 R1.
-Proof. rewrite /rel_dual. by split; move => H a b; symmetry; apply H. Qed.
-*)
 
 (** get the dual relation *)
 Definition dualRel {T : Type} (R1 : relation T) : relation T :=
     fun a b => R1 b a.
 Notation " f '†r' " := (dualRel f) : NSet_scope.
 
-(*
+
 Lemma dual_dualRel {T : Type} (R1 : relation T) :
-    rel_dual R1 (R1 †r).
-Proof. 
-    (*
-    rewrite /dualRel. econstructor => a b. split.
-    move => H. apply H. 
-Qed.
-    *)
-Admitted.
-*)
+    (R1 †r) †r = R1.
+Proof. rewrite /dualRel. by apply functional_extensionality. Qed.
+
 
 
 
@@ -84,7 +64,7 @@ Admitted.
 
 Module Poset.
 
-Structure mixin_of T := Mixin { op : relation T; _ : order T op }.
+Structure mixin_of T := Mixin { op : relation T; ord : order T op }.
 Notation class_of := mixin_of (only parsing).
 
 Section ClassDef.
@@ -96,7 +76,9 @@ Definition class (cT : type) :=
 
 End ClassDef.
 
+
 Module Exports.
+
 Coercion sort : type >-> Sortclass.
 Notation poset := type.
 Notation posetMixin := Mixin.
@@ -108,9 +90,16 @@ Notation "[ 'posetMixin' 'of' T ]" := (@class [ poset of T ])
 
 
 Definition poset_op T := Poset.op (Poset.class T).
-Notation " a ⊑ ( p ) b " := (@poset_op p a b) : POrder_scope.
-Notation " a ⊑ b " := (poset_op a b) : POrder_scope.
-Notation " a ⋢ ( p ) b " := (~ a ⊑ (p) b) : POrder_scope.
+Definition poset_refl (T : type) := ord_refl _ _ (ord (class T)).
+Definition poset_trans (T : type) := ord_trans _ _ (ord (class T)).
+Definition poset_antisym (T : type) := ord_antisym _ _ (ord (class T)).
+
+Notation " a ⊑ ( p ) b " := (Poset.op (Poset.class p) a b) 
+    (only parsing): POrder_scope.
+Notation " a ⊑ b " := (Poset.op (Poset.class _) a b) : POrder_scope.
+
+Notation " a ⋢ ( p ) b " := (~ a ⊑ (p) b) 
+    (only parsing): POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
 
 
@@ -123,22 +112,7 @@ Lemma poset_order (po : poset) : order po (@poset_op po).
 Proof. destruct po. destruct m => //=. Qed.
 
 
-(** The (extensional) equality between posets. *)
-(*
-Lemma poset_eqP (R1 R2 : poset) :
-    R1 = R2 <-> (Poset.o_rel R1) = (Poset.o_rel R2).
-Proof. split. by move=> ->.
-    move => H. destruct R1 as [r1 [Hr1]], R2 as [r2 [Hr2]] => //=. 
-    rewrite /as_type in H => //=. simpl in H. 
-    move: Hr1 Hr2. rewrite H => Hr1 Hr2.
-    f_equal. f_equal. by apply proof_irrelevance.
-Qed.
-*)
-
-
-(** dual relation and dual poset *)
-Definition poset_dual (po1 po2 : poset) :=
-    rel_dual (Poset.op (Poset.class po1)) (Poset.op (Poset.class po2)).
+(** dual poset *)
 
 Lemma dual_order {T : Type} (R : relation T) : order _ R -> order _ (R †r).
 Proof. rewrite /dualRel => [H]. constructor.
