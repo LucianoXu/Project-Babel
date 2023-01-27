@@ -7,7 +7,7 @@ From Ranko.TerminalDogma Require Export NotationRefinements.
 From Ranko.TerminalDogma Require Export CanonicalInfrastructure.
 From Ranko.TerminalDogma Require Export TypeFacility.
 From Ranko.TerminalDogma Require Export function.
-
+From Ranko.TerminalDogma Require Export ProofFacility.
 
 From Coq Require Export ClassicalFacts.
 

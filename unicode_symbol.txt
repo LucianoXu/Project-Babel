@@ -6,7 +6,7 @@
 ℕ ℤ ℚ ℝ ℂ ∞
 
 [functions]
-≠ ◦ × √ → ⧓ λ ↦
+≠ ◦ × √ → ⏴ ⏵ ⧓ λ ↦
 
 [isomorphism]
 ≅

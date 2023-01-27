@@ -277,14 +277,20 @@ Lemma lar_unique (T : poset) (A : 𝒫(T)) (a b : T)
         (Ha_largest : largest A a) (Hb_largest : largest A b)
         : a = b.
 Proof.
-Abort.
+    apply poset_antisym. 
+    apply Hb_largest. by apply Ha_largest.
+    apply Ha_largest. by apply Hb_largest.
+Qed.
 
 (* lea_unique : least element of A is unique *)
 Lemma lea_unique (T : poset) (A : 𝒫(T)) (a b : T)
         (Ha_least : least A a) (Hb_least : least A b)
         : a = b.
 Proof.    
-Abort.
+    apply poset_antisym. 
+    apply Ha_least. by apply Hb_least.
+    apply Hb_least. by apply Ha_least.
+Qed.
 
 
 (* lar_in_ub : largest element is an upper bound *)
@@ -364,15 +370,13 @@ Qed.
 Lemma sup_unique (T : poset) (A : 𝒫(T)) (a b : T)
     (Ha_sup : supremum A a) (Hb_sup : supremum A b)
     : a = b.
-Proof.
-Abort.
+Proof. by apply (lea_unique Ha_sup Hb_sup). Qed.
 
 (* inf_unique : infimum element of A is unique *)
 Lemma inf_unique (T : poset) (A : 𝒫(T)) (a b : T)
     (Ha_inf : infimum A a) (Hb_inf : infimum A b)
     : a = b.
-Proof.
-Abort.
+Proof. by apply (lar_unique Ha_inf Hb_inf). Qed.
 
 
 (* lar_is_sup : x = largest A -> x = sup A *)

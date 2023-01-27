@@ -106,7 +106,7 @@ Definition fun_comp {X Y Z : Type} (g : Y -> Z) (f : X -> Y) : X -> Z :=
     fun x => g (f x).
 
 (** Note : This notation is right associate. *)
-Notation " g ◦ f " := (fun_comp g f) (at level 4, right associativity)
+Notation " g ◦ f " := (fun_comp g f) (at level 15, right associativity)
     : TerminalDogma_scope.
 
 (** The equivalence between the function compostion defined here and that in
@@ -139,7 +139,7 @@ Proof.
     intros A B f g <- H; reflexivity.
 Qed.
       
-
+(** This tactic transforms an equality [f x = g x] into [f = g]. *)
 Ltac equal_f_comp A := 
     generalize dependent A; 
     apply equal_f;

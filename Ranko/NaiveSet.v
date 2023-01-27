@@ -34,12 +34,9 @@ Reserved Notation " '∁' A" (at level 39).
 
 Reserved Notation "⋃".
 Reserved Notation "⋂".
-Reserved Notation " f [<] " (at level 1, left associativity).
-Reserved Notation " f [<] ( A )" (at level 1, left associativity).
-Reserved Notation " F [>] " (at level 30, right associativity).
-Reserved Notation " F [>] x" (at level 30, right associativity, only printing).
-Reserved Notation " F [@] " (at level 30, right associativity).
-Reserved Notation " F [@] A" (at level 30, right associativity, only printing).
+Reserved Notation " f [<] " (at level 11, right associativity).
+Reserved Notation " F [>] " (at level 11, right associativity).
+Reserved Notation " F [><] " (at level 11, right associativity).
 
 (** TODO #11 *)
 Reserved Notation "'forall'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
@@ -338,7 +335,6 @@ Notation "⋂" := big_itsct : NSet_scope.
 Definition mapR {X Y: Type} (f : X -> Y) : 𝒫(X) -> 𝒫(Y) :=
     fun A => { f x , x | x ∈ A }.
 Notation " f [<] " := (@mapR _ _ f) : NSet_scope.
-Notation " f [<] ( A ) " := (@mapR _ _ f A) : NSet_scope.
 
 Lemma mapR_fold (X Y: Type) (f : X -> Y) A : 
     { f a , a | a ∈ A } = f [<] A.
@@ -356,26 +352,50 @@ Definition mapL {X Y: Type} (F : 𝒫(X -> Y)) : X -> 𝒫(Y) :=
     fun x => { f x , f | f ∈ F }.
 
 Notation " F [>] " := (@mapL _ _ F) : NSet_scope.
-(* Notation " F [>] x" := (@mapL _ _ F x) : NSet_scope. *)
 
 
+(** Note that this operator automatically contains a big union. *)
+Definition UmapRL {X Y: Type} (F : 𝒫(X -> Y)) : 𝒫(X) -> 𝒫(Y)
+    := fun x => ⋃ (F [>][<] x).
 
-Definition mapLR {X Y: Type} (F : 𝒫(X -> Y)) : 𝒫(X) -> 𝒫(Y) :=
-    fun A => ⋃ (F [>][<] A).
+Notation " F [><] " := (@UmapRL _ _ F) : NSet_scope.
 
-Notation " F [@] " := (@mapLR _ _ F) : NSet_scope.
-(* Notation " F [@] A" := (@mapLR _ _ F A) : NSet_scope. *)
+
+(*
+(*  Example: Function Lifting 
+    言の葉ではなく…秘められし真意を伝えん!
+*)
+Axiom (A B C D: Type) (f : A -> B -> C -> D).
+Check (fun x => f [<] x).
+Check (fun x => f [<] x [>]).
+Check (fun x => f [<] x [><]).
+Check (fun x y z => f [<] x [><] y [><] z).
+*)
+
+
 
 Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr) : NSet_scope.
 Notation "'exists'' x '∈' A , expr" := (exists x , x ∈ A /\ expr) : NSet_scope.
 Notation "'forall'' A '⊆' B , expr" := (forall A , A ⊆ B -> expr) : NSet_scope.
 Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_scope.
 
+
+
+
+
+
+
 (* set by enumerating *)
+
+Definition singleton {T : Type} (x : T) := { a | a = x }.
+
+(*
 Notation "{{ x , .. , y }} " := 
     ({ a | (a = x \/ .. (a = y \/ False) .. )}) : NSet_scope.
-
-
+*)
+Notation "{{ x , .. , y }} " := 
+    (singleton x ∪ .. (singleton y ∪ ∅) .. ) : NSet_scope.
+    
 
 
 
@@ -547,15 +567,31 @@ Proof. move => /nonemptyP [a Hain]. apply seteqP => x. split.
     by move => [].
 Qed.
 
-Lemma mapR_em {X Y: Type} (f : X -> Y) :
+Lemma mapR_eq_emP {X Y: Type} (f : X -> Y) (A : 𝒫(X)):
 
-        f [<] ∅ = ∅.
+        f [<] A = ∅ <-> A = ∅.
 
-Proof. rewrite /mapR. apply seteqP => x. split.
+Proof. rewrite /mapR. split; last first.
+    move ->. apply seteqP => x. split.
     by move => [?] [[]].
     by move => [].
+
+    move => /seteqP /= H. apply seteqP => x. split => //=.
+    move => Hxin.
+    apply (H (f x)). by exists x.
 Qed.
 
+Lemma bigU_nemP {X : Type} (A : 𝒫(𝒫(X))) :
+
+        (exists' X ∈ A, X <> ∅) <-> ⋃ A <> ∅.
+
+Proof. split.
+    move => [A0 [HA0in /nonemptyP [x Hxin]]].
+    apply nonemptyP. exists x => //=. by exists A0. 
+    
+    move => /nonemptyP [x [A0 [HA0in HA0nem]]].
+    exists A0. split => //=. apply /nonemptyP. by exists x.
+Qed.
 
 Lemma bigU_fun_rei {X Y: Type} (A : 𝒫(X)) (f : X -> Y):
 
@@ -791,7 +827,19 @@ Qed.
 
 *)
 
+(*#######################################################################*)
+(** Proof Facility*)
+Lemma forall_to_exists_nonempty {T : Type} (A : 𝒫(T)) (P : T -> Prop) :
+    A <> ∅ -> (forall' x ∈ A, P x) -> (exists' x ∈ A, P x).
+Proof.
+    move => /nonemptyP [x Hx] H.
+    exists x. split => //. by apply H.
+Qed.
 
+
+
+
+(*#######################################################################*)
 (** I am not sure whether this axiom is consistent. 
     TODO #10 *)
 Module TypeSetEquivalence.
