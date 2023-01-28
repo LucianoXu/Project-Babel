@@ -3,7 +3,7 @@
 
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality
-                          NemSet.
+                          .
 
 From Ranko Require Export NaiveSet.
 
@@ -50,33 +50,21 @@ Qed.
 
 (** subset morphism of ⋃ ◦ (f [<]) set *)
 (** Here a more precise description of the relation between f and g is 
-    something like 'subfunction' *)
+    something like 'subfunction' 
+    TODO #13 *)
 Lemma bigU_mapR_mor_sub {X Y: Type} (f g: X -> 𝒫(Y)) (A B: 𝒫(X)):
     A ⊆ B -> (forall t, f t ⊆ g t) ->
 
         ⋃ (f [<] A) ⊆ ⋃ (g [<] B).
 
-Proof. rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
+Proof.
+    rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
     have H := Hfleg t v. rewrite HSveq in H. have H' := H Hvin.
     exists (g t). split => //. exists t. split => //. by apply HAinB.
 Qed.
 
         
 (** About big opertor and mappings *)
-
-(** This method requires that the type of [y] is not dependent on [A]. *)
-Lemma mapR_rei {X Y : Type} (A : 𝒫(X)) (y : Y) :
-
-    A <> ∅ -> { y , a | a ∈ A } = {{ y }} .
-
-Proof. move => /nonemptyP [a Hain]. apply seteqP => x. split.
-    move => [x0] [Hx0in] Heq. rewrite Heq. by apply singletonP.
-    move => [Heq|].
-    exists a. by split.
-    by move => [].
-Qed.
-
-
 
 Lemma bigU_fun_rei {X Y: Type} (A : 𝒫(X)) (f : X -> Y):
 
@@ -149,6 +137,12 @@ Lemma mapR_in {X Y : Type} (A : 𝒫(X)) (f : X -> Y) :
 Proof. rewrite /mapR => x ? //=. by exists x. Qed.
 
 
+Lemma mapL_in {X Y : Type} (F : 𝒫(X -> Y)) (x : X) :
+    forall f : X -> Y,
+
+        f ∈ F -> f x ∈ F [>] x.
+
+Proof. rewrite /mapL => f ? //=. by exists f. Qed.
 
 (*************************)
 (** ESPECIALLY IMPORTANT *)
@@ -263,3 +257,14 @@ Proof.
     by apply bigU_fun_dist.
 Qed.
 
+
+(*###########################################################################*)
+(** relation morphisms *)
+Add Parametric Morphism {X Y : Type} : (@UmapRL X Y)
+    with signature (@subset (X -> Y)) ==> 
+        (@subset X) ==> (@subset Y) as UmapRL_mor_sub.
+Proof.
+    rewrite /UmapRL => F G HFinG A B HAinB //=.
+    apply bigU_mapR_mor_sub => //= x.
+    by apply mapR_mor_sub.
+Qed.

@@ -395,7 +395,7 @@ Definition big_union {T : Type} (A : 𝒫(𝒫(T))) : 𝒫(T) :=
 Notation "⋃" := big_union : NSet_scope.
 
 Add Parametric Morphism {X : Type} : (@big_union X)
-    with signature (@subset (powerset X)) ==> (@subset X) as big_union_mor_sub.
+    with signature (@subset (𝒫(X))) ==> (@subset X) as bigU_mor_sub.
 Proof.
     intros M N HMinN. unfold big_union, subset. simpl.
     intros x [S HS]. exists S. split. apply HMinN. apply HS. apply HS.
@@ -423,7 +423,8 @@ Add Parametric Morphism {X Y : Type} : (@mapR X Y)
     with signature eq ==> (@subset X) ==> (@subset Y) as mapR_mor_sub.
 Proof.
     intros f M N HMinN. unfold mapR, subset. simpl.
-    intros y [x Hxin]. exists x. split. apply HMinN. by apply Hxin. by apply Hxin.
+    intros y [x Hxin]. exists x. split. apply HMinN. 
+    by apply Hxin. by apply Hxin.
 Qed.
 
 
@@ -431,6 +432,14 @@ Definition mapL {X Y: Type} (F : 𝒫(X -> Y)) : X -> 𝒫(Y) :=
     fun x => { f x , f | f ∈ F }.
 
 Notation " F [>] " := (@mapL _ _ F) : NSet_scope.
+
+Add Parametric Morphism {X Y : Type} : (@mapL X Y)
+    with signature (@subset (X -> Y)) ==> eq ==> (@subset Y) as mapL_mor_sub.
+Proof.
+    rewrite /mapL /subset => F G HFinG x //=.
+    move => y [f [Hfin Hyeq]]. exists f. split => //. by apply HFinG.
+Qed.
+    
 
 
 (** Note that this operator automatically contains a big union. *)
@@ -448,6 +457,7 @@ Axiom (A B C D: Type) (f : A -> B -> C -> D).
 Check (fun x => f [<] x).
 Check (fun x => f [<] x [>]).
 Check (fun x => f [<] x [><]).
+Check (fun x y => ((f [<] x) [>])[<] y).
 Check (fun x y z => f [<] x [><] y [><] z).
 *)
 (*

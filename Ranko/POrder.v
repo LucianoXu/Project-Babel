@@ -28,14 +28,15 @@ Reserved Notation " a ⋢ b " (at level 60).
 Reserved Notation " f '†r' " (at level 20).
 Reserved Notation " P '†po' " (at level 10).
 
-(*
+
 Reserved Notation " L '†L' " (at level 10).
 Reserved Notation " cL '†cL' " (at level 10).
-*)
 
-Reserved Notation "⊔ A " (at level 40).
-Reserved Notation "'cpo⊔' A" (at level 40).
-
+Reserved Notation "'⊔ᶜᵖᵒ' A" (at level 40).
+Reserved Notation "⊔ˡ" (at level 40).
+Reserved Notation "⊓ˡ" (at level 40).
+Reserved Notation "⊔ᶜˡ A " (at level 40).
+Reserved Notation "⊓ᶜˡ A " (at level 40).
 
 (** get the dual relation *)
 Definition dualRel {T : Type} (R1 : relation T) : relation T :=
@@ -553,53 +554,6 @@ Proof. rewrite /Chain.mixin_of => ? []. Qed.
 Canonical em_is_chain (T : poset) := Chain ∅ (@em_chain_mixin T).
 
 
-
-(** CPO - existence version 
-    The join operator is not necessary. This class only requires the existence
-    of supremums. *)
-Module CPO_ex.
-
-Definition mixin_of (T : poset) := forall A : chain T, exists y, supremum A y.
-Notation class_of := mixin_of (only parsing).
-
-Section ClassDef.
-
-Structure type := Pack {
-    sort : poset;
-    _ : class_of sort;
-}.
-
-Definition class cT := 
-    let: Pack _ c := cT return class_of (sort cT) in c.
-
-End ClassDef.
-
-Module Exports.
-Coercion sort : type >-> poset.
-Notation cpo_ex := type.
-Notation CPO_ex t m := (@Pack t m).
-Notation "[ 'cpo_ex' 'of' T ]" := ([get c | sort c ~ [poset of T] ])
-  (at level 0, format "[ 'cpo_ex'  'of'  T ]") : POrder_scope.
-Notation "[ 'cpo_exMixin' 'of' T ]" := (@class [ cpo_ex of T ])
-  (at level 0, format "[ 'cpo_exMixin'  'of'  T ]") : POrder_scope.
-
-End Exports.
-
-End CPO_ex.
-Export CPO_ex.Exports.
-
-
-
-(** **** CPO_ex_bottom: every CPO has the least element *)
-Lemma CPO_ex_bottom (C : cpo_ex) : exists x : C, least 𝕌 x.
-Proof.
-    have Hbot := CPO_ex.class [chain of (set_em C)]. simpl in Hbot.
-    destruct Hbot as [y Hy].
-    exists y. by apply sup_em_iff_lea_uni.
-Qed.
-
-
-
 (** CPO (with the join operator) *)
 Module CPO.
 
@@ -631,12 +585,10 @@ Notation cpoMixin := Mixin.
 Notation CPO t m := (@Pack t m).
 Notation "[ 'cpo' 'of' T ]" := ([get c | sort c ~ [poset of T] ])
     (at level 0, format "[ 'cpo'  'of'  T ]") : POrder_scope.
-Notation "[ 'cpoMixin' 'of' T ]" := (@class [ cpo_ex of T ])
+Notation "[ 'cpoMixin' 'of' T ]" := (@class [ cpo of T ])
     (at level 0, format "[ 'cpoMixin'  'of'  T ]") : POrder_scope.
-Notation "'cpo⊔' A" := (join_op (@class _) [chain of A]) : 
+Notation "'⊔ᶜᵖᵒ' A" := (join_op (@class _) [chain of A]) : 
     POrder_scope.
-Notation "⊔ A " := (join_op (@class _) A) 
-    (only printing) : POrder_scope.
 End Exports.
 
 End CPO.
@@ -644,7 +596,7 @@ Export CPO.Exports.
 
 
 (** **** CPO_bottom: every CPO has the least element *)
-Lemma CPO_bottom (C : cpo) : least 𝕌 (cpo⊔ (set_em C)).
+Lemma CPO_bottom (C : cpo) : least 𝕌 (⊔ᶜᵖᵒ (set_em C)).
 Proof.
     apply sup_em_iff_lea_uni.
     have Hbot := CPO.join_prop (CPO.class C).
@@ -654,20 +606,20 @@ Qed.
 (*######################################################################*)
 (** lattice *)
 
-Module Lattice_ex.
+Module Lattice.
 
-(* po is a lattice *)
-Structure mixin_of (T : cpo_ex) := Mixin {
-    inf_ex : forall x y : T, (exists i, infimum ({{x, y}}) i);
-    sup_ex : forall x y : T, (exists s, supremum ({{x, y}}) s);
+Structure mixin_of (T : poset) := Mixin {
+    join_op : T -> T -> T;
+    join_prop : forall x y : T, supremum ({{x, y}}) (join_op x y);
+    meet_op : T -> T -> T;
+    meet_prop : forall x y : T, infimum ({{x, y}}) (meet_op x y);
 }.
 Notation class_of := mixin_of (only parsing).
 
 Section ClassDef.
 
-(* lattice (computable) *)
 Structure type := Pack {
-    sort : cpo_ex;
+    sort : poset;
     _ : class_of sort;
 }.
 
@@ -676,19 +628,21 @@ Definition class cT := let: Pack _ c := cT return class_of (sort cT) in c.
 End ClassDef.
 
 Module Exports.
-Coercion sort : type >-> cpo_ex.
-Notation latt_ex := type.
-Notation Latt_exMixin := Mixin.
-Notation Latt_ex t m := (@Pack t m).
+Coercion sort : type >-> poset.
+Notation lattice := type.
+Notation LatticeMixin := Mixin.
+Notation Lattice t m := (@Pack t m).
 
-Notation "[ 'latt_ex' 'of' T ]" := ([get r | sort r ~ [cpo_ex of T] ])
-  (at level 0, format "[ 'latt_ex'  'of'  T ]") : POrder_scope.
-Notation "[ 'latt_exMixin' 'of' T ]" := (@class [latt_ex of T])
-  (at level 0, format "[ 'latt_exMixin'  'of'  T ]") : POrder_scope.
+Notation "[ 'lattice' 'of' T ]" := ([get r | sort r ~ [poset of T] ])
+  (at level 0, format "[ 'lattice'  'of'  T ]") : POrder_scope.
+Notation "[ 'latticeMixin' 'of' T ]" := (@class [lattice of T])
+  (at level 0, format "[ 'latticeMixin'  'of'  T ]") : POrder_scope.
+Notation "⊔ˡ" := (join_op (class _)) : POrder_scope.
+Notation "⊓ˡ" := (meet_op (class _)) : POrder_scope.
 End Exports.
 
-End Lattice_ex.
-Export Lattice_ex.Exports.
+End Lattice.
+Export Lattice.Exports.
 
 
 (*###################################################*)
@@ -713,39 +667,109 @@ Export Lattice_ex.Exports.
 *)
 
 
-Module CLattice_ex.
+Module CLattice.
 
-Structure mixin_of (T : latt_ex) := Mixin {
-    inf_ex : forall A : 𝒫(T), exists i, infimum A i;
-    sup_ex : forall A : 𝒫(T), exists s, supremum A s;
+(** Essential requirement
+    Breaking the mixin into [essence_of] and the consistency requirements makes
+    it easier to build CLattice directly.
+    *)
+Structure essence_of (T : poset) := Essence {
+    join_op : 𝒫(T) -> T;
+    join_prop : forall A : 𝒫(T), supremum A (join_op A);
+    meet_op : 𝒫(T) -> T;
+    meet_prop : forall A : 𝒫(T), infimum A (meet_op A);
+    (** we don't put top and bottom here, since they can be derived.*)
 }.
+
+Structure mixin_of (T : lattice) := Mixin {
+    essence : essence_of T;
+    (** consistency *)
+    join_consistent : forall (x y : T), (⊔ˡ x y) = join_op essence ({{x, y}});
+    meet_consistent : forall (x y : T), (⊓ˡ x y) = meet_op essence ({{x, y}});
+}.
+
 Notation class_of := mixin_of (only parsing).
 
+(** Definition *)
 Section ClassDef.
 
 Structure type := Pack {
-    sort : latt_ex;
+    sort : lattice;
     _ : class_of sort
 }.
 
 Definition class cT := let: Pack _ c := cT return class_of (sort cT) in c.
 
+Local Coercion sort : type >-> lattice.
+
+(** Complete Lattice to cpo *)
+
+Definition clattice_cpoMixin (T : type) : CPO.class_of T.
+Proof.
+    refine (@cpoMixin _ (fun c : chain T => join_op (essence (class T)) c) _).
+    move => c. by apply join_prop.
+Defined.
+
+Definition clattice2cpo (T : type) : cpo := CPO T (clattice_cpoMixin T).
+
+
+(** Build CLattice directly from [essence_of]. *)
+
+Definition clattice_essence_imp_lattice_class 
+    (T : poset) (e : essence_of T) : Lattice.class_of T.
+Proof.
+    set j_op := (fun x y => join_op e ({{x, y}})).
+    set m_op := (fun x y => meet_op e ({{x, y}})).
+    refine (@LatticeMixin _ j_op _ m_op _).
+    move => x y. by apply join_prop.
+    move => x y. by apply meet_prop.
+Defined.
+
+Definition clattice_essence_lattice (T : poset) (e : essence_of T) :=
+    Lattice _ (clattice_essence_imp_lattice_class e).
+
+Definition clattice_essence_imp_class
+    (T : poset) (e : essence_of T) : 
+        class_of (clattice_essence_lattice e).
+Proof.
+    have e' : essence_of (clattice_essence_lattice e). by [].
+    refine (@Mixin _ e' _ _).
+    (** consistency of join *)
+    move => x y. apply (sup_unique (A := {{x, y}})). 
+    by apply Lattice.join_prop. by apply join_prop.
+    (** consistency of meet *)
+    move => x y. apply (inf_unique (A := {{x, y}})). 
+    by apply Lattice.meet_prop. by apply meet_prop.
+Defined.
+
+(** This function allows us to build clattice from [essence_of] directly.*)
+Definition clattice_essence_build (T : poset) (e : essence_of T) : type :=
+    Pack (clattice_essence_imp_class e).
+
 End ClassDef.
 
 Module Exports.
-Coercion sort : type >-> latt_ex.
-Notation clatt_ex := type.
-Notation Clatt_exMixin := Mixin.
-Notation Clatt_ex T m := (@Pack T m).
+Coercion sort : type >-> lattice.
+Coercion clattice2cpo : type >-> cpo.
 
-Notation "[ 'clatt_ex' 'of' T ]" := ([get r | sort r ~ [ latt_ex of T ]])
-    (at level 0, format "[ 'clatt_ex'  'of'  T ]") : POrder_scope.
-Notation "[ 'clatt_exMixin' 'of' T ]" := (@class [clatt_ex of T])
-    (at level 0, format "[ 'clatt_exMixin'  'of'  T ]") : POrder_scope.
+Notation clattice := type.
+Notation ClatticeEssence := Essence.
+Notation ClatticeMixin := Mixin.
+
+Notation Clattice T m := (@Pack T m).
+Notation ClatticeFromEssence T e := (@clattice_essence_build T e).
+
+Notation "[ 'clattice' 'of' T ]" := ([get r | sort r ~ [ lattice of T ]])
+    (at level 0, format "[ 'clattice'  'of'  T ]") : POrder_scope.
+Notation "[ 'clatticeMixin' 'of' T ]" := (@class [clattice of T])
+    (at level 0, format "[ 'clatticeMixin'  'of'  T ]") : POrder_scope.
+Notation "⊔ᶜˡ" := (join_op (essence (class _))) : POrder_scope.
+Notation "⊓ᶜˡ" := (meet_op (essence (class _))) : POrder_scope.
+
 End Exports.
 
-End CLattice_ex.
-Export CLattice_ex.Exports.
+End CLattice.
+Export CLattice.Exports.
 
 
 
@@ -870,7 +894,7 @@ Module ContinuousFun.
     be a chain. *)
 Definition mixin_of (T T' : cpo) (f : [ T ↦ᵐ T' ]) :=
     forall c : chain T, 
-        f (cpo⊔ c) = cpo⊔ (f [<] c).
+        f (⊔ᶜᵖᵒ c) = ⊔ᶜᵖᵒ (f [<] c).
 Notation class_of := mixin_of (only parsing).
 
 Section ClassDef.

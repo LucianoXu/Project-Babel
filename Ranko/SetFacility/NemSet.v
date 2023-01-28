@@ -6,7 +6,7 @@
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Export NaiveSet.
+From Ranko Require Export NaiveSet SetAdvanced.
 
 From Coq Require Import Relations Classical.
 
@@ -75,6 +75,19 @@ Proof.
     by move => [].
 Qed.
 
+(** This method requires that the type of [y] is not dependent on [A]. *)
+Lemma mapR_rei {X Y : Type} (A : 𝒫(X)) (y : Y) :
+
+    A <> ∅ -> { y , a | a ∈ A } = {{ y }} .
+
+Proof. move => /nonemptyP [a Hain]. apply seteqP => x. split.
+    move => [x0] [Hx0in] Heq. rewrite Heq. by apply singletonP.
+    move => [Heq|].
+    exists a. by split.
+    by move => [].
+Qed.
+
+
 Lemma mapR_eq_emP {X Y: Type} (f : X -> Y) (A : 𝒫(X)):
 
     f [<] A = ∅ <-> A = ∅.
@@ -89,6 +102,24 @@ Proof.
     move => Hxin.
     apply (H (f x)). by exists x.
 Qed.
+
+Lemma mapR_nem {X Y: Type} (f : X -> Y) (A : 𝒫(X)) :
+
+    A <> ∅ -> f [<] A <> ∅.
+
+Proof. by rewrite mapR_eq_emP. Qed.
+
+
+Lemma UmapRL_nem {X Y: Type} (F : 𝒫(X -> Y)) (A : 𝒫(X)) :
+
+    F <> ∅ -> A <> ∅ -> F [><] A <> ∅.
+
+Proof.
+    rewrite !nonemptyP. move => [f Hfin] [x Hxin].
+    exists (f x), (F [>] x). split. 
+    by apply mapR_in. by apply mapL_in.
+Qed.
+
 
 Lemma bigU_nemP {X : Type} (A : 𝒫(𝒫(X))) :
 
