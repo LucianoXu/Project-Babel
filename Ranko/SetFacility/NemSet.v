@@ -1,4 +1,6 @@
-(** * NemSet.v : special structure about nonempty sets. *)
+(** * NemSet.v : 
+    This module gathers all advanced conclusions about the empty set.
+    Including special structures about nonempty sets. *)
 
 
 From Ranko Require Import TerminalDogma.premises 
@@ -6,7 +8,7 @@ From Ranko Require Import TerminalDogma.premises
 
 From Ranko Require Export NaiveSet.
 
-From Coq Require Import Relations.
+From Coq Require Import Relations Classical.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -15,6 +17,116 @@ Unset Printing Implicit Defensive.
 
 Reserved Notation " A '⊆₊' B " (at level 49).
 Reserved Notation " A '⊇₊' B " (at level 49).
+
+
+(*##########################################################*)
+(** Lemmas *)
+
+Lemma in_set_em_F [T : Type] : 
+    forall (A : 𝒫(T)) (x : T), x ∈ A -> A = ∅ -> False.
+Proof. move => A x Hx HA. rewrite HA in Hx. by destruct Hx. Qed.
+
+
+(** The set is nonempty *)
+Lemma nonemptyP {T : Type} (A : 𝒫(T)) :  A <> ∅ <-> exists x, x ∈ A.
+Proof. split; last first.
+
+    move => [x Hx] H. move: Hx H. by apply in_set_em_F.
+
+    move => HA. apply NNPP => /(not_ex_all_not _ _) H.
+    apply HA. apply /seteqP => x. split.
+    by move => Hx; apply (H x).
+    by move => [].
+
+Qed.
+    
+
+(** In a inhabited type, 𝕌 ≠ ∅. *)
+Lemma uni_neq_em (T : iType) : set_uni T <> set_em T.
+Proof. apply nonemptyP. by exists [witness of T]. Qed.
+
+(* This one uses classical logic. *)
+Lemma em_classic {T : Type} (A : 𝒫(T)) : A = ∅ \/ A <> ∅.
+Proof. apply classic. Qed.
+
+
+
+Lemma sgt_nem {T : Type} (x : T) : singleton x <> ∅.
+Proof. apply nonemptyP. by exists x. Qed.
+
+Lemma uni_nem (T : iType) : set_uni T <> ∅.
+Proof. by apply uni_neq_em. Qed.
+    
+Lemma union_nem_L {T : Type} (A : 𝒫(T)) (B : 𝒫(T)) :
+    
+        A <> ∅ -> (A ∪ B) <> ∅.
+
+Proof. rewrite !nonemptyP => [[x Hx]]. exists x => //=. by left. Qed.
+    
+
+
+Lemma big_union_em {T : Type} :
+
+        ⋃ ∅ = set_em T.
+
+Proof.
+    rewrite /big_union. apply seteqP => x. split.
+    move => [?] [H]. by destruct H.
+    by move => [].
+Qed.
+
+Lemma mapR_eq_emP {X Y: Type} (f : X -> Y) (A : 𝒫(X)):
+
+    f [<] A = ∅ <-> A = ∅.
+
+Proof. 
+    rewrite /mapR. split; last first.
+    move ->. apply seteqP => x. split.
+    by move => [?] [[]].
+    by move => [].
+
+    move => /seteqP /= H. apply seteqP => x. split => //=.
+    move => Hxin.
+    apply (H (f x)). by exists x.
+Qed.
+
+Lemma bigU_nemP {X : Type} (A : 𝒫(𝒫(X))) :
+
+        (exists' X ∈ A, X <> ∅) <-> ⋃ A <> ∅.
+
+Proof. split.
+    move => [A0 [HA0in /nonemptyP [x Hxin]]].
+    apply nonemptyP. exists x => //=. by exists A0. 
+    
+    move => /nonemptyP [x [A0 [HA0in HA0nem]]].
+    exists A0. split => //=. apply /nonemptyP. by exists x.
+Qed.
+
+(** How to combine the following two lemmas? *)
+Lemma bigU_sgt_nem {X Y: Type} (A : 𝒫(X)) (a : 𝒫(Y)) : 
+
+        A <> ∅ -> ⋃ { a, x | x ∈ A } = a.
+
+Proof.
+    rewrite /big_union => /nonemptyP HAnem. apply seteqP => x. split.
+
+    move => [Sx] [[x0] [Hx0in HSxeq]] Hxin.
+    by rewrite HSxeq.
+
+    (** nonempty A is need in this direction*)
+    destruct HAnem as [x0 Hx0].
+    move => Hx. exists a. split => //. eexists x0. split => //=.
+Qed.
+
+Lemma bigU_sgt_em {X Y: Type} (A : 𝒫(X)) (a : 𝒫(Y)) : 
+
+        A = ∅ -> ⋃ { a, x | x ∈ A } = ∅.
+
+Proof.
+    rewrite /big_union => ->. apply seteqP => x. split.
+    move => [Sy] [[y0] [Hy0in HSyeq]]. destruct Hy0in.
+    move => Hx. destruct Hx.
+Qed.        
 
 (*##########################################################*)
 (** type of nonempty set *)
@@ -77,31 +189,31 @@ Coercion belonging_nemType {T : Type} (A : 𝒫(T)) (x : T) (Hin : x ∈ A) :=
 
 (*##################################################################*)
 (** singleton is nonempty *)
-Lemma sgt_nemMixin {T : Type} (x : T): NemSet.class_of (singleton x).
-Proof. 
-    rewrite /NemSet.mixin_of. apply nonemptyP. 
-    exists x => //=.
-Qed.
+
+Lemma sgt_nemMixin {T : Type} (x : T) : NemSet.class_of (singleton x).
+Proof. by apply sgt_nem. Qed.
 
 Canonical sgt_nemType {T : Type} (x : T) := NemSet _ (@sgt_nemMixin _ x).
 
+(*##################################################################*)
+(** universal set nonempty *)
+
+Lemma uni_nemMixin (T : iType) : NemSet.class_of (set_uni T).
+Proof. by apply uni_nem. Qed.
+
+Canonical uni_nemType (T : iType) := NemSet _ (@uni_nemMixin T).
 
 (*##################################################################*)
 (** union to nonempty
     Note : the canonical structure if on the left of [A ∪ B]. That is, [A]
     should be nonempty to get the nonempty set of [A ∪ B]. *)
-Lemma union_nemMixin_L {T : Type} (A : 𝒫(T)) (B : 𝒫(T)) 
-    (mA : NemSet.class_of A):
+    
+Lemma union_nemMixin_L {T : Type} (A : 𝒫(T)₊) (B : 𝒫(T)) :
     NemSet.class_of (A ∪ B).
-Proof.
-    rewrite /NemSet.mixin_of. apply nonemptyP.
-    set nemA := NemSet _ mA.
-    case [nemset_witness of nemA]. move => x Hx.
-    exists x. by apply in_union_l.
-Qed.
+Proof. apply union_nem_L. by apply NemSet.class. Qed.
 
 Canonical union_nemType_L {T : Type} (A : 𝒫(T)₊) (B : 𝒫(T)) :=
-    NemSet _ (@union_nemMixin_L _ A B (NemSet.class A)).
+    NemSet _ (@union_nemMixin_L _ A B).
 (*
 (** typical usage: *)
 Axiom (a b c : nat) (A : 𝒫(nat)₊) (B : 𝒫(nat)).
@@ -111,21 +223,15 @@ Check ([nemset of {{a, b}}]).
 *)
 
 
-(*##################################################################*)
-(** universal set nonempty *)
-Lemma uni_nemMixin (T : iType) : NemSet.class_of (set_uni T).
-Proof. rewrite /NemSet.mixin_of. apply uni_neq_em. Qed.
-
-Canonical uni_nemType (T : iType) := NemSet _ (@uni_nemMixin T).
-
 
 (*##################################################################*)
 (** mapR nonempty *)
+
 Lemma mapR_nemMixin (X Y: Type) (f : X -> Y) (A : 𝒫(X)₊): 
     NemSet.class_of (f [<] A).
 Proof. 
     rewrite /NemSet.mixin_of. rewrite mapR_eq_emP. 
-    by apply NemSet.class.
+    by apply NemSet.class. 
 Qed.
 
 Canonical mapR_nemType (X Y: Type) (f : X -> Y) (A : 𝒫(X)₊) :=
@@ -178,15 +284,20 @@ Definition nem_big_union {T : Type} (A : 𝒫(𝒫(T)₊)) : 𝒫(T) :=
     (⋃ [ A as set ]).
 Notation "⋃₊" := nem_big_union : NSet_scope.
 
+Lemma nem_big_union_nem {T : Type} (A : 𝒫(𝒫(T)₊)) :
+
+    A <> ∅ -> ⋃₊ A <> ∅.
+
+Proof.
+    rewrite !nonemptyP => [[X HX]].
+    case [nemset_witness of X] => x Hx.
+    exists x, X. split => //=. by exists X.
+Qed. 
+
 
 Lemma nem_big_union_nemMixin {T : Type} (A : 𝒫(𝒫(T)₊)₊) :
     NemSet.class_of (⋃₊ A).
-Proof.
-    rewrite /NemSet.mixin_of. apply /nonemptyP.
-    case [nemset_witness of A] => X HX.
-    case [nemset_witness of X] => x Hx.
-    exists x. exists X => //=. split => //=. by exists X.
-Qed.
+Proof. apply nem_big_union_nem. by apply NemSet.class. Qed.
 
 Canonical nem_big_union_nemType {T : Type} (A : 𝒫(𝒫(T)₊)₊) :=
     NemSet _ (@nem_big_union_nemMixin _ A).
@@ -194,9 +305,15 @@ Canonical nem_big_union_nemType {T : Type} (A : 𝒫(𝒫(T)₊)₊) :=
 (*#######################################################################*)
 (** Proof facilities about sets *)
 
-Lemma forall_to_exists_nemset {T : Type} (A : 𝒫(T)₊) (P : T -> Prop) :
-    (forall' x ∈ A, P x) -> (exists' x ∈ A, P x).
+Lemma forall_to_exists_nonempty {T : Type} (A : 𝒫(T)) (P : T -> Prop) :
+    A <> ∅ -> (forall' x ∈ A, P x) -> (exists' x ∈ A, P x).
 Proof.
-    move => H. case [nemset_witness of A]. move => x Hx.
+    move => /nonemptyP [x Hx] H.
     exists x. split => //. by apply H.
 Qed.
+
+Lemma forall_to_exists_nemset {T : Type} (A : 𝒫(T)₊) (P : T -> Prop) :
+    (forall' x ∈ A, P x) -> (exists' x ∈ A, P x).
+Proof. apply forall_to_exists_nonempty. by apply NemSet.class. Qed.
+
+    

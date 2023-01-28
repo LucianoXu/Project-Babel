@@ -36,7 +36,7 @@ Proof.
 Defined.
 
 (** every subset of nat is a chain *)
-Definition nat_subset_chain (A : 𝒫(nat)) := Chain _ (@nat_subset_chainMixin A).
+Canonical nat_subset_chain (A : 𝒫(nat)) := Chain _ (@nat_subset_chainMixin A).
 
 
 Module CanonicalStruct.

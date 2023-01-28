@@ -3,7 +3,7 @@
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Import NaiveSet.
+From Ranko Require Import SetFacility.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

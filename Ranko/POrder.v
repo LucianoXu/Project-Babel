@@ -3,7 +3,7 @@
 
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality
-                          NaiveSet.
+                          SetFacility.
 
 From Coq Require Import Relations Classical.
 
@@ -866,7 +866,9 @@ Canonical monotonic_chain (T T' : poset) (f : monotonicfun T T') (c : chain T)
 (* continuous *)
 Module ContinuousFun.
 
-Definition mixin_of (T T' : cpo) (f : monotonicfun T T') :=
+(** We must build the mixin of monotonic function first, because [f [<] c] must
+    be a chain. *)
+Definition mixin_of (T T' : cpo) (f : [ T ↦ᵐ T' ]) :=
     forall c : chain T, 
         f (cpo⊔ c) = cpo⊔ (f [<] c).
 Notation class_of := mixin_of (only parsing).
