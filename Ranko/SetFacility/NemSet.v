@@ -75,6 +75,13 @@ Proof.
     by move => [].
 Qed.
 
+Lemma big_itsct_em {T : Type} :
+
+        ⋂ ∅ = set_uni T.
+
+Proof. rewrite /big_itsct. by apply seteqP => /=. Qed.
+
+
 (** This method requires that the type of [y] is not dependent on [A]. *)
 Lemma mapR_rei {X Y : Type} (A : 𝒫(X)) (y : Y) :
 
@@ -159,41 +166,81 @@ Proof.
     move => Hx. destruct Hx.
 Qed.        
 
+(** About multiple elements *)
+Lemma bigU_ele1 {X : Type} (A : 𝒫(X)) :
+
+        ⋃ ({{ A }}) = A.
+
+Proof. 
+    rewrite bigU_union_dist.
+    rewrite big_union_em bigU_sgt.
+    by apply union_em.
+Qed.
+
+Lemma bigU_ele2 {X : Type} (A B : 𝒫(X)) :
+
+        ⋃ ({{A, B}}) = A ∪ B.
+
+Proof.
+    rewrite bigU_union_dist.
+    by rewrite bigU_ele1 bigU_sgt.
+Qed.
+
+Lemma bigI_ele1 {X : Type} (A : 𝒫(X)) :
+
+    ⋂ ({{ A }}) = A.
+
+Proof. 
+    rewrite bigI_itsct_sgt_dist.
+    rewrite big_itsct_em.
+    by apply itsct_uni.
+Qed.
+
+Lemma bigI_ele2 {X : Type} (A B : 𝒫(X)) :
+
+    ⋂ ({{A, B}}) = A ∩ B.
+
+Proof.
+    rewrite bigI_itsct_sgt_dist.
+    by rewrite bigI_ele1.
+Qed.
+
 (*##########################################################*)
 (** type of nonempty set *)
 Module NemSet.
-
-Definition mixin_of (T : Type) (A : 𝒫(T)) := A <> ∅.
-Notation class_of := mixin_of (only parsing).
-
 Section ClassDef.
 
+Definition mixin_of (T : Type) (A : 𝒫(T)) := A <> ∅.
+Definition class_of := mixin_of.
+
+
 Structure type (T : Type) := Pack {
-    obj : 𝒫(T);
-    _ : class_of obj;
+    set : 𝒫(T);
+    _ : class_of set;
 }.
 
-Definition class T (cT : type T) := 
-    let: Pack _ c := cT return class_of (obj cT) in c.
+Variable (T : Type) (cT : type T).
+
+Definition class := let: Pack _ c := cT return class_of (set cT) in c.
+
+Definition pack := Pack.
 
 End ClassDef.
 
 Module Exports.
-Coercion obj : type >-> powerset.
+#[reversible] Coercion set : type >-> powerset.
 Arguments class [T] cT.
 
 Notation nemset := type.
 Notation " '𝒫(' T ')₊' " := (type T) (format "'𝒫(' T )₊") : NSet_scope.
 
-Notation NemSet T m := (@Pack _ T m).
-Notation "[ 'nemset' 'of' T ]" := ([get s | obj s ~ T : 𝒫(_)])
+Notation NemSet T m := (@pack _ T m).
+Notation "[ 'nemset' 'of' T ]" := (T : type _)
   (at level 0, format "[ 'nemset'  'of'  T ]") : NSet_scope.
-Notation "[ 'nemsetMixin' 'of' T ]" := (class [nemset of T])
-  (at level 0, format "[ 'nemsetMixin'  'of'  T ]") : NSet_scope.
 
 (** This item returns [ ∃ x : _, x ∈ T ] directly. *)
 Notation "[ 'nemset_witness' 'of' T ]" := 
-    (iffLR (@nonemptyP _ _ ) [nemsetMixin of T])
+    (iffLR (@nonemptyP _ _ ) (class T))
     (at level 0, format "[ 'nemset_witness'  'of'  T ]") : NSet_scope.
 
 End Exports.
@@ -211,7 +258,7 @@ Qed.
 
 (** get nemset type directly from [x ∈ A]. *)
 Lemma belonging_nemMixin {T : Type} (A : 𝒫(T)) (x : T) (Hin : x ∈ A) :
-    NemSet.class_of A.
+    NemSet.mixin_of A.
 Proof. apply nonemptyP. by exists x. Qed.
 
 Coercion belonging_nemType {T : Type} (A : 𝒫(T)) (x : T) (Hin : x ∈ A) :=
@@ -221,7 +268,7 @@ Coercion belonging_nemType {T : Type} (A : 𝒫(T)) (x : T) (Hin : x ∈ A) :=
 (*##################################################################*)
 (** singleton is nonempty *)
 
-Lemma sgt_nemMixin {T : Type} (x : T) : NemSet.class_of (singleton x).
+Lemma sgt_nemMixin {T : Type} (x : T) : NemSet.mixin_of (singleton x).
 Proof. by apply sgt_nem. Qed.
 
 Canonical sgt_nemType {T : Type} (x : T) := NemSet _ (@sgt_nemMixin _ x).
@@ -229,7 +276,7 @@ Canonical sgt_nemType {T : Type} (x : T) := NemSet _ (@sgt_nemMixin _ x).
 (*##################################################################*)
 (** universal set nonempty *)
 
-Lemma uni_nemMixin (T : iType) : NemSet.class_of (set_uni T).
+Lemma uni_nemMixin (T : iType) : NemSet.mixin_of (set_uni T).
 Proof. by apply uni_nem. Qed.
 
 Canonical uni_nemType (T : iType) := NemSet _ (@uni_nemMixin T).
@@ -240,7 +287,7 @@ Canonical uni_nemType (T : iType) := NemSet _ (@uni_nemMixin T).
     should be nonempty to get the nonempty set of [A ∪ B]. *)
     
 Lemma union_nemMixin_L {T : Type} (A : 𝒫(T)₊) (B : 𝒫(T)) :
-    NemSet.class_of (A ∪ B).
+    NemSet.mixin_of (A ∪ B).
 Proof. apply union_nem_L. by apply NemSet.class. Qed.
 
 Canonical union_nemType_L {T : Type} (A : 𝒫(T)₊) (B : 𝒫(T)) :=
@@ -259,7 +306,7 @@ Check ([nemset of {{a, b}}]).
 (** mapR nonempty *)
 
 Lemma mapR_nemMixin (X Y: Type) (f : X -> Y) (A : 𝒫(X)₊): 
-    NemSet.class_of (f [<] A).
+    NemSet.mixin_of (f [<] A).
 Proof. 
     rewrite /NemSet.mixin_of. rewrite mapR_eq_emP. 
     by apply NemSet.class. 
@@ -302,7 +349,7 @@ Add Parametric Relation {T : Type} : _ (@nem_supset T)
 
 (** Transform the inner nemset type into normal set type. *)
 Definition nemset2set {T : Type} : 𝒫(𝒫(T)₊) -> 𝒫(𝒫(T)) :=
-    (@NemSet.obj T) [<].
+    (@NemSet.set T) [<].
 Notation "[ T 'as' 'set' ]" := (nemset2set T)
     (at level 0, format "[ T  'as'  'set' ]") : NSet_scope.
 

@@ -19,10 +19,10 @@ Module NatLePoset.
 
 Lemma poset_mixin : Poset.class_of nat.
 Proof.
-    refine (@posetMixin _ le _).
+    refine (@Poset.Mixin _ le _).
     constructor.
-    move => x. by apply le_refl.
-    move => x y z. by apply le_trans.
+    move => x. by apply Nat.le_refl.
+    move => x y z. by apply Nat.le_trans.
     move => x y. by apply Nat.le_antisymm.
 Defined.
 

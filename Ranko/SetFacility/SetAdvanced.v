@@ -63,8 +63,27 @@ Proof.
     exists (g t). split => //. exists t. split => //. by apply HAinB.
 Qed.
 
-        
+Lemma bigU_sgt {X : Type} (A : 𝒫(X)) :
+
+        ⋃ (singleton A) = A.
+
+Proof. apply seteqP => //= x. split.
+    by move => [] X0 [] ->.
+    move => Hxin. exists A. by split.
+Qed.
+
+Lemma bigI_sgt {X : Type} (A : 𝒫(X)) :
+
+        ⋂ (singleton A) = A.
+
+Proof. apply seteqP => //= x. split.
+    by move => /(_ A Logic.eq_refl).
+    by move => Hxin X0 ->.
+Qed.
+
+
 (** About big opertor and mappings *)
+
 
 Lemma bigU_fun_rei {X Y: Type} (A : 𝒫(X)) (f : X -> Y):
 
@@ -103,6 +122,19 @@ Proof.
     [left|right] => //.
 Qed.
 
+Lemma bigI_itsct_dist {X : Type} (A B: 𝒫(𝒫(X))) :
+    
+        ⋂ (A ∩ B) = (⋂ A) ∩ (⋂ B).
+
+Proof.
+Admitted.
+
+Lemma bigI_itsct_sgt_dist   {X : Type} (A : 𝒫(X)) (B: 𝒫(𝒫(X))) :
+    
+        ⋂ (singleton A ∪ B) = A ∩ ⋂ B.
+
+Proof.
+Admitted.
 
 (** Note: The following one is also a unique lemma. *)
 Lemma union_bigU_mapR_dist {X Y : Type} (A : 𝒫(X)) (f g : X -> 𝒫(Y)) :

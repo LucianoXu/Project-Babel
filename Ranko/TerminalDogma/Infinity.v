@@ -1,5 +1,5 @@
 (** Infinity.v : builds the structures of finity and infinity *)
-
+(*
 From Ranko Require Import TerminalDogma.premises.
 From Ranko Require Import TerminalDogma.Isomorphism.
 
@@ -41,3 +41,4 @@ End Exports.
 
 End FiniteType.
 Export FiniteType.Exports.
+*)

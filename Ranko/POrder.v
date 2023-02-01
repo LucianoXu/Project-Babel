@@ -35,8 +35,8 @@ Reserved Notation " cL '†cL' " (at level 10).
 Reserved Notation "'⊔ᶜᵖᵒ' A" (at level 40).
 Reserved Notation "⊔ˡ" (at level 40).
 Reserved Notation "⊓ˡ" (at level 40).
-Reserved Notation "⊔ᶜˡ A " (at level 40).
-Reserved Notation "⊓ᶜˡ A " (at level 40).
+Reserved Notation "⊔ᶜˡ" (at level 40).
+Reserved Notation "⊓ᶜˡ" (at level 40).
 
 (** get the dual relation *)
 Definition dualRel {T : Type} (R1 : relation T) : relation T :=
@@ -64,56 +64,49 @@ Proof. rewrite /dualRel. by apply functional_extensionality. Qed.
     *)
 
 Module Poset.
-
-Structure mixin_of T := Mixin { op : relation T; ord : order T op }.
-Notation class_of := mixin_of (only parsing).
-
 Section ClassDef.
+
+Structure mixin_of (T : Type) := Mixin { op : relation T; ord : order T op }.
+Definition class_of := mixin_of.
 
 Structure type := Pack { sort; _ : class_of sort }.
 
-Definition class (cT : type) := 
-    let: Pack _ c := cT return class_of (sort cT) in c.
+Local Coercion sort : type >-> Sortclass.
+
+Variables (cT : type).
+
+Definition class := 
+    let: Pack _ c := cT return class_of cT in c.
+Definition pack := Pack.
 
 End ClassDef.
 
 
 Module Exports.
+#[reversible] Coercion sort : type >-> Sortclass.
 
-Coercion sort : type >-> Sortclass.
 Notation poset := type.
-Notation posetMixin := Mixin.
-Notation Poset T m := (@Pack T m).
+Notation Poset T m := (@pack T m).
 
-(** Here we conduct the explicit conversion by [T : Type], to allow the
-    downgrade of more complex structures, such as cpo and lattices. *)
-Notation "[ 'poset' 'of' T ]" := ([get r | sort r ~ T : Type ])
+Notation "[ 'poset' 'of' T ]" := (T : poset)
   (at level 0, format "[ 'poset'  'of'  T ]") : POrder_scope.
-Notation "[ 'posetMixin' 'of' T ]" := (@class [ poset of T ])
-  (at level 0, format "[ 'posetMixin'  'of'  T ]") : POrder_scope.
 
-
-Definition poset_op T := Poset.op (Poset.class T).
+Notation poset_op T := (op (class T)).
+Definition poset_order (T : type) := ord (class T).
 Definition poset_refl (T : type) := ord_refl _ _ (ord (class T)).
 Definition poset_trans (T : type) := ord_trans _ _ (ord (class T)).
 Definition poset_antisym (T : type) := ord_antisym _ _ (ord (class T)).
 
-Notation " a ⊑ ( p ) b " := (Poset.op (Poset.class p) a b) 
-    (only parsing): POrder_scope.
-Notation " a ⊑ b " := (Poset.op (Poset.class _) a b) : POrder_scope.
+Notation " a ⊑ ( p ) b " := (op (class p) a b) (only parsing): POrder_scope.
+Notation " a ⊑ b " := (op (class _) a b) : POrder_scope.
 
-Notation " a ⋢ ( p ) b " := (~ a ⊑ (p) b) 
-    (only parsing): POrder_scope.
+Notation " a ⋢ ( p ) b " := (~ a ⊑ (p) b) (only parsing): POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
-
 
 End Exports.
 
 End Poset.
 Export Poset.Exports.
-
-Lemma poset_order (po : poset) : order po (@poset_op po).
-Proof. destruct po. destruct m => //=. Qed.
 
 
 (** dual poset *)
@@ -127,7 +120,7 @@ Qed.
 
 (** get the dual poset *)
 Definition dualPoset (po : poset) : poset :=
-    Poset po (posetMixin (dual_order (poset_order po))).
+    Poset po (Poset.Mixin (dual_order (poset_order po))).
 Notation " P '†po' " := (dualPoset P): POrder_scope.
 
 
@@ -513,35 +506,40 @@ Abort.
 
 
 (*###################################################*)
-(** ** chain and CPO *)
+(** ** chain *)
 
 Module Chain.
+Section ClassDef.
 
 Definition mixin_of (T : poset) (A : 𝒫(T)) :=
     forall' x ∈ A, forall' y ∈ A, (x ⊑ y \/ y ⊑ x).
-Notation class_of := mixin_of (only parsing).
+Definition class_of := mixin_of.
 
-Section ClassDef.
 
 Structure type (T : poset) := Pack {
     set : 𝒫(T);
     _ : class_of set;
 }.
 
+Local Coercion set : type >-> powerset.
+
+Variables (T : poset) (cT : type T).
+
 Definition class (T : poset) (cT : type T) := 
-    let: Pack _ c := cT return class_of (set cT) in c.
+    let: Pack _ c := cT return class_of cT in c.
+
+Definition pack := Pack.
 
 End ClassDef.
 
 Module Exports.
-Coercion set : type >-> powerset.
-Arguments class [T] cT.
+#[reversible] Coercion set : type >-> powerset.
+Arguments class [T] _.
+
 Notation chain := type.
-Notation Chain s m := (@Pack _ s m).
-Notation "[ 'chain' 'of' A ]" := ([get c | set c ~ A : 𝒫(_)])
+Notation Chain s m := (@pack _ s m).
+Notation "[ 'chain' 'of' A ]" := ((A : chain))
   (at level 0, format "[ 'chain'  'of'  A ]"): POrder_scope.
-Notation "[ 'chainMixin' 'of' A ]" := (@class _ [ chain of A ])
-  (at level 0, format "[ 'chainMixin'  'of'  A ]"): POrder_scope.
 End Exports.
 
 End Chain.
@@ -554,41 +552,60 @@ Proof. rewrite /Chain.mixin_of => ? []. Qed.
 Canonical em_is_chain (T : poset) := Chain ∅ (@em_chain_mixin T).
 
 
+(*###################################################*)
 (** CPO (with the join operator) *)
 Module CPO.
+Section ClassDef.
 
-Structure mixin_of (T : poset) := Mixin {
+Record mixin_of (T0 : Type) (b : Poset.class_of T0)
+                (T := Poset T0 b) := Mixin {
     join_of : chain T -> T;
     join_prop : forall A : chain T, supremum A (join_of A);
 }.
-Notation class_of := mixin_of (only parsing).
 
-Section ClassDef.
+#[projections(primitive)]
+Record class_of (T : Type) := Class {
+    base : Poset.class_of T;
+    mixin : mixin_of base;
+}.
+
+Local Coercion base : class_of >-> Poset.class_of.
+Local Coercion mixin : class_of >-> mixin_of.
 
 Structure type := Pack {
-    sort : poset;
+    sort : Type;
     _ : class_of sort;
 }.
 
-Definition class cT := 
+
+Variables (T : Type) (cT : type).
+
+Definition class := 
     let: Pack _ c := cT return class_of (sort cT) in c.
+
+Definition pack b (m : mixin_of b) : type := Pack (@Class T b m).
+
+Definition poset := Poset (sort cT) class.
+
+Definition join_op : chain poset -> poset := join_of class.
 
 End ClassDef.
 
-
-Notation join_op A := (join_of (@class _) [chain of A : 𝒫(_)]).
-
 Module Exports.
-Coercion sort : type >-> poset.
+
+#[reversible] Coercion base : class_of >-> Poset.class_of.
+#[reversible] Coercion mixin : class_of >-> mixin_of.
+(*
+#[reversible] Coercion sort : type >-> Sortclass.
+*)
+#[reversible] Coercion poset : type >-> Poset.type.
+Canonical poset.
+
 Notation cpo := type.
-Notation cpoMixin := Mixin.
-Notation CPO t m := (@Pack t m).
-Notation "[ 'cpo' 'of' T ]" := ([get c | sort c ~ [poset of T] ])
+Notation CPO t m := (@pack t _ m).
+Notation "[ 'cpo' 'of' T ]" := (T : cpo)
     (at level 0, format "[ 'cpo'  'of'  T ]") : POrder_scope.
-Notation "[ 'cpoMixin' 'of' T ]" := (@class [ cpo of T ])
-    (at level 0, format "[ 'cpoMixin'  'of'  T ]") : POrder_scope.
-Notation "'⊔ᶜᵖᵒ' A" := (join_of (@class _) [chain of A]) : 
-    POrder_scope.
+Notation "'⊔ᶜᵖᵒ' A" := (join_op A) : POrder_scope.
 End Exports.
 
 End CPO.
@@ -607,53 +624,76 @@ Qed.
 (** lattice *)
 
 Module Lattice.
-
-Structure mixin_of (T : poset) := Mixin {
-    join_of : T -> T -> T;
-    join_prop : forall x y : T, supremum ({{x, y}}) (join_of x y);
-    meet_of : T -> T -> T;
-    meet_prop : forall x y : T, infimum ({{x, y}}) (meet_of x y);
-}.
-Notation class_of := mixin_of (only parsing).
-
 Section ClassDef.
 
+Record mixin_of (T0 : Type) (b : Poset.class_of T0)
+                (T := Poset T0 b) := Mixin {
+    join_of : T0 -> T0 -> T0;
+    join_prop : forall x y : T, supremum ({{x, y}}) (join_of x y);
+    meet_of : T0 -> T0 -> T0;
+    meet_prop : forall x y : T, infimum ({{x, y}}) (meet_of x y);
+}.
+
+#[projections(primitive)]
+Record class_of (T : Type) := Class {
+    base : Poset.class_of T;
+    mixin : mixin_of base;
+}.
+
+Local Coercion base : class_of >-> Poset.class_of.
+Local Coercion mixin : class_of >->  mixin_of.
+
 Structure type := Pack {
-    sort : poset;
+    sort : Type;
     _ : class_of sort;
 }.
 
-Definition class cT := let: Pack _ c := cT return class_of (sort cT) in c.
+Variable (T : Type) (cT : type).
+
+Definition class := let: Pack _ c := cT return class_of (sort cT) in c.
+
+Definition pack b m : type := Pack (@Class T b m).
+
+Definition poset := Poset (sort cT) class.
+
+Definition join_op := join_of class.
+Definition meet_op := meet_of class.
 
 End ClassDef.
 
-Notation join_op A := (join_of (class A)).
-Notation meet_op A := (meet_of (class A)).
 
 Module Exports.
-Coercion sort : type >-> poset.
-Notation lattice := type.
-Notation LatticeMixin := Mixin.
-Notation Lattice t m := (@Pack t m).
+#[reversible] Coercion base : class_of >-> Poset.class_of.
+#[reversible] Coercion mixin : class_of >-> mixin_of.
+(** we remove the direct coercion to force Coq going through all base classes
+    one by one.
 
-Notation "[ 'lattice' 'of' T ]" := ([get r | sort r ~ [poset of T] ])
+#[reversible] Coercion sort : type >-> Sortclass.
+*)
+#[reversible] Coercion poset : type >-> Poset.type.
+Canonical poset.
+
+Notation lattice := type.
+Notation Lattice t m := (@pack t _ m).
+
+Notation "[ 'lattice' 'of' T ]" := (T : lattice)
   (at level 0, format "[ 'lattice'  'of'  T ]") : POrder_scope.
-Notation "[ 'latticeMixin' 'of' T ]" := (@class [lattice of T])
-  (at level 0, format "[ 'latticeMixin'  'of'  T ]") : POrder_scope.
-Notation "⊔ˡ" := (join_of (class _)) : POrder_scope.
-Notation "⊓ˡ" := (meet_of (class _)) : POrder_scope.
+Notation "⊔ˡ" := join_op : POrder_scope.
+Notation "⊓ˡ" := meet_op : POrder_scope.
 End Exports.
 
 End Lattice.
 Export Lattice.Exports.
 
+
 (** dual lattice canonical structure *)
 Definition dual_lattice_mixin (T : lattice) : Lattice.class_of (T †po).
 Proof.
-    refine (@LatticeMixin (T †po) 
-        (Lattice.meet_op T) _ (Lattice.join_op T) _) => x y.
-    by apply (@Lattice.meet_prop T).
-    by apply (@Lattice.join_prop T).
+    eapply Lattice.Class.
+    refine (@Lattice.Mixin (T †po) (Poset.class (T †po)) 
+            (@Lattice.meet_op T) _ (@Lattice.join_op T) _) => x y.
+    by apply (Lattice.meet_prop (Lattice.class T)).
+    by apply (Lattice.join_prop (Lattice.class T)).
 Defined.
 
 Canonical dual_lattice (T : lattice) := Lattice _ (dual_lattice_mixin T).
@@ -666,6 +706,7 @@ Notation " L '†L' " := (dual_lattice L) : POrder_scope.
 (** ** complete lattice *)
 
 Module CLattice.
+Section ClassDef.
 
 (** Essential requirement
     Breaking the mixin into [essence_of] and the consistency requirements makes
@@ -679,94 +720,99 @@ Structure essence_of (T : poset) := Essence {
     (** we don't put top and bottom here, since they can be derived.*)
 }.
 
-Structure mixin_of (T : lattice) := Mixin {
+Record mixin_of (T0 : Type) (b : Lattice.class_of T0) 
+                    (T := Lattice T0 b) := Mixin {
     essence : essence_of T;
-    (** consistency *)
+    (** we don't put top and bottom here, since they can be derived.*)
     join_consistent : forall (x y : T), (⊔ˡ x y) = join_of essence ({{x, y}});
-    meet_consistent : forall (x y : T), (⊓ˡ x y) = meet_of essence ({{x, y}});
+    meet_consistent : forall (x y : T), (⊓ˡ x y) = meet_of essence ({{x, y}}); 
 }.
 
-Notation class_of := mixin_of (only parsing).
+Local Coercion essence : mixin_of >-> essence_of.
 
-(** Definition *)
-Section ClassDef.
+#[projections(primitive)]
+Record class_of (T : Type) := Class {
+    base : Lattice.class_of T;
+    mixin : mixin_of base;
+}.
+
+Local Coercion base : class_of >-> Lattice.class_of.
+Local Coercion mixin : class_of >-> mixin_of.
 
 Structure type := Pack {
-    sort : lattice;
-    _ : class_of sort
+    sort : Type;
+    _ : class_of sort;
 }.
 
-Definition class cT := let: Pack _ c := cT return class_of (sort cT) in c.
+Variables (T : Type) (cT : type).
 
-Local Coercion sort : type >-> lattice.
+Definition class := let: Pack _ c := cT return class_of (sort cT) in c.
+
+Definition pack b m : type := Pack (@Class T b m).
+
+Definition lattice := Lattice (sort cT) class.
 
 
-(** Complete Lattice to cpo *)
-
-Definition clattice_cpoMixin (T : type) : CPO.class_of T.
+Definition cpo_mixin : CPO.mixin_of (Lattice.class lattice).
 Proof.
-    refine (@cpoMixin _ (fun c : chain T => (join_of (essence (class T)) c)) _).
+    refine (@CPO.Mixin _ _ (join_of class) _).
     move => c. by apply join_prop.
 Defined.
 
-Definition clattice2cpo (T : type) : cpo := CPO T (clattice_cpoMixin T).
+Definition cpo := CPO _ cpo_mixin.
+
+Definition join_op := join_of (essence class).
+Definition meet_op := meet_of (essence class).
+
+End ClassDef.
 
 
-(** Build CLattice directly from [essence_of]. *)
+(** EXPERIMENTAL
+    Build CLattice directly from [essence_of]. *)
 
-Definition clattice_essence_imp_lattice_class 
-    (T : poset) (e : essence_of T) : Lattice.class_of T.
-Proof.
-    set j_op := (fun x y => join_of e ({{x, y}})).
-    set m_op := (fun x y => meet_of e ({{x, y}})).
-    refine (@LatticeMixin _ j_op _ m_op _).
-    move => x y. by apply join_prop.
-    move => x y. by apply meet_prop.
-Defined.
+Definition essence_to_lattice_mixin
+    (T : poset) (e : essence_of T ) : Lattice.mixin_of (Poset.class T) :=
+    {|
+      Lattice.join_of := λ x y : T, join_of e ({{x, y}});
+      Lattice.join_prop := λ x y : T, join_prop e ({{x, y}});
+      Lattice.meet_of := λ x y : T, meet_of e ({{x, y}});
+      Lattice.meet_prop := λ x y : T, meet_prop e ({{x, y}})
+    |}.
 
-Definition clattice_essence_lattice (T : poset) (e : essence_of T) :=
-    Lattice _ (clattice_essence_imp_lattice_class e).
+Definition essence_to_lattice (T : poset) (e : essence_of T) :=
+    Lattice _ (essence_to_lattice_mixin e).
 
-Definition clattice_essence_imp_class
+(** This function allows us to build [mixin_of] from [essence_of] directly.*)
+Definition essence_to_mixin
     (T : poset) (e : essence_of T) : 
-        class_of (clattice_essence_lattice e).
+        mixin_of (Lattice.class (essence_to_lattice e)).
 Proof.
-    have e' : essence_of (clattice_essence_lattice e). by [].
-    refine (@Mixin _ e' _ _).
+    econstructor.
     (** consistency of join *)
     move => x y. apply (sup_unique (A := {{x, y}})). 
     by apply Lattice.join_prop. by apply join_prop.
     (** consistency of meet *)
     move => x y. apply (inf_unique (A := {{x, y}})). 
     by apply Lattice.meet_prop. by apply meet_prop.
+    Unshelve. by destruct T.
 Defined.
 
-(** This function allows us to build clattice from [essence_of] directly.*)
-Definition clattice_essence_build (T : poset) (e : essence_of T) : type :=
-    Pack (clattice_essence_imp_class e).
-
-End ClassDef.
-
-Notation join_op A := (join_of (essence (class A))).
-Notation meet_op A := (meet_of (essence (class A))).
 
 Module Exports.
-Coercion sort : type >-> lattice.
-Coercion clattice2cpo : type >-> cpo.
+#[reversible] Coercion base : class_of >-> Lattice.class_of.
+#[reversible] Coercion mixin : class_of >-> mixin_of.
+#[reversible] Coercion cpo : type >-> CPO.type.
+Canonical cpo.
+#[reversible] Coercion lattice : type >-> Lattice.type.
+Canonical lattice.
 
 Notation clattice := type.
-Notation CLatticeEssence := Essence.
-Notation CLatticeMixin := Mixin.
+Notation CLattice T m := (@pack T _ m).
 
-Notation CLattice T m := (@Pack T m).
-Notation CLatticeFromEssence T e := (@clattice_essence_build T e).
-
-Notation "[ 'clattice' 'of' T ]" := ([get r | sort r ~ [ lattice of T ]])
+Notation "[ 'clattice' 'of' T ]" := (T : clattice)
     (at level 0, format "[ 'clattice'  'of'  T ]") : POrder_scope.
-Notation "[ 'clatticeMixin' 'of' T ]" := (@class [clattice of T])
-    (at level 0, format "[ 'clatticeMixin'  'of'  T ]") : POrder_scope.
-Notation "⊔ᶜˡ" := (join_of (essence (class _))) : POrder_scope.
-Notation "⊓ᶜˡ" := (meet_of (essence (class _))) : POrder_scope.
+Notation "⊔ᶜˡ" := join_op : POrder_scope.
+Notation "⊓ᶜˡ" := join_op : POrder_scope.
 
 End Exports.
 
@@ -778,17 +824,18 @@ Export CLattice.Exports.
 (** dual lattice canonical structure *)
 Definition dual_clattice_essence (T : clattice) : CLattice.essence_of (T †L).
 Proof. 
-    refine (@CLatticeEssence (T †L) 
-        (CLattice.meet_op T) _ (CLattice.join_op T) _) => A.
+    refine (@CLattice.Essence (T †L) 
+        (@CLattice.meet_op T) _ (@CLattice.join_op T) _) => A.
     by apply (@CLattice.meet_prop T).
     by apply (@CLattice.join_prop T).
 Defined.
 
-Definition dual_clattice_mixin (T : clattice) : CLattice.class_of (T †L).
+Definition dual_clattice_mixin (T : clattice) : 
+    CLattice.mixin_of (Lattice.class (T †L)).
 Proof.
-    refine (@CLatticeMixin (T †L) (dual_clattice_essence T) _ _) => x y.
-    by apply (@CLattice.meet_consistent T).
-    by apply (@CLattice.join_consistent T).
+    refine (@CLattice.Mixin _ _ (dual_clattice_essence T) _ _) => x y.
+    by apply (@CLattice.meet_consistent _ (Lattice.class T)).
+    by apply (@CLattice.join_consistent _ (Lattice.class T)).
 Defined.
 
 Canonical dual_clattice (T : clattice) := CLattice _ (dual_clattice_mixin T).
@@ -848,38 +895,41 @@ Definition gfp_x (T : poset) (f : T -> T) (x a : T) :=
 Definition gfp (T : poset) (f : T -> T) (a : T) := 
     largest (fp_s f) a.
 
+
+(*###########################################################################*)
 (** monotonic *)
 Module MonotonicFun.
+Section ClassDef.
 
 Definition mixin_of (T T' : poset) (f : T -> T') :=
     forall x y : T, x ⊑ y -> f x ⊑ f y.
-Notation class_of := mixin_of (only parsing).
+Definition class_of := mixin_of.
 
-Section ClassDef.
 
 Structure type (T T' : poset) := Pack {
     obj : T -> T';
     _ : class_of obj;
 }.
 
-Definition class T T' (cT : type T T') := 
-    let: Pack _ c := cT return class_of (obj cT) in c.
+Variable (T T' : poset) (cT : type T T').
+
+Definition class := let: Pack _ c := cT return class_of (obj cT) in c.
+
+Definition pack := Pack.
 
 End ClassDef.
 
 Module Exports.
-Coercion obj : type >-> Funclass.
+#[reversible] Coercion obj : type >-> Funclass.
 Notation monotonicfun := type.
 
 (** The special notation for monotonic function. *)
 Notation "[ A ↦ᵐ B ]" := (type [poset of A] [poset of B]) 
     (at level 0, format "[ A  ↦ᵐ  B ]"): POrder_scope.
 
-Notation MonotonicFun T m := (@Pack _ _ T m).
-Notation "[ 'monotonicfun' 'of' T ]" := ([get f | obj f ~ (T : _ -> _) ])
+Notation MonotonicFun T m := (@pack _ _ T m).
+Notation "[ 'monotonicfun' 'of' T ]" := (T : type _ _ )
     (at level 0, format "[ 'monotonicfun'  'of'  T ]") : POrder_scope.
-Notation "[ 'monotonicMixin' 'of' T ]" := (class [ monotonicfun of T ])
-    (at level 0, format "[ 'monotonicMixin'  'of'  T ]") : POrder_scope.
 End Exports.
     
 End MonotonicFun.
@@ -911,38 +961,52 @@ Canonical monotonic_chain (T T' : poset) (f : monotonicfun T T') (c : chain T)
 (* continuous *)
 Module ContinuousFun.
 
-(** We must build the mixin of monotonic function first, because [f [<] c] must
-    be a chain. *)
-Definition mixin_of (T T' : cpo) (f : [ T ↦ᵐ T' ]) :=
-    forall c : chain T, 
-        f (⊔ᶜᵖᵒ c) = ⊔ᶜᵖᵒ (f [<] c).
-Notation class_of := mixin_of (only parsing).
-
 Section ClassDef.
 
+(** We must build the mixin of monotonic function first, because [f [<] c] must
+    be a chain. *)
+Definition mixin_of (T T' : cpo) (f0 : T -> T')
+            (bf : MonotonicFun.class_of f0) (f := MonotonicFun f0 bf) :=
+    forall c : chain T, f (⊔ᶜᵖᵒ c) = ⊔ᶜᵖᵒ (f [<] c).
+
+#[projections(primitive)]
+Record class_of (T T' : cpo) (f : T -> T'):= Class {
+    base : MonotonicFun.class_of f;
+    mixin : mixin_of base;
+}.
+
+Local Coercion base : class_of >-> MonotonicFun.class_of.
+Local Coercion mixin : class_of >-> mixin_of.
+
 Structure type (T T' : cpo) := Pack {
-    obj : monotonicfun T T';
+    obj : T -> T';
     _ : class_of obj;
 }.
 
-Definition class T T' (cT : type T T') := 
-    let: Pack _ c := cT return class_of (obj cT) in c.
+Variable (T T' : cpo) (f : T -> T') (cT : type T T').
 
+Definition class := let: Pack _ c := cT return class_of (obj cT) in c.
+
+Definition pack b m := @Pack _ _ _ (@Class T T' f b m).
+
+Definition monotonicfun := MonotonicFun _ class.
 End ClassDef.
 
 Module Exports.
-Coercion obj : type >-> monotonicfun.
+#[reversible] Coercion base : class_of >-> MonotonicFun.class_of.
+#[reversible] Coercion mixin : class_of >-> mixin_of.
+
+#[reversible] Coercion monotonicfun : type >-> MonotonicFun.type.
+Canonical monotonicfun.
+
 Notation continuousfun := type.
 
 (** The special notation for continuous function. *)
 Notation "[ A ↦ B ]" := (type [cpo of A] [cpo of B]) 
     (at level 0, format "[ A  ↦  B ]"): POrder_scope.
-
-Notation ContinuousFun T m := (@Pack _ _ T m).
-Notation "[ 'continuousfun' 'of' T ]" := ([get f | obj f ~ [monotonicfun of T] ])
+Notation ContinuousFun T m := (@pack _ _ _ T m).
+Notation "[ 'continuousfun' 'of' T ]" := (T : type _ _)
     (at level 0, format "[ 'continuousfun'  'of'  T ]") : POrder_scope.
-Notation "[ 'continuousMixin' 'of' T ]" := (class [ continuousfun of T ])
-    (at level 0, format "[ 'continuousMixin'  'of'  T ]") : POrder_scope.
 End Exports.
     
 End ContinuousFun.

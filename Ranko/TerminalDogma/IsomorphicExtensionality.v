@@ -1,5 +1,5 @@
 (** IsomorphicExtensioniality.v *)
-
+(*
 From Ranko Require Import TerminalDogma.premises.
 From Ranko Require Import TerminalDogma.Isomorphism.
 
@@ -17,5 +17,5 @@ Axiom isomorphic_extensionality : IsomorphicExtensionality.
 Definition transport_iso (A B : Type) : A ≅ B -> A -> B.
 Proof. move => H a. apply isomorphic_extensionality in H. by exact ([a by H]).
 Qed.
-        
+*)
         
