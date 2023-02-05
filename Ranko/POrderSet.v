@@ -105,6 +105,7 @@ End OrderDef.
 (** Import this module to use the subset poset canonical structures. *)
 Module CanonicalStruct.
 
+Canonical clattice_type.
 Canonical poset_type.
 Coercion lattice_type : Sortclass >-> lattice.
 Coercion cpo_type : Sortclass >-> cpo.
@@ -172,6 +173,9 @@ End OrderDef.
 
 (** Import this module to use the supset poset canonical structures. *)
 Module CanonicalStruct.
+
+(** This seems not working very well. 
+    The coercion of [poset] does not work. *)
 
 Canonical clattice_type.
 Coercion poset_type : Sortclass >-> poset.

@@ -50,7 +50,7 @@ Notation " a [+] b " := (@QvarUnion _ a b )
 Parameter QvType : forall qs: QvarScope, qs -> HilbertSpace.
 Coercion QvType : Qvar >-> HilbertSpace.
 
-Parameter PDensityOpt : HilbertSpace -> Type.
+Parameter PDensityOpt : HilbertSpace -> iType.
 Notation " '𝒟(' H ')⁻' " := (PDensityOpt H) 
     (format "'𝒟(' H ')⁻'" ): QTheoryBasic_scope.
 
@@ -116,15 +116,32 @@ Definition PDensitySet (H: HilbertSpace) : Type := 𝒫(𝒟( H )⁻).
 Definition union_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
         fun _ a b => a ∪ b.
-        
+
 Definition add_set : forall {H : HilbertSpace}, 
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
-        fun _ a b => ⋃ { (add_PDenOpt x) [<] b, x | x ∈ a }.
+        fun H a b => ((@add_PDenOpt H) [<] a [><] b).
 
 (* Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope. *)
 Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
 
 
+Lemma add_set_nem {H : HilbertSpace} (A B : 𝒫(𝒟( H )⁻))
+    (HA : A <> ∅) (HB : B <> ∅) : (A + B) <> ∅.
+Proof.
+    rewrite /NemSet.mixin_of /add_set. 
+    apply UmapRL_nem => //. by apply mapR_nem.
+Qed.
+        
+
+Lemma add_set_nemMixin {H : HilbertSpace} (A B : 𝒫(𝒟( H )⁻)₊) : 
+    NemSet.mixin_of (A + B).
+Proof. by apply add_set_nem; apply NemSet.class. Qed.
+
+Canonical add_set_nemType {H : HilbertSpace} (A B : 𝒫(𝒟( H )⁻)₊) :=
+    NemSet _ (@add_set_nemMixin _ A B).
+
+
+(*
 Definition InitSttS {qs : QvarScope} qv rho_s : 𝒫(𝒟( qs )⁻) :=
     (InitStt qv) [<] rho_s.
 (* Notation "'𝒮ℯ𝓉⁰_'" := InitStt. *)
@@ -138,17 +155,32 @@ Definition MapplyS (qs : QvarScope) (qv_M : qs) (m : MeaOpt qv_M) (r : bool)
     rho_s : 𝒫(𝒟( qs )⁻) :=
     (Mapply m r) [<] rho_s.
 (* Notation "'𝒫_'" := Mapply. *)
+*)
 
 Definition scalar_convex_combS : forall (H : HilbertSpace), 
     [0, 1]R -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
-    fun _ p a b => ⋃ { (scalar_convex_comb p x) [<] b, x | x ∈ a }.
+    fun _ p a b => (scalar_convex_comb p) [<] a [><] b.
 
 Notation " A [ p ⊕ ] B " := (@scalar_convex_combS _ p A B) 
     (format "A  [ p ⊕ ]  B"): QTheorySet_scope.
 
+Lemma scalar_convex_combS_nemMixin 
+    {H : HilbertSpace} (p : [0, 1]R) (A B : 𝒫(𝒟( H )⁻)) 
+        (mA : NemSet.class_of A) (mB : NemSet.class_of B):
+        NemSet.mixin_of (A [ p ⊕ ] B).
+Proof.
+    rewrite /NemSet.mixin_of /scalar_convex_combS. 
+    apply UmapRL_nem => //. by apply mapR_nem.
+Qed.
+
+Canonical scalar_convex_combS_nemType 
+    {H : HilbertSpace} (p : [0, 1]R) (A B : 𝒫(𝒟( H )⁻)₊) :=
+        NemSet _ (@scalar_convex_combS_nemMixin _ p _ _ 
+                    (NemSet.class A) (NemSet.class B)).
+
 
 (** Use inverse inclusion order *)
-Export SupsetOrder.CanonicalStruct.
+Export SubsetOrder.CanonicalStruct.
 
 
 
@@ -156,9 +188,9 @@ Add Parametric Morphism {H : HilbertSpace} : (@add_set H)
     with signature 
     (@poset_op _) ==> (@poset_op _) ==> (@poset_op _) as add_mor_le.
 Proof.
-    rewrite /add_set => x y Hxy a b Hab.
+    rewrite /add_set => x y Hxy a b Hab //=.
     apply bigU_mapR_mor_sub => //.
-    move => t. by apply mapR_mor_sub.
+    move => t. apply mapL_mor_sub => //. by apply mapR_mor_sub.
 Qed.
 
 Lemma PDenSetOrder_add_split {H : HilbertSpace} :
@@ -173,10 +205,10 @@ Add Parametric Morphism {H : HilbertSpace} : (@scalar_convex_combS H)
         eq ==> (@poset_op _) ==> (@poset_op _) 
             ==> (@poset_op _) as convex_comb_mor_le.
 Proof.
-    rewrite /scalar_convex_combS => p x y Hxy a b Hab.
+    rewrite /scalar_convex_combS => p x y Hxy a b Hab //=.
     apply bigU_mapR_mor_sub => //.
-    move => t. by apply mapR_mor_sub.
-Admitted.
+    move => t. apply mapL_mor_sub => //. by apply mapR_mor_sub.
+Qed.
 
 Lemma PDensetOrder_cv_comb_split {H : HilbertSpace} :
     forall p {rho_s1 rho_s2 rho_s1' rho_s2': 𝒫(𝒟( H )⁻)},
@@ -202,43 +234,6 @@ Proof.
 Qed.
 
 
-(** The monotonicity of three operators *)
-Lemma InitSttS_monotonicMixin {qs : QvarScope} (qv : qs) :
-    MonotonicFun.class_of (InitSttS qv).
-Proof.
-    rewrite /MonotonicFun.mixin_of => r1 r2 Hr1r2.
-    by apply mapR_mor_sub.
-Qed.
-
-Canonical InitSttS_monotonicfun {qs : QvarScope} (qv : qs) := 
-    MonotonicFun _ (@InitSttS_monotonicMixin _ qv).
-
-
-Lemma UapplyS_monotonicMixin {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) :
-    MonotonicFun.class_of (UapplyS U).
-Proof.
-    rewrite /MonotonicFun.mixin_of => r1 r2 Hr1r2.
-    by apply mapR_mor_sub.
-Qed.
-
-Canonical UapplyS_monotonicfun {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv)
-    := MonotonicFun _ (@UapplyS_monotonicMixin _ _ U).
-
-
-Lemma MapplyS_monotonicMixin 
-    {qs : QvarScope} (qv_m : qs) (m : MeaOpt qv_m) (result : bool) :
-    MonotonicFun.class_of (MapplyS m result).
-Proof.
-    rewrite /MonotonicFun.mixin_of => r1 r2 Hr1r2.
-    by apply mapR_mor_sub.
-Qed.
-
-Canonical MapplyS_monotonicfun 
-    {qs : QvarScope} (qv_m : qs) (m : MeaOpt qv_m) (result : bool) :=
-    MonotonicFun _ (@MapplyS_monotonicMixin _ _ m result).
-
-
-
 
 (* chain and CPO conclusions *)
 
@@ -246,7 +241,7 @@ Canonical MapplyS_monotonicfun
 Record chain (T : Type) := mk_chain {
     chain_obj : nat -> 𝒫(T);
     (** Here for simplicity we take the inverse direction *)
-    chain_prop : forall n, chain_obj n ⊇ chain_obj n.+1;
+    chain_prop : forall n, chain_obj n ⊑ chain_obj n.+1;
 }.
 Notation " ch _[ n ] " := (chain_obj ch n) (at level 40) : QTheorySet_scope.
 
@@ -278,10 +273,10 @@ Notation " 'lim→∞' ( ch ) " := (@chain_limit _ ch)
     (at level 200) : QTheorySet_scope.
 
 Axiom chain_limit_ub : forall T (ch : chain T) n,
-    ch _[n] ⊇ lim→∞ (ch).
+    ch _[n] ⊑ lim→∞ (ch).
 
 Axiom chain_limit_lub : forall T (ch : chain T) rho_ub,
-    (forall n, ch _[n] ⊇ rho_ub) -> lim→∞ (ch) ⊇ rho_ub.
+    (forall n, ch _[n] ⊑ rho_ub) -> lim→∞ (ch) ⊑ rho_ub.
 
 Lemma singleton_chain_limit (H : HilbertSpace) (rho_s : PDensitySet H) :
     lim→∞ (rho_s) = rho_s.
@@ -292,6 +287,7 @@ Proof.
     have temp := @chain_limit_ub _ (singleton_chain rho_s). 
     by apply (temp O).
 Qed.
+(* 
 
 Lemma repeat_chain_limit (T : Type) (ch : chain T) x :
     (forall i, ch _[i] = x) -> lim→∞ (ch) = x.
@@ -300,9 +296,6 @@ Proof. move => H.
     transitivity (ch _[1]). by apply chain_limit_ub. by rewrite H.
     apply chain_limit_lub. move => i. by rewrite H.
 Qed.
-
-
-
 (* chain_add *)
 Definition chain_add_obj (H : HilbertSpace) 
     (ch_obj1 ch_obj2 : nat -> PDensitySet H) :=
@@ -463,7 +456,7 @@ Axiom fmap_continuous :
     forall (T V: Type) (f : T -> V) (ch : chain T),
         f [<] (lim→∞ (ch)) = lim→∞ (fmap_chain f ch).
     
-
+*)
 End QTheorySetType.
 
 

@@ -21,6 +21,9 @@ Open Scope POrder_scope.
 Reserved Notation " a ⊑ ( p ) b " 
     (at level 60, p at next level, format " a  ⊑ ( p )  b ").
 Reserved Notation " a ⊑ b " (at level 60).
+Reserved Notation " a ⊒ ( p ) b " 
+    (at level 60, p at next level, format " a  ⊒ ( p )  b ").
+Reserved Notation " a ⊒ b " (at level 60).
 Reserved Notation " a ⋢ ( p ) b " 
     (at level 60, p at next level, format " a  ⋢ ( p )  b ").
 Reserved Notation " a ⋢ b " (at level 60).
@@ -99,6 +102,8 @@ Definition poset_antisym (T : type) := ord_antisym _ _ (ord (class T)).
 
 Notation " a ⊑ ( p ) b " := (op (class p) a b) (only parsing): POrder_scope.
 Notation " a ⊑ b " := (op (class _) a b) : POrder_scope.
+Notation " a ⊒ ( p ) b " := (op (class p) b a) (only parsing): POrder_scope.
+Notation " a ⊒ b " := (op (class _) b a) : POrder_scope.
 
 Notation " a ⋢ ( p ) b " := (~ a ⊑ (p) b) (only parsing): POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
@@ -812,7 +817,7 @@ Notation CLattice T m := (@pack T _ m).
 Notation "[ 'clattice' 'of' T ]" := (T : clattice)
     (at level 0, format "[ 'clattice'  'of'  T ]") : POrder_scope.
 Notation "⊔ᶜˡ" := join_op : POrder_scope.
-Notation "⊓ᶜˡ" := join_op : POrder_scope.
+Notation "⊓ᶜˡ" := meet_op : POrder_scope.
 
 End Exports.
 
