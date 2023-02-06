@@ -3,4 +3,6 @@
 From Ranko.SetFacility Require Export
     NaiveSet
     NemSet
-    SetAdvanced.
+    SetBasic
+    SetAdvanced
+    SetTactic.

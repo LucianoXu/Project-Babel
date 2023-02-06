@@ -946,7 +946,7 @@ Lemma monotonic_mapR_chainMixin
     Chain.mixin_of (f [<] c).
 Proof.
     rewrite /Chain.mixin_of => x [a [Hain Hxeq]] y [b [Hbin Hyeq]].
-    rewrite -Hxeq -Hyeq.
+    rewrite Hxeq Hyeq.
     case (Chain.class c a Hain b Hbin) => H; 
     [left | right]; by apply (MonotonicFun.class f).
 Qed.

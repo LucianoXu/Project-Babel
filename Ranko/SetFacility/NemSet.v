@@ -6,7 +6,7 @@
 From Ranko Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Export NaiveSet SetAdvanced.
+From Ranko Require Export NaiveSet SetBasic SetAdvanced SetTactic.
 
 From Coq Require Import Relations Classical.
 
@@ -78,16 +78,21 @@ Lemma big_union_em {T : Type} :
         ⋃ ∅ = set_em T.
 
 Proof.
+    seteq_killer.
+    (*
     rewrite /big_union. apply seteqP => x. split.
     move => [?] [H]. by destruct H.
     by move => [].
+    *)
 Qed.
 
 Lemma big_itsct_em {T : Type} :
 
         ⋂ ∅ = set_uni T.
 
-Proof. rewrite /big_itsct. by apply seteqP => /=. Qed.
+Proof. seteq_killer.
+    (* rewrite /big_itsct. by apply seteqP => /=. *)
+Qed.
 
 
 (** This method requires that the type of [y] is not dependent on [A]. *)
@@ -95,7 +100,8 @@ Lemma mapR_rei {X Y : Type} (A : 𝒫(X)) (y : Y) :
 
     A <> ∅ -> { y , a | a ∈ A } = {{ y }} .
 
-Proof. move => /nonemptyP [a Hain]. apply seteqP => x. split.
+Proof. 
+    move => /nonemptyP [a Hain]. apply seteqP => x. split.
     move => [x0] [Hx0in] Heq. rewrite Heq. by apply singletonP.
     move => [Heq|].
     exists a. by split.
@@ -163,7 +169,7 @@ Proof.
     rewrite /big_union => /nonemptyP HAnem. apply seteqP => x. split.
 
     move => [Sx] [[x0] [Hx0in HSxeq]] Hxin.
-    by rewrite HSxeq.
+    by rewrite -HSxeq.
 
     (** nonempty A is need in this direction*)
     destruct HAnem as [x0 Hx0].
