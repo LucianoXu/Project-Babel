@@ -59,7 +59,7 @@ Lemma bigU_mapR_mor_sub {X Y: Type} (f g: X -> 𝒫(Y)) (A B: 𝒫(X)):
 
 Proof.
     rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
-    have H := Hfleg t v. rewrite HSveq in H. have H' := H Hvin.
+    have H := Hfleg t v. rewrite -HSveq in H. have H' := H Hvin.
     exists (g t). split => //. exists t. split => //. by apply HAinB.
 Qed.
 
@@ -90,7 +90,7 @@ Lemma bigU_fun_rei {X Y: Type} (A : 𝒫(X)) (f : X -> Y):
         ⋃ { {{ f a }}, a | a ∈ A } = f [<] A.
     
 Proof. rewrite /mapR /big_union. apply seteqP => x. split.
-    move => [Sy] [[x0 [Hx0in HSyeq]]]. rewrite -{}HSyeq.
+    move => [Sy] [[x0 [Hx0in HSyeq]]]. rewrite {}HSyeq.
     rewrite singletonP => ->. exists x0. by split.
     move => [x0 [Hx0in Hxeq]].
     eexists. split. eexists. split. apply Hx0in. rewrite Hxeq.
@@ -103,7 +103,7 @@ Lemma bigU_rei {X : Type} (A : 𝒫(X)) :
         ⋃ { {{ a }}, a | a ∈ A } = A.
 
 Proof. rewrite /big_union. apply seteqP => x. split.
-    move => [Sx] [[x0 [Hx0in HSxeq]]]. rewrite -{}HSxeq. 
+    move => [Sx] [[x0 [Hx0in HSxeq]]]. rewrite {}HSxeq. 
     by rewrite singletonP => ->.
     move => Hx.
     exists ({{x}}). split. exists x. by split. by apply singletonP.
@@ -146,14 +146,14 @@ Proof.
     move => [].
     
     { move => [y] [[x0 [Hx0in Hyeq]]] Hxin.
-    exists ((f x0)∪(g x0)). split =>//. exists x0. split => //. rewrite Hyeq.
+    exists ((f x0)∪(g x0)). split =>//. exists x0. split => //. rewrite -Hyeq.
     by apply in_union_l. }
     
     { move => [y] [[x0 [Hx0in Hyeq]]] Hxin.
-    exists ((f x0)∪(g x0)). split =>//. exists x0. split => //. rewrite Hyeq.
+    exists ((f x0)∪(g x0)). split =>//. exists x0. split => //. rewrite -Hyeq.
     by apply in_union_r. }
 
-    move => [y] [[x0] [Hx0in Hyeq]] Hxin. rewrite -{}Hyeq in Hxin.
+    move => [y] [[x0] [Hx0in Hyeq]] Hxin. rewrite {}Hyeq in Hxin.
     destruct Hxin.
 
     { left. exists (f x0). split => //. exists x0. by split. }
@@ -176,13 +176,14 @@ Lemma mapL_in {X Y : Type} (F : 𝒫(X -> Y)) (x : X) :
 
 Proof. rewrite /mapL => f ? //=. by exists f. Qed.
 
+
 (*************************)
 (** ESPECIALLY IMPORTANT *)
 (*************************)
 
 Lemma mapR_bigU_swap {X Y : Type} (f : X -> Y) (A : 𝒫(𝒫(X))):
     
-        { f x, x | x ∈ (⋃ A) } = ⋃ { f [<] a , a | a ∈ A }.
+        f [<] (⋃ A) = ⋃ (f [<] [<] A).
 
 Proof.
     rewrite /big_union /mapR. apply /seteqP => x //=. split.
@@ -192,10 +193,9 @@ Proof.
     exists x0. by split.
 
     move => [y] [[a [Ha Hyeq]]] Heq.
-    rewrite -Hyeq in Heq. destruct Heq as [x0 [Hx01 Hx02]].
+    rewrite Hyeq in Heq. destruct Heq as [x0 [Hx01 Hx02]].
     exists x0. split => //. exists a. by split.
 Qed.
-
 
 Lemma mapR_bigU_swapF {X Y : Type} (f : X -> Y) :
 
@@ -204,6 +204,30 @@ Lemma mapR_bigU_swapF {X Y : Type} (f : X -> Y) :
 Proof.
     apply functional_extensionality => A.
     by apply mapR_bigU_swap.
+Qed.
+
+Lemma mapL_bigU_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (a : X):
+
+        (⋃ F) [>] a = ⋃ { f [>] a , f | f ∈ F }.
+    
+Proof.
+    rewrite /big_union /mapL. apply /seteqP => x //=. split.
+    move => [x0] [[a' [Hain Hx0in]]] Hfeq.
+    eexists. split. exists a'. split => //.
+    exists x0. by split.
+
+    move => [y] [[a' [Ha Hyeq]]] Heq.
+    rewrite Hyeq in Heq. destruct Heq as [x0 [Hx01 Hx02]].
+    exists x0. split => //. exists a'. by split.
+Qed.
+
+Lemma mapL_bigU_swapF {X Y : Type} (F : 𝒫(𝒫(X -> Y))) :
+    
+        (⋃ F) [>] = fun a => ⋃ { f [>] a , f | f ∈ F }.
+
+Proof.
+    apply functional_extensionality => x.
+    by apply mapL_bigU_swap.
 Qed.
 
 
@@ -218,7 +242,7 @@ Lemma double_mapR {X Y Z : Type} (g : X -> Y) (f : Y -> Z) (A : 𝒫(X)) :
 
 Proof.
     rewrite /mapR. apply /seteqP => x //=. split.
-    move => [v] [[a [Hain Hveq]] Hxeq]. exists a. rewrite Hveq. by split.
+    move => [v] [[a [Hain Hveq]] Hxeq]. exists a. rewrite -Hveq. by split.
     move => [a] [Hain Hxeq]. exists (g a). split => //=. by exists a.
 Qed.
 
@@ -246,7 +270,7 @@ Proof.
     rewrite /big_union. apply /seteqP => x. split.
 
     move => [Sx] [[SSx] [HSSxin HSxeq]] Hxin.
-    rewrite -HSxeq in Hxin. destruct Hxin as [Sx0 [HSx0in Hxin]].
+    rewrite HSxeq in Hxin. destruct Hxin as [Sx0 [HSx0in Hxin]].
     exists Sx0. split => //. exists SSx. by split.
 
     move => [Sx] [[SSx] [HSSxin HSxin]] Hxin.
@@ -290,13 +314,110 @@ Proof.
 Qed.
 
 
+(** UmapLR *)
+Lemma UmapLR_bigU_swap {X Y: Type} (F : 𝒫(X -> Y)) (A : 𝒫(𝒫(X))) :
+
+        F [><] (⋃ A) = ⋃ (⋃ (F[>][<][<] A)).
+    
+Proof.
+    rewrite /UmapLR. equal_f_comp A.
+    by rewrite mapR_bigU_swapF.
+Qed.
+
+Lemma parlift_mapR {X Y Z : Type} (f : X -> Y -> Z) (A : 𝒫(𝒫(X))) :
+
+    (fun a => f [<] a [><] ) [<] A = UmapLR [<] (f[<][<]A).
+
+Proof.
+    rewrite [_ [<] A]/mapR [UmapLR [<] _]/mapR.
+    rewrite double_mapR.
+    by [].
+Qed.
+
+Ltac set_simpl :=
+    repeat (rewrite /big_union 
+            || rewrite /UmapLR
+            || rewrite /mapL
+            || rewrite /mapR);
+    simpl.
+
+Lemma bigU_mapLR_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (A : 𝒫(X)): 
+
+    (⋃ F) [><] A = ⋃ ((UmapLR [<] F) [>] A).
+
+Proof.
+ 
+    apply seteqP => y. split.
+    set_simpl.
+
+    (** 关于集合证明技术的tactic，我有了一个天大的发现！*)
+    move => [] sY [] [] x [] HxinA Hsy. rewrite Hsy.
+    move => [] f [][] sf [] Hsfin Hfin Hy. rewrite Hy.
+    simpl.
+    eexists. split. eexists. split. eexists. split.
+    apply Hsfin. apply Logic.eq_refl. apply Logic.eq_refl.
+    simpl. eexists. split. eexists. split. apply HxinA.
+    apply Logic.eq_refl.
+    simpl. eexists. split. apply Hfin. apply Logic.eq_refl.
+
+    move => [] sy [] [] f [] [] f0 [] Hf0in Hf. rewrite Hf.
+    move => Hsy. rewrite Hsy.
+    move => [] sy0 [] [] x [] Hxin Hsy0. rewrite Hsy0.
+    move => [] f1 [] Hf1in Hy. rewrite Hy.
+    simpl.
+    eexists. split. eexists. split. apply Hxin.
+    apply Logic.eq_refl.
+    simpl. eexists. split. eexists. split. apply Hf0in.
+    apply Hf1in. by[].
+Qed.    
+
+Lemma UmapLR_2bigU_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (A : 𝒫(𝒫(X))):
+
+    (⋃ F) [><] (⋃ A) = ⋃ ((UmapLR [<] F) [><] A).
+
+Proof.
+    rewrite bigU_mapLR_swap.
+    rewrite [_ [><] A]/UmapLR.
+    apply seteqP => y. split.
+
+    move => [] sy [] [] f [] [] sf [] Hsfin Hf. rewrite Hf.
+    move => Hsy. rewrite Hsy.
+    move => [] sy0 [] [] x [] [] sx [] Hsxin Hxin Hsy0. rewrite Hsy0.
+    move => [] f1 [] Hf1in Hy. rewrite Hy.
+    simpl.
+    eexists. split. eexists. split. eexists. split. apply Hsxin.
+    apply Logic.eq_refl.
+    simpl. eexists. split. eexists. split. apply Hsfin.
+    apply Logic.eq_refl. apply Logic.eq_refl.
+    simpl. eexists. split. eexists. split. apply Hxin. apply Logic.eq_refl.
+    simpl. eexists. split. apply Hf1in. by [].
+
+    move => [] sy [] [] ssy [] [] sx [] Hsxin Hssy. rewrite Hssy.
+    move => [] f [] [] sf [] Hsfin Hf. rewrite Hf.
+    move => Hsy. rewrite Hsy.
+    move => [] sy0 [] [] x [] Hxin Hsy0. rewrite Hsy0.
+    move => [] f0 [] Hf0in Hy. rewrite Hy.
+    simpl.
+    eexists. split. eexists. split. eexists. split.
+    apply Hsfin. apply Logic.eq_refl. apply Logic.eq_refl.
+    simpl. eexists. split. eexists. split. eexists. split. apply Hsxin.
+    apply Hxin. apply Logic.eq_refl.
+    simpl. eexists. split. apply Hf0in. by [].
+Qed.
+
+
+
+
+
+
+
 (*###########################################################################*)
 (** relation morphisms *)
-Add Parametric Morphism {X Y : Type} : (@UmapRL X Y)
+Add Parametric Morphism {X Y : Type} : (@UmapLR X Y)
     with signature (@subset (X -> Y)) ==> 
-        (@subset X) ==> (@subset Y) as UmapRL_mor_sub.
+        (@subset X) ==> (@subset Y) as UmapLR_mor_sub.
 Proof.
-    rewrite /UmapRL => F G HFinG A B HAinB //=.
+    rewrite /UmapLR => F G HFinG A B HAinB //=.
     apply bigU_mapR_mor_sub => //= x.
     by apply mapR_mor_sub.
 Qed.

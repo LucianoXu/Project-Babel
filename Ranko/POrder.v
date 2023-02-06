@@ -543,7 +543,7 @@ Arguments class [T] _.
 
 Notation chain := type.
 Notation Chain s m := (@pack _ s m).
-Notation "[ 'chain' 'of' A ]" := ((A : chain))
+Notation "[ 'chain' 'of' A ]" := ([get c | set c ~ A])
   (at level 0, format "[ 'chain'  'of'  A ]"): POrder_scope.
 End Exports.
 
@@ -953,7 +953,7 @@ Qed.
 
 (** We make this a canonical structure, so we will get [f [<] c] as a chain if
     [f] is monotonic and [c] is a chain. *)
-Canonical monotonic_chain (T T' : poset) (f : monotonicfun T T') (c : chain T) 
+Canonical monotonic_mapR_chain (T T' : poset) (f : monotonicfun T T') (c : chain T) 
     : chain T' :=
     Chain (f [<] c) (@monotonic_mapR_chainMixin _ _ f c).
 
@@ -1009,7 +1009,7 @@ Notation continuousfun := type.
 (** The special notation for continuous function. *)
 Notation "[ A ↦ B ]" := (type [cpo of A] [cpo of B]) 
     (at level 0, format "[ A  ↦  B ]"): POrder_scope.
-Notation ContinuousFun T m := (@pack _ _ _ T m).
+Notation ContinuousFun T m := (@pack _ _ T _ m).
 Notation "[ 'continuousfun' 'of' T ]" := (T : type _ _)
     (at level 0, format "[ 'continuousfun'  'of'  T ]") : POrder_scope.
 End Exports.

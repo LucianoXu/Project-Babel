@@ -72,7 +72,7 @@ Notation " s '∉' S " := (~ s ∈ S) : NSet_scope.
 Notation "{  x : A | P  }" := (mk_set (T:=A) (fun x => P)) : NSet_scope.
 Notation "{  x | P  }" := (mk_set (fun x => P)) : NSet_scope.
 Notation "{ expr , x .. y | cond }" :=
-    { a | (exists x, .. (exists y, cond /\ expr = a ) ..) } : NSet_scope.
+    { a | (exists x, .. (exists y, cond /\ a = expr ) ..) } : NSet_scope.
 
 Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr) : NSet_scope.
 Notation "'exists'' x '∈' A , expr" := (exists x , x ∈ A /\ expr) : NSet_scope.
@@ -443,10 +443,16 @@ Qed.
 
 
 (** Note that this operator automatically contains a big union. *)
-Definition UmapRL {X Y: Type} (F : 𝒫(X -> Y)) : 𝒫(X) -> 𝒫(Y)
+Definition UmapLR {X Y: Type} (F : 𝒫(X -> Y)) : 𝒫(X) -> 𝒫(Y)
     := fun x => ⋃ (F [>][<] x).
 
-Notation " F [><] " := (@UmapRL _ _ F) : NSet_scope.
+Notation " F [><] " := (@UmapLR _ _ F) : NSet_scope.
+
+Lemma UmapLR_fold {X Y: Type} (F : 𝒫(X -> Y)) (A :  𝒫(X)) :
+
+    ⋃ (F [>][<] A) = F [><] A.
+
+Proof. by rewrite /UmapLR. Qed.
 
 
 (*

@@ -64,6 +64,14 @@ Lemma union_nem_L {T : Type} (A : 𝒫(T)) (B : 𝒫(T)) :
 Proof. rewrite !nonemptyP => [[x Hx]]. exists x => //=. by left. Qed.
     
 
+Lemma cond_False_em (T T': Type) (t : T):
+
+    { t , _ : T' | False } = ∅.
+
+Proof. rewrite seteqP => //= => x. split => //.
+    by move => [] _ [] [].
+Qed.
+
 
 Lemma big_union_em {T : Type} :
 
@@ -110,6 +118,12 @@ Proof.
     apply (H (f x)). by exists x.
 Qed.
 
+Lemma mapR_em {X Y: Type} (f : X -> Y) :
+    
+    f [<] ∅ = ∅.
+
+Proof. by apply mapR_eq_emP. Qed.
+
 Lemma mapR_nem {X Y: Type} (f : X -> Y) (A : 𝒫(X)) :
 
     A <> ∅ -> f [<] A <> ∅.
@@ -117,7 +131,7 @@ Lemma mapR_nem {X Y: Type} (f : X -> Y) (A : 𝒫(X)) :
 Proof. by rewrite mapR_eq_emP. Qed.
 
 
-Lemma UmapRL_nem {X Y: Type} (F : 𝒫(X -> Y)) (A : 𝒫(X)) :
+Lemma UmapLR_nem {X Y: Type} (F : 𝒫(X -> Y)) (A : 𝒫(X)) :
 
     F <> ∅ -> A <> ∅ -> F [><] A <> ∅.
 
