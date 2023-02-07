@@ -19,6 +19,9 @@ Unset Printing Implicit Defensive.
     It will try to solve equality propositions on sets.
     (within intuitionism)
     (This could even be a COMPLETE tactic.)
+
+    This is meant to be a 'safe' tactic. That is, it will not turn a provable
+    goal into an unprovable one.
 *)
 
 Ltac set_simpl :=
@@ -33,7 +36,7 @@ Ltac set_simpl :=
     simpl.
 
 Ltac set_move_up :=
-    repeat match goal with
+    repeat multimatch goal with
     (** discard absurd cases first *)
     | |- False -> _ => move => []
 
@@ -45,8 +48,11 @@ Ltac set_move_up :=
     | |- (exists i, _) -> _ => move => []
     | |- (_ /\ _) -> _ => move => []
     | |- (_ = _) -> _ => move ->
+    | |- (_ ∈ _) -> _ => move => []
+    (*
     | |- (_ ∈ { _ , _ | _}) -> _ => move => []
     | |- (_ ∈ { _ | _}) -> _ => move => []
+    *)
     | |- forall i, _ => let x := fresh "H" in move => x
     end.
 
