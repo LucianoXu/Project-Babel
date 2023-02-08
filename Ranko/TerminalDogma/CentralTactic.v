@@ -52,9 +52,6 @@ Ltac terminate :=
 
 Ltac search_framework tac :=
     repeat multimatch goal with
-    (** process the premises *)
-    | |- _ => premise_break_step
-
     (** for equality, try to use it in two ways 
         This is a dangerous technique, and we don't use for now. *)
     (*
@@ -66,31 +63,7 @@ Ltac search_framework tac :=
 
     (** path selecting *)
     | |- (_ /\ _) => split
-    | |- (_ \/ _) => 
-        (left; by (search_framework tac)) || (right; by (search_framework tac))
-
-    (** try to finish the goal after path searching*)
-    | |- _ => terminate
-    | |- _ => tac
-    end.
-
-(** for debugging purpose *)
-Ltac search_frameworkN tac :=
-    do 100 multimatch goal with
-    (** process the premises *)
-    | |- _ => premise_break_step
-    
-    (** for equality, try to use it in two ways 
-        This is a dangerous technique, and we don't use for now. *)
-    (*
-    | |- _ = _ -> _ => 
-        let H := fresh "Heq" in 
-            (move => H; try rewrite H; by (search_framework tac))
-            || (move => H; try rewrite -H; by (search_framework tac))
-    *)
-
-    (** path selecting *)
-    | |- (_ /\ _) => split
+    | |- _ <-> _ => split
     | |- (_ \/ _) => 
         (left; by (search_framework tac)) || (right; by (search_framework tac))
 

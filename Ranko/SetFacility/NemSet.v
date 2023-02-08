@@ -78,7 +78,7 @@ Lemma big_union_em {T : Type} :
         ⋃ ∅ = set_em T.
 
 Proof.
-    seteq_killer.
+    set_killer.
     (*
     rewrite /big_union. apply seteqP => x. split.
     move => [?] [H]. by destruct H.
@@ -90,7 +90,7 @@ Lemma big_itsct_em {T : Type} :
 
         ⋂ ∅ = set_uni T.
 
-Proof. seteq_killer.
+Proof. set_killer.
     (* rewrite /big_itsct. by apply seteqP => /=. *)
 Qed.
 

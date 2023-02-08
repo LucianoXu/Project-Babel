@@ -11,7 +11,7 @@ Unset Printing Implicit Defensive.
 
 
 
-(** seteq_killer
+(** set_killer
 
     关于集合证明技术的tactic，我有了一个天大的发现！
 
@@ -35,33 +35,41 @@ Ltac set_simpl :=
         || rewrite /mapL
         || rewrite /mapR); simpl.
 
-(** break the premise into small pieces and move up *)
-Ltac set_move_up :=
+
+Ltac set_step := 
+    set_simpl || 
+
     multimatch goal with
+    
+    (** break the premise into small pieces and move up *)
+    | |- _ => premise_break_step
     | |- (_ ∈ _) -> _ => move => []
     | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H
     | |- forall i, _ => intros ?
-    end.
 
-(** try to solve the goal 
-    It will not turn a provable goal into an unprovable one. *)
-Ltac set_move_down :=
-    multimatch goal with
+
+    (** try to solve the goal *)
     | H : _ ∈ ?A |- _ ∈ ?A => 
-        apply H; by repeat (set_simpl || set_move_up || set_move_down)
+        apply H; by search_framework set_step
     | |- ?A = ?B => apply Logic.eq_refl
-    
+
     | |- exists i, _ => eexists
     (** possible goal from big_itsct *)
-    | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => apply H
-    | |- _ ∈ _ => simpl
-    end.
+    | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => eapply H
 
-Ltac set_step := (set_simpl || set_move_up || set_move_down).
+    (** try to utilize [forall] premises 
+        Note that this method is not complete, because we cannot control which
+        term to use for instantiating [forall] *)
+    | H : forall a : ?A, _, Hterm : ?A |- _ => 
+        move: (H Hterm); clear H; by search_framework set_step
+
+    | |- _ ∈ _ => simpl
+    
+    end
+
+    (** if the goal is a set equality that must be taken apart, just do it *)
+    || (apply seteqP; intros ?; split).
+
 
 Ltac set_killer :=
-    search_framework set_step.
-
-Ltac seteq_killer := 
-    apply seteqP; intros ?; split;
     search_framework set_step.
