@@ -40,6 +40,10 @@ Ltac terminate :=
     | H1: ?A, H2: ~?A |- _ => destruct (H2 H1)
     end.
 
+
+Ltac check_and_not_both_have_evar :=
+    assert_fails (split; instantiate (1 := _)).
+
 (** This is a traversal and iterative proof search framework.
     It takes in a parameter [tac], which is a tactic. 
     
@@ -62,8 +66,18 @@ Ltac search_framework tac :=
     *)
 
     (** path selecting *)
-    | |- (_ /\ _) => split
-    | |- _ <-> _ => split
+
+    (** [and] goal *)
+    | |- (_ /\ _) => 
+    (** If the [and] goal has at least one side without any exsitential 
+        variable, we can directly split it. *)
+                    (check_and_not_both_have_evar; split)
+    (** If the [and] goal has exsitential variables, the tactic must solve the
+        goal after [split], otherwise this [split] action can be unsafe. *)
+                    || (split; by search_framework tac)
+                    || (split; last first; by search_framework tac)
+
+    | |- _ <-> _ => unfold iff
     | |- (_ \/ _) => 
         (left; by (search_framework tac)) || (right; by (search_framework tac))
 

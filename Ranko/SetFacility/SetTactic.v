@@ -67,11 +67,16 @@ Ltac set_step extra_step :=
 
     (*##################################################*)
     (** try to solve the goal *)
+    | H : ?x ∈ _ |- ?x ∈ _ =>
+        apply H; 
+        by search_framework ltac:(set_step extra_step)
+
     | H : _ ∈ ?A |- _ ∈ ?A => 
         apply H; 
         by search_framework ltac:(set_step extra_step)
 
-    | |- ?A = ?B => apply Logic.eq_refl
+    | |- ?A = ?B => 
+        apply Logic.eq_refl
 
     | |- exists i, _ => eexists
 
@@ -98,3 +103,5 @@ Ltac set_step extra_step :=
 
 Ltac set_killer :=
     search_framework ltac:(set_step idtac).
+
+

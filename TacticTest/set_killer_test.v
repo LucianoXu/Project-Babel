@@ -361,19 +361,11 @@ Lemma bigU_ele1 {X : Type} (A : 𝒫(X)) :
 Proof. set_killer. Qed.
 
 
-(** TODO it's really strange that set_killer is not safe on this example. *)
 Lemma bigU_ele2 {X : Type} (A B : 𝒫(X)) :
 
         ⋃ ({{A, B}}) = A ∪ B.
 
-Proof.
-    set_killer.
-    Restart.
-    
-
-    rewrite bigU_union_dist.
-    set_killer.
-Qed.
+Proof. set_killer. Qed.
 
 Lemma bigI_ele1 {X : Type} (A : 𝒫(X)) :
 
