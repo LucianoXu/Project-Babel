@@ -94,6 +94,14 @@ Proof.
     move => H. by apply /seteq_predP /predeqP.
 Qed.
 
+(** This one needs classical logic. *)
+Lemma setneqP {T : Type} (A B : 𝒫(T)) : 
+    A <> B <-> ((exists x, x ∈ A /\ x ∉ B) \/ (exists x, x ∈ B /\ x ∉ A)).
+Proof. split.
+    move => HAneqB. apply NNPP => H. apply HAneqB.
+    apply not_or_and in H. destruct H as [H1 H2].
+Admitted.
+
 
 (** The set we defined can be converted into a sigma type, which corresponds to
     the subset in type system. *)
@@ -112,6 +120,68 @@ Notation "∅" := (set_em _).
 (** The universal set (of type T). *)
 Definition set_uni (T : Type) : 𝒫(T) := { x | True }.
 Notation "'𝕌'" := (set_uni _).
+
+Lemma in_set_em_F [T : Type] : 
+    forall (A : 𝒫(T)) (x : T), x ∈ A -> A = ∅ -> False.
+Proof. move => A x Hx HA. rewrite HA in Hx. by destruct Hx. Qed.
+
+
+(** The set is nonempty *)
+Lemma nonemptyP {T : Type} (A : 𝒫(T)) :  A <> ∅ <-> exists x, x ∈ A.
+Proof. split; last first.
+
+    move => [x Hx] H. move: Hx H. by apply in_set_em_F.
+
+    move => HA. apply NNPP => /(not_ex_all_not _ _) H.
+    apply HA. apply /seteqP => x. split.
+    by move => Hx; apply (H x).
+    by move => [].
+
+Qed.
+
+(*##########################################################*)
+(** type of nonempty set *)
+Module NemSet.
+Section ClassDef.
+
+Definition mixin_of (T : Type) (A : 𝒫(T)) := A <> ∅.
+Definition class_of := mixin_of.
+
+
+Structure type (T : Type) := Pack {
+    set : 𝒫(T);
+    _ : class_of set;
+}.
+
+Variable (T : Type) (cT : type T).
+
+Definition class := let: Pack _ c := cT return class_of (set cT) in c.
+
+Definition pack := Pack.
+
+End ClassDef.
+
+Module Exports.
+#[reversible] Coercion set : type >-> powerset.
+Arguments class [T] cT.
+
+Notation nemset := type.
+Notation " '𝒫(' T ')₊' " := (type T) (format "'𝒫(' T )₊") : NSet_scope.
+
+Notation NemSet T m := (@pack _ T m).
+Notation "[ 'nemset' 'of' T ]" := (T : type _)
+  (at level 0, format "[ 'nemset'  'of'  T ]") : NSet_scope.
+
+(** This item returns [ ∃ x : _, x ∈ T ] directly. *)
+Notation "[ 'nemset_witness' 'of' T ]" := 
+    (iffLR (@nonemptyP _ _ ) (class T))
+    (at level 0, format "[ 'nemset_witness'  'of'  T ]") : NSet_scope.
+
+End Exports.
+
+End NemSet.
+Export NemSet.Exports.
+
 
 
 (** subset relation *)

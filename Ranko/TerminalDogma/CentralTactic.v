@@ -68,6 +68,6 @@ Ltac search_framework tac :=
         (left; by (search_framework tac)) || (right; by (search_framework tac))
 
     (** try to finish the goal after path searching*)
-    | |- _ => terminate
-    | |- _ => tac
+    |  _ => terminate
+    |  _ => tac
     end.

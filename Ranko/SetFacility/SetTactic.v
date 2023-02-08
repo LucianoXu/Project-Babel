@@ -35,41 +35,66 @@ Ltac set_simpl :=
         || rewrite /mapL
         || rewrite /mapR); simpl.
 
-
-Ltac set_step := 
-    set_simpl || 
-
+Ltac set_move_up := 
     multimatch goal with
-    
     (** break the premise into small pieces and move up *)
     | |- _ => premise_break_step
+
+    (** break NemSet structure *)
+    | A : 𝒫( _ )₊ |- _ => 
+        let H := fresh "Hnem" in 
+            destruct A as [? H]=> //=;
+            rewrite /NemSet.class_of /NemSet.mixin_of nonemptyP in H
+    | H : _ <> ∅ |- _ =>
+        rewrite nonemptyP in H; generalize dependent H
+
     | |- (_ ∈ _) -> _ => move => []
     | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H
     | |- forall i, _ => intros ?
+    end.
 
+(** Note: [extra_step] is the tactic to do high-level reasonings before fall to
+    This low level reasoning. *)
+Ltac set_step extra_step := 
+    multimatch goal with
 
+    (** do the extra step first *)
+    | _ => progress extra_step
+
+    | _ => progress set_simpl
+    (** break the premise into small pieces and move up *)
+    | _ => set_move_up
+
+    (*##################################################*)
     (** try to solve the goal *)
     | H : _ ∈ ?A |- _ ∈ ?A => 
-        apply H; by search_framework set_step
+        apply H; 
+        by search_framework ltac:(set_step extra_step)
+
     | |- ?A = ?B => apply Logic.eq_refl
 
     | |- exists i, _ => eexists
+
+    | |- ~ (@eq 𝒫(_) _ _) => rewrite setneqP
+
     (** possible goal from big_itsct *)
-    | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => eapply H
+    | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => 
+        eapply H; by search_framework ltac:(set_step extra_step)
 
     (** try to utilize [forall] premises 
         Note that this method is not complete, because we cannot control which
         term to use for instantiating [forall] *)
     | H : forall a : ?A, _, Hterm : ?A |- _ => 
-        move: (H Hterm); clear H; by search_framework set_step
+        move: (H Hterm); clear H; 
+        by search_framework ltac:(set_step extra_step)
 
     | |- _ ∈ _ => simpl
     
     end
 
     (** if the goal is a set equality that must be taken apart, just do it *)
-    || (apply seteqP; intros ?; split).
+    || (rewrite seteqP; intros ?; split).
 
 
 Ltac set_killer :=
-    search_framework set_step.
+    search_framework ltac:(set_step idtac).

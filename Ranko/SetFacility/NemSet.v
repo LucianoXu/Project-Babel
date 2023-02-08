@@ -22,25 +22,6 @@ Reserved Notation " A '⊇₊' B " (at level 49).
 (*##########################################################*)
 (** Lemmas *)
 
-Lemma in_set_em_F [T : Type] : 
-    forall (A : 𝒫(T)) (x : T), x ∈ A -> A = ∅ -> False.
-Proof. move => A x Hx HA. rewrite HA in Hx. by destruct Hx. Qed.
-
-
-(** The set is nonempty *)
-Lemma nonemptyP {T : Type} (A : 𝒫(T)) :  A <> ∅ <-> exists x, x ∈ A.
-Proof. split; last first.
-
-    move => [x Hx] H. move: Hx H. by apply in_set_em_F.
-
-    move => HA. apply NNPP => /(not_ex_all_not _ _) H.
-    apply HA. apply /seteqP => x. split.
-    by move => Hx; apply (H x).
-    by move => [].
-
-Qed.
-    
-
 (** In a inhabited type, 𝕌 ≠ ∅. *)
 Lemma uni_neq_em (T : iType) : set_uni T <> set_em T.
 Proof. apply nonemptyP. by exists [witness of T]. Qed.
@@ -225,48 +206,6 @@ Proof.
     by rewrite bigI_ele1.
 Qed.
 
-(*##########################################################*)
-(** type of nonempty set *)
-Module NemSet.
-Section ClassDef.
-
-Definition mixin_of (T : Type) (A : 𝒫(T)) := A <> ∅.
-Definition class_of := mixin_of.
-
-
-Structure type (T : Type) := Pack {
-    set : 𝒫(T);
-    _ : class_of set;
-}.
-
-Variable (T : Type) (cT : type T).
-
-Definition class := let: Pack _ c := cT return class_of (set cT) in c.
-
-Definition pack := Pack.
-
-End ClassDef.
-
-Module Exports.
-#[reversible] Coercion set : type >-> powerset.
-Arguments class [T] cT.
-
-Notation nemset := type.
-Notation " '𝒫(' T ')₊' " := (type T) (format "'𝒫(' T )₊") : NSet_scope.
-
-Notation NemSet T m := (@pack _ T m).
-Notation "[ 'nemset' 'of' T ]" := (T : type _)
-  (at level 0, format "[ 'nemset'  'of'  T ]") : NSet_scope.
-
-(** This item returns [ ∃ x : _, x ∈ T ] directly. *)
-Notation "[ 'nemset_witness' 'of' T ]" := 
-    (iffLR (@nonemptyP _ _ ) (class T))
-    (at level 0, format "[ 'nemset_witness'  'of'  T ]") : NSet_scope.
-
-End Exports.
-
-End NemSet.
-Export NemSet.Exports.
 
 Lemma nemset_eqP {T : Type} (A B : 𝒫(T)₊) : A = B <-> (A : 𝒫(T)) = (B : 𝒫(T)).
 Proof.

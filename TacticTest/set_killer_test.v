@@ -242,3 +242,147 @@ Add Parametric Morphism {X Y : Type} : (@UmapLR X Y)
     with signature (@subset (X -> Y)) ==> 
         (@subset X) ==> (@subset Y) as UmapLR_mor_sub.
 Proof. set_killer. Qed.
+
+
+
+(*###########################################################################*)
+(** nonemtpy *)
+
+(** In a inhabited type, 𝕌 ≠ ∅. *)
+Lemma uni_neq_em (T : iType) : set_uni T <> set_em T.
+Proof. 
+    set_killer. Unshelve. apply [witness of T]. 
+Qed.
+
+
+
+Lemma sgt_nem {T : Type} (x : T) : singleton x <> ∅.
+Proof. set_killer. Qed.
+
+Lemma uni_nem (T : iType) : set_uni T <> ∅.
+Proof. 
+    set_killer. Unshelve. destruct T => //. 
+Qed.
+    
+Lemma union_nem_L {T : Type} (A : 𝒫(T)) (B : 𝒫(T)) :
+    
+        A <> ∅ -> (A ∪ B) <> ∅.
+
+Proof. set_killer. Qed.
+    
+
+Lemma cond_False_em (T T': Type) (t : T):
+
+    { t , _ : T' | False } = ∅.
+
+Proof. set_killer. Qed.
+
+
+Lemma big_union_em {T : Type} :
+
+        ⋃ ∅ = set_em T.
+
+Proof. set_killer. Qed.
+
+Lemma big_itsct_em {T : Type} :
+
+        ⋂ ∅ = set_uni T.
+
+Proof. set_killer. Qed.
+
+
+(** This method requires that the type of [y] is not dependent on [A]. *)
+Lemma mapR_rei {X Y : Type} (A : 𝒫(X)) (y : Y) :
+
+    A <> ∅ -> { y , a | a ∈ A } = {{ y }} .
+
+Proof. set_killer. Qed.
+
+
+Lemma mapR_eq_emP {X Y: Type} (f : X -> Y) (A : 𝒫(X)):
+
+    f [<] A = ∅ <-> A = ∅.
+
+Proof. 
+    rewrite /mapR. split; last first.
+    move ->. apply seteqP => x. split.
+    by move => [?] [[]].
+    by move => [].
+
+    move => /seteqP /= H. apply seteqP => x. split => //=.
+    move => Hxin.
+    apply (H (f x)). by exists x.
+Qed.
+
+Lemma mapR_em {X Y: Type} (f : X -> Y) :
+    
+    f [<] ∅ = ∅.
+
+Proof. set_killer. Qed.
+
+Lemma mapR_nem {X Y: Type} (f : X -> Y) (A : 𝒫(X)) :
+
+    A <> ∅ -> f [<] A <> ∅.
+
+Proof. set_killer. Qed.
+
+
+Lemma UmapLR_nem {X Y: Type} (F : 𝒫(X -> Y)) (A : 𝒫(X)) :
+
+    F <> ∅ -> A <> ∅ -> F [><] A <> ∅.
+
+Proof. set_killer. Qed.
+
+
+Lemma bigU_nemP {X : Type} (A : 𝒫(𝒫(X))) :
+
+        (exists' X ∈ A, X <> ∅) <-> ⋃ A <> ∅.
+
+Proof. set_killer. Qed.
+
+(** How to combine the following two lemmas? *)
+Lemma bigU_sgt_nem {X Y: Type} (A : 𝒫(X)) (a : 𝒫(Y)) : 
+
+        A <> ∅ -> ⋃ { a, x | x ∈ A } = a.
+
+Proof. set_killer. Qed.
+
+Lemma bigU_sgt_em {X Y: Type} (A : 𝒫(X)) (a : 𝒫(Y)) : 
+
+        A = ∅ -> ⋃ { a, x | x ∈ A } = ∅.
+
+Proof. set_killer. Qed.        
+
+(** About multiple elements *)
+Lemma bigU_ele1 {X : Type} (A : 𝒫(X)) :
+
+        ⋃ ({{ A }}) = A.
+
+Proof. set_killer. Qed.
+
+
+(** TODO it's really strange that set_killer is not safe on this example. *)
+Lemma bigU_ele2 {X : Type} (A B : 𝒫(X)) :
+
+        ⋃ ({{A, B}}) = A ∪ B.
+
+Proof.
+    set_killer.
+    Restart.
+    
+
+    rewrite bigU_union_dist.
+    set_killer.
+Qed.
+
+Lemma bigI_ele1 {X : Type} (A : 𝒫(X)) :
+
+    ⋂ ({{ A }}) = A.
+
+Proof. set_killer. Qed.
+
+Lemma bigI_ele2 {X : Type} (A B : 𝒫(X)) :
+
+    ⋂ ({{A, B}}) = A ∩ B.
+
+Proof. set_killer. Qed.
