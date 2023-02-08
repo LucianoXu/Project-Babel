@@ -60,6 +60,10 @@ Proof.
     rewrite /subset => HAinB Hfleg v [Sv] [[t] [Htin HSveq] Hvin].
     have H := Hfleg t v. rewrite -HSveq in H. have H' := H Hvin.
     exists (g t). split => //. exists t. split => //. by apply HAinB.
+
+    (** provable with 
+    set_killer. apply H. apply a. apply H0. apply b.
+    *)
 Qed.
 
 Lemma bigU_sgt {X : Type} (A : 𝒫(X)) :
@@ -67,12 +71,11 @@ Lemma bigU_sgt {X : Type} (A : 𝒫(X)) :
         ⋃ (singleton A) = A.
 
 Proof.
-    seteq_killer.
-    (*
     apply seteqP => //= x. split.
     by move => [] X0 [] ->.
     move => Hxin. exists A. by split.
-    *)
+
+    (** provable with seteq_killer. *)
 Qed.
 
 Lemma bigI_sgt {X : Type} (A : 𝒫(X)) :
@@ -80,12 +83,11 @@ Lemma bigI_sgt {X : Type} (A : 𝒫(X)) :
         ⋂ (singleton A) = A.
 
 Proof. 
-    seteq_killer.
-    (* 
     apply seteqP => //= x. split.
     by move => /(_ A Logic.eq_refl).
     by move => Hxin X0 ->.
-    *)
+
+    (** provable with seteq_killer. *)
 Qed.
 
 
@@ -97,15 +99,14 @@ Lemma bigU_fun_rei {X Y: Type} (A : 𝒫(X)) (f : X -> Y):
         ⋃ { {{ f a }}, a | a ∈ A } = f [<] A.
     
 Proof.
-    seteq_killer.
-    (*
     rewrite /mapR /big_union. apply seteqP => x. split.
     move => [Sy] [[x0 [Hx0in HSyeq]]]. rewrite {}HSyeq.
     rewrite singletonP => ->. exists x0. by split.
     move => [x0 [Hx0in Hxeq]].
     eexists. split. eexists. split. apply Hx0in. rewrite Hxeq.
     by []. by apply singletonP.
-    *)
+
+    (** provable with seteq_killer. *)
 Qed.
     
 
@@ -113,14 +114,14 @@ Lemma bigU_rei {X : Type} (A : 𝒫(X)) :
 
         ⋃ { {{ a }}, a | a ∈ A } = A.
 
-Proof. seteq_killer.
-    (* 
+Proof. 
     rewrite /big_union. apply seteqP => x. split.
     move => [Sx] [[x0 [Hx0in HSxeq]]]. rewrite {}HSxeq. 
     by rewrite singletonP => ->.
     move => Hx.
     exists ({{x}}). split. exists x. by split. by apply singletonP.
-    *)
+
+    (** provable with seteq_killer. *)
 Qed.
 
 
@@ -129,13 +130,13 @@ Lemma bigU_union_dist {X : Type} (A B: 𝒫(𝒫(X))) :
     
         ⋃ (A ∪ B) = (⋃ A) ∪ (⋃ B).
 
-Proof. seteq_killer.
-    (*
+Proof. 
     rewrite /union /big_union. apply seteqP => x. split.
     by move => [SX] [[HSXin|HSXin]] Hxin ; [left|right]; exists SX; split.
     by move => [[SX [HSXin Hxin]]|[SX [HSXin Hxin]]]; exists SX; split => //;
     [left|right] => //.
-    *)
+    
+    (** provable with seteq_killer. *)
 Qed.
 
 
@@ -144,8 +145,7 @@ Lemma bigI_itsct_dist {X : Type} (A B: 𝒫(𝒫(X))) :
     
         ⋂ (A ∩ B) = (⋂ A) ∩ (⋂ B).
 
-Proof. 
-    seteq_killer. 
+Proof.
 Abort.
 
 
@@ -161,8 +161,6 @@ Lemma union_bigU_mapR_dist {X Y : Type} (A : 𝒫(X)) (f g : X -> 𝒫(Y)) :
         (⋃ (f [<] A) ) ∪ (⋃ (g [<] A)) = ⋃ { f x ∪ g x, x | x ∈ A }.
 
 Proof.
-    seteq_killer.
-    (*
     rewrite /union /big_union. apply seteqP => x. split.
     move => [].
     
@@ -179,7 +177,8 @@ Proof.
 
     { left. exists (f x0). split => //. exists x0. by split. }
     { right. exists (g x0). split => //. exists x0. by split. }
-    *)
+    
+    (** provable with seteq_killer. *)
 Qed.
 
 
@@ -188,9 +187,7 @@ Lemma mapR_in {X Y : Type} (A : 𝒫(X)) (f : X -> Y) :
 
         x ∈ A -> f x ∈ f [<] A.
 
-Proof. set_belonging_killer. 
-    (* rewrite /mapR => x ? //=. by exists x. *)
-Qed.
+Proof. rewrite /mapR => x ? //=. by exists x. Qed.
 
 
 Lemma mapL_in {X Y : Type} (F : 𝒫(X -> Y)) (x : X) :
@@ -198,9 +195,7 @@ Lemma mapL_in {X Y : Type} (F : 𝒫(X -> Y)) (x : X) :
 
         f ∈ F -> f x ∈ F [>] x.
 
-Proof. set_belonging_killer.
-    (* rewrite /mapL => f ? //=. by exists f. *)
-Qed.
+Proof. rewrite /mapL => f ? //=. by exists f. Qed.
 
 
 (*************************)
@@ -211,8 +206,7 @@ Lemma mapR_bigU_swap {X Y : Type} (f : X -> Y) (A : 𝒫(𝒫(X))):
     
         f [<] (⋃ A) = ⋃ (f [<] [<] A).
 
-Proof. seteq_killer.
-    (*
+Proof. 
     rewrite /big_union /mapR. apply /seteqP => x //=. split.
 
     move => [x0] [[a [Hain Hx0in]]] Hfeq.
@@ -222,7 +216,8 @@ Proof. seteq_killer.
     move => [y] [[a [Ha Hyeq]]] Heq.
     rewrite Hyeq in Heq. destruct Heq as [x0 [Hx01 Hx02]].
     exists x0. split => //. exists a. by split.
-    *)
+
+    (** provable with seteq_killer. *)
 Qed.
 
 Lemma mapR_bigU_swapF {X Y : Type} (f : X -> Y) :
@@ -238,8 +233,7 @@ Lemma mapL_bigU_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (a : X):
 
         (⋃ F) [>] a = ⋃ { f [>] a , f | f ∈ F }.
     
-Proof. seteq_killer.
-    (*
+Proof. 
     rewrite /big_union /mapL. apply /seteqP => x //=. split.
     move => [x0] [[a' [Hain Hx0in]]] Hfeq.
     eexists. split. exists a'. split => //.
@@ -248,7 +242,8 @@ Proof. seteq_killer.
     move => [y] [[a' [Ha Hyeq]]] Heq.
     rewrite Hyeq in Heq. destruct Heq as [x0 [Hx01 Hx02]].
     exists x0. split => //. exists a'. by split.
-    *)
+
+    (** provable with seteq_killer. *)
 Qed.
 
 Lemma mapL_bigU_swapF {X Y : Type} (F : 𝒫(𝒫(X -> Y))) :
@@ -271,12 +266,11 @@ Lemma double_mapR {X Y Z : Type} (g : X -> Y) (f : Y -> Z) (A : 𝒫(X)) :
         { f b , b | b ∈ g [<] A } = { f (g a), a | a ∈ A }.
 
 Proof.
-    seteq_killer.
-    (*
     rewrite /mapR. apply /seteqP => x //=. split.
     move => [v] [[a [Hain Hveq]] Hxeq]. exists a. rewrite -Hveq. by split.
     move => [a] [Hain Hxeq]. exists (g a). split => //=. by exists a.
-    *)
+
+    (** provable with seteq_killer. *)
 Qed.
 
 Lemma double_mapRF {X Y Z : Type} (g : X -> Y) (f : Y -> Z) :
@@ -300,8 +294,6 @@ Lemma bigU_swap {X : Type} (A : 𝒫(𝒫(𝒫(X)))) :
         ⋃ { ⋃ a , a | a ∈ A } = ⋃ (⋃ A).
 
 Proof.
-    seteq_killer.
-    (*
     rewrite /big_union. apply /seteqP => x. split.
 
     move => [Sx] [[SSx] [HSSxin HSxeq]] Hxin.
@@ -311,7 +303,8 @@ Proof.
     move => [Sx] [[SSx] [HSSxin HSxin]] Hxin.
     eexists. split. eexists. split; last first. eexists. 2: eexists.
     apply HSSxin. split. apply HSxin. by apply Hxin.
-    *)
+    
+    (** provable with seteq_killer. *)
 Qed.
 
 Lemma bigU_swapF {X : Type}  :
@@ -329,9 +322,7 @@ Lemma bigU_fun_dist {X Y: Type} (f : X -> 𝒫(𝒫(Y))) (A : 𝒫(X)):
         ⋃ { ⋃ (f a) , a | a ∈ A } = ⋃ (⋃ (f [<] A)).
 
 Proof.
-    seteq_killer.
     
-    (*
     (** transform into the function equality *)
     rewrite mapR_fold. 
     equal_f_comp A.
@@ -340,7 +331,8 @@ Proof.
     rewrite -bigU_swapF.
     rewrite fun_assoc.
     by rewrite -double_mapRF.
-    *)
+        
+    (* provable with seteq_killer. *)
 Qed.
 
 Lemma bigU_fun_distF {X Y: Type} (f : X -> 𝒫(𝒫(Y))):
@@ -359,24 +351,20 @@ Lemma UmapLR_bigU_swap {X Y: Type} (F : 𝒫(X -> Y)) (A : 𝒫(𝒫(X))) :
         F [><] (⋃ A) = ⋃ (⋃ (F[>][<][<] A)).
     
 Proof.
-    seteq_killer.
-    (*
     rewrite /UmapLR. equal_f_comp A.
     by rewrite mapR_bigU_swapF.
-    *)
+    (* provable with seteq_killer. *)
 Qed.
 
 Lemma parlift_mapR {X Y Z : Type} (f : X -> Y -> Z) (A : 𝒫(𝒫(X))) :
 
     (fun a => f [<] a [><] ) [<] A = UmapLR [<] (f[<][<]A).
 
-Proof.
-    seteq_killer.
-    (*
+Proof. 
     rewrite [_ [<] A]/mapR [UmapLR [<] _]/mapR.
     rewrite double_mapR.
     by [].
-    *)
+    (** provable with seteq_killer. *) 
 Qed.
 
 
@@ -384,34 +372,7 @@ Lemma bigU_mapLR_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (A : 𝒫(X)):
 
     (⋃ F) [><] A = ⋃ ((UmapLR [<] F) [>] A).
 
-Proof.
-    seteq_killer.
-
-    (*
-    (** This is a proof by hand *)
-    Undo.
-    apply seteqP => y. split.
-
-    move => [] sY [] [] x [] HxinA Hsy. rewrite Hsy.
-    move => [] f [][] sf [] Hsfin Hfin Hy. rewrite Hy.
-    simpl.
-    eexists. split. eexists. split. eexists. split.
-    apply Hsfin. apply Logic.eq_refl. apply Logic.eq_refl.
-    simpl. eexists. split. eexists. split. apply HxinA.
-    apply Logic.eq_refl.
-    simpl. eexists. split. apply Hfin. apply Logic.eq_refl.
-
-    move => [] sy [] [] f [] [] f0 [] Hf0in Hf. rewrite Hf.
-    move => Hsy. rewrite Hsy.
-    move => [] sy0 [] [] x [] Hxin Hsy0. rewrite Hsy0.
-    move => [] f1 [] Hf1in Hy. rewrite Hy.
-    simpl.
-    eexists. split. eexists. split. apply Hxin.
-    apply Logic.eq_refl.
-    simpl. eexists. split. eexists. split. apply Hf0in.
-    apply Hf1in. by[].
-    *)
-Qed.    
+Proof. seteq_killer. Qed.    
 
 Lemma UmapLR_2bigU_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (A : 𝒫(𝒫(X))):
 
@@ -420,6 +381,9 @@ Lemma UmapLR_2bigU_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (A : 𝒫(𝒫(X))
 Proof. seteq_killer. Qed.
 
 
+Lemma funlift2_bigU_swap {X Y Z: Type} (f : X -> Y -> Z) A B :
+    (funlift2 f) (⋃ A) (⋃ B) = ⋃ (funlift2 f [<] A [><] B).
+Proof. seteq_killer. Qed.
 
 
 

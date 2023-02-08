@@ -1,8 +1,7 @@
 (** SetTactic.v : the tactics about sets *)
 
 From Ranko Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality
-                          .
+                          TerminalDogma.Extensionality.
 
 From Ranko Require Export NaiveSet.
 
@@ -24,57 +23,45 @@ Unset Printing Implicit Defensive.
     goal into an unprovable one.
 *)
 
-Ltac set_simpl :=
-    repeat (
-            rewrite /union
-            || rewrite /itsct
-            || rewrite /big_union 
-            || rewrite /big_itsct
-            || rewrite /UmapLR
-            || rewrite /mapL
-            || rewrite /mapR);
-    simpl.
+(** expand all definitions *)
+Ltac set_simpl := 
+    (    rewrite /subset
+        || rewrite /supset
+        || rewrite /union
+        || rewrite /itsct
+        || rewrite /big_union 
+        || rewrite /big_itsct
+        || rewrite /UmapLR
+        || rewrite /mapL
+        || rewrite /mapR); simpl.
 
+(** break the premise into small pieces and move up *)
 Ltac set_move_up :=
-    repeat multimatch goal with
-    (** discard absurd cases first *)
-    | |- False -> _ => move => []
-
-    (** possible premises from union 
-        such premises means multiple trying is need for solving the goal.
-    *)
-    | |- (_ \/ _) -> _ => move => [|]
-
-    | |- (exists i, _) -> _ => move => []
-    | |- (_ /\ _) -> _ => move => []
-    | |- (_ = _) -> _ => move ->
+    multimatch goal with
     | |- (_ ∈ _) -> _ => move => []
-    (*
-    | |- (_ ∈ { _ , _ | _}) -> _ => move => []
-    | |- (_ ∈ { _ | _}) -> _ => move => []
-    *)
-    | |- forall i, _ => let x := fresh "H" in move => x
+    | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H
+    | |- forall i, _ => intros ?
     end.
 
+(** try to solve the goal 
+    It will not turn a provable goal into an unprovable one. *)
 Ltac set_move_down :=
-    repeat multimatch goal with
-    | H : _ ∈ ?A |- _ ∈ ?A => apply H
+    multimatch goal with
+    | H : _ ∈ ?A |- _ ∈ ?A => 
+        apply H; by repeat (set_simpl || set_move_up || set_move_down)
     | |- ?A = ?B => apply Logic.eq_refl
     
     | |- exists i, _ => eexists
-    | |- (_ /\ _) => split
-    (** possible goal from intersection
-        It choices are made, then it must succeed in its path. *)
-    | |- (?A \/ ?B) => (left; by set_move_down) || (right; by set_move_down)
     (** possible goal from big_itsct *)
     | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => apply H
-    | |- True => by []
     | |- _ ∈ _ => simpl
     end.
 
-Ltac set_belonging_killer :=
-    repeat (set_move_up || set_move_down).
+Ltac set_step := (set_simpl || set_move_up || set_move_down).
+
+Ltac set_killer :=
+    search_framework set_step.
 
 Ltac seteq_killer := 
-    let x := fresh "x" in apply seteqP => x; split;
-    set_simpl; set_belonging_killer.
+    apply seteqP; intros ?; split;
+    search_framework set_step.

@@ -374,7 +374,15 @@ Check (fun x => f [<] x [><]).
 Check (fun x y => ((f [<] x) [>])[<] y).
 Check (fun x y z => f [<] x [><] y [><] z).
 *)
+
+
+(** lift operator of a function with two parameters *)
+Definition funlift2 {X Y Z: Type} (f : X -> Y -> Z) : 𝒫(X) -> 𝒫(Y) -> 𝒫(Z) :=
+    fun A B => f[<]A[><]B.
+
 (*
+
+
 
 (* bi_ele_eq : { x , y } {=} { y , x } *)
 Lemma bi_ele_eq : forall x y : T, {{ x , y }} {=} {{ y , x }}.
