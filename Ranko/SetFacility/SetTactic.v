@@ -37,16 +37,18 @@ Ltac set_simpl :=
 
 Ltac set_move_up := 
     multimatch goal with
-    (** break the premise into small pieces and move up *)
-    | |- _ => premise_break_step
 
     (** break NemSet structure *)
     | A : 𝒫( _ )₊ |- _ => 
         let H := fresh "Hnem" in 
             destruct A as [? H]=> //=;
             rewrite /NemSet.class_of /NemSet.mixin_of nonemptyP in H
+
     | H : _ <> ∅ |- _ =>
         rewrite nonemptyP in H; generalize dependent H
+
+    (** break the premise into small pieces and move up *)
+    | |- _ => premise_break_step
 
     | |- (_ ∈ _) -> _ => move => []
     | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H
@@ -59,9 +61,9 @@ Ltac set_step extra_step :=
     multimatch goal with
 
     (** do the extra step first *)
-    | _ => progress extra_step
+    | _ => extra_step
 
-    | _ => progress set_simpl
+    | _ => set_simpl
     (** break the premise into small pieces and move up *)
     | _ => set_move_up
 
@@ -78,8 +80,6 @@ Ltac set_step extra_step :=
     | |- ?A = ?B => 
         apply Logic.eq_refl
 
-    | |- exists i, _ => eexists
-
     | |- ~ (@eq 𝒫(_) _ _) => rewrite setneqP
 
     (** possible goal from big_itsct *)
@@ -94,7 +94,7 @@ Ltac set_step extra_step :=
         by search_framework ltac:(set_step extra_step)
 
     | |- _ ∈ _ => simpl
-    
+
     end
 
     (** if the goal is a set equality that must be taken apart, just do it *)
@@ -103,5 +103,3 @@ Ltac set_step extra_step :=
 
 Ltac set_killer :=
     search_framework ltac:(set_step idtac).
-
-
