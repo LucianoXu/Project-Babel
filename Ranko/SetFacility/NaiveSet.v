@@ -199,6 +199,11 @@ Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_sco
 Lemma subsupP {T : Type} (A B : 𝒫(T)) : A ⊆ B <-> B ⊇ A.
 Proof. split; auto. Qed.
 
+Lemma set_belong_cut {T : Type} (A B : 𝒫(T)) (x : T):
+    x ∈ B -> B ⊆ A -> x ∈ A.
+Proof. move => Hxin HBinA. apply HBinA. by apply Hxin. Qed.
+Arguments set_belong_cut {_} [_] _.
+
 (* 
 Lemma set_trichotomy {T : Type} (A B : 𝒫(T)) :
     A = B \/ A ⊆ B \/ A ⊇ B.

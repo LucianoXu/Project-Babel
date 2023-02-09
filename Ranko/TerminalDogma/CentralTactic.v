@@ -58,6 +58,13 @@ Ltac terminate :=
 Ltac check_and_not_both_have_evar :=
     assert_fails (split; instantiate (1 := _)).
 
+(** Display the current goal (conclusion) using [idtac]. *)
+Ltac show_goal :=    
+    match goal with
+    | |- ?G => idtac G
+    end.
+
+
 (** Succeeds if the premise [H] is the only term of that type in the premises. *)
 Ltac is_only H :=
     let T := type of H in 
@@ -75,7 +82,13 @@ Ltac is_only H :=
 
     safe tactic *)
 
-Ltac search_framework tac :=
+Ltac search_framework 
+        tac             (* [ltac], the level-specific tactic *)
+        complete_split  (* [integer] controls the behaviour of split branch
+                                integer:(0) : not complete, but much quicker
+                                other value: complete, but may be slower*)
+        :=
+
     repeat multimatch goal with
     (** for equality, try to use it in two ways 
         This is a dangerous technique, and we don't use for now. *)
@@ -90,17 +103,23 @@ Ltac search_framework tac :=
 
     (** [and] goal*)
     | |- (_ /\ _) => 
+
+    (** >>>>>> complete_split: no *)
+                    (guard complete_split = 0; split)
+    
+    (** >>>>>> complete_split: yes *)
     (** If the [and] goal has at least one side without any exsitential 
         variable, we can directly split it. *)
-                    (check_and_not_both_have_evar; split)
+                    || (check_and_not_both_have_evar; split)
     (** If the [and] goal has exsitential variables, the tactic must solve the
         goal after [split], otherwise this [split] action can be unsafe. *)
-                    || (split; by search_framework tac)
-                    || (split; last first; by search_framework tac)
+                    || (split; by search_framework tac complete_split)
+                    || (split; last first; by search_framework tac complete_split)
 
     (** [or] goal, complete branch *)
     | |- (_ \/ _) => 
-        (left; by (search_framework tac)) || (right; by (search_framework tac))
+        (left; by (search_framework tac complete_split)) 
+        || (right; by (search_framework tac complete_split))
 
     (** Conduct the tactic of this particualr level. *)
     |  _ => tac
@@ -108,14 +127,6 @@ Ltac search_framework tac :=
     | |- _ <-> _ => unfold iff
 
     | |- exists i, _ => eexists
-
-
-    (** Try to finish equality goal with [eq_refl]. This is mainly for the
-        instantiation of existential variables. This is safe since there are no
-        other branches*)
-    (* | |- ?A = ?B =>
-        (is_evar A + is_evar B);
-        apply Logic.eq_refl *)
 
     (** try to finish the goal after path searching*)
     |  _ => terminate

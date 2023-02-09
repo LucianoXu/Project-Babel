@@ -55,15 +55,21 @@ Ltac set_move_up :=
     | |- forall i, _ => intros ?
     end.
 
+
 (** Note: [extra_step] is the tactic to do high-level reasonings before fall to
     This low level reasoning. *)
-Ltac set_step extra_step := 
-    multimatch goal with
+Ltac set_step 
+        extra_step      (* [ltac] the step tactic of higher level *)
+        complete_split  (* [integer] controls the behaviour of split branch
+                                integer:(0) : not complete, but much quicker
+                                other value: complete, but may be slower*)
+        := 
 
+    multimatch goal with
     (** do the extra step first *)
     | _ => extra_step
 
-    | _ => set_simpl
+    | _ => repeat set_simpl
     (** break the premise into small pieces and move up *)
     | _ => set_move_up
 
@@ -71,11 +77,11 @@ Ltac set_step extra_step :=
     (** try to solve the goal *)
     | H : ?x ∈ _ |- ?x ∈ _ =>
         apply H; 
-        by search_framework ltac:(set_step extra_step)
+        by search_framework ltac:(set_step extra_step complete_split) complete_split
 
     | H : _ ∈ ?A |- _ ∈ ?A => 
         apply H; 
-        by search_framework ltac:(set_step extra_step)
+        by search_framework ltac:(set_step extra_step complete_split) complete_split
 
     | |- ?A = ?B => 
         apply Logic.eq_refl
@@ -84,14 +90,14 @@ Ltac set_step extra_step :=
 
     (** possible goal from big_itsct *)
     | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => 
-        eapply H; by search_framework ltac:(set_step extra_step)
+        eapply H; by search_framework ltac:(set_step extra_step complete_split) complete_split
 
     (** try to utilize [forall] premises 
         Note that this method is not complete, because we cannot control which
         term to use for instantiating [forall] *)
     | H : forall a : ?A, _, Hterm : ?A |- _ => 
         move: (H Hterm); clear H; 
-        by search_framework ltac:(set_step extra_step)
+        by search_framework ltac:(set_step extra_step complete_split) complete_split
 
     | |- _ ∈ _ => simpl
 
@@ -101,5 +107,10 @@ Ltac set_step extra_step :=
     || (rewrite seteqP; intros ?; split).
 
 
-Ltac set_killer :=
-    search_framework ltac:(set_step idtac).
+Ltac set_killer_with complete_split :=
+    search_framework ltac:(set_step idtac complete_split) complete_split.
+
+Ltac set_killer := set_killer_with integer:(0).
+
+Ltac set_killer_full := set_killer_with integer:(1).
+

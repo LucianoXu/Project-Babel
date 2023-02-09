@@ -25,6 +25,12 @@ Module QParallelProg
 (** Get the extended theory of quantum sets *)
 Module Import QTS_ext := QTheorySet QTB QTS.
 
+
+(** use the number order *)
+Import NatLePoset.CanonicalStruct.
+Import SubsetOrder.CanonicalStruct.
+
+
 Declare Scope QPP_scope.
 Open Scope QPP_scope.
 
@@ -231,7 +237,7 @@ Fixpoint deSemN_point {qs : QvarScope} (P : option (prog qs)) (n : nat)
     | None => {{ rho }}
     | Some P => 
         match n with
-        | 0 => 𝕌
+        | 0 => ∅
         | n'.+1 => 
             match P with
             | Skip => 
@@ -239,8 +245,6 @@ Fixpoint deSemN_point {qs : QvarScope} (P : option (prog qs)) (n : nat)
 
             | Abort => 
                 𝕌 
-                (** Note : universal set is necessary here. Otherwise, it's
-                    hard to construct the infimum set. *)
 
             | qv <- 0 => 
                 {{ InitStt qv rho }}
@@ -296,8 +300,7 @@ Notation " ⟦ P , n ⟧ ( rho_s ) " := (deSemN P n rho_s)
     (at level 10, rho_s at next level, 
     format "⟦  P ,  n  ⟧ ( rho_s )") : QPP_scope.
 
-
-
+(*
 (** Prove that [⦗ P , n ⦘ ( rho )] is always nonempty. *)
 Lemma deSemN_point_nemMixin {qs : QvarScope} (P : prog qs) (n : nat) rho :
     NemSet.class_of (⦗ P , n ⦘ (rho)).
@@ -340,7 +343,6 @@ Qed.
 
 
 
-
 (** Prove that [⟦ P , n ⟧ (rho_s)] is always nonempty. *)
 
 Lemma deSemN_nemMixin {qs : QvarScope} (P : prog qs) (n : nat) 
@@ -356,6 +358,7 @@ Qed.
 Canonical deSemN_nemType 
     {qs : QvarScope} (P : prog qs) (n : nat) (rho_s : 𝒫(𝒟( qs )⁻)₊) :=
         NemSet _ (@deSemN_nemMixin _ P n _ (NemSet.class rho_s)).
+*)
 
 
 Section DeSemPointStep.
@@ -375,6 +378,7 @@ End DeSemPointStep.
 Section DeSemStep.
 
 Variable (qs : QvarScope) (rho_s : 𝒫(𝒟( qs )⁻)₊).
+(*
 
 
 Lemma deSemN_skip n:
@@ -418,7 +422,6 @@ Proof.
     rewrite /deSemN /mapR //=. 
     by apply bigU_fun_rei.
 Qed.
-(*
 Lemma deSemN_if qv_m m S0 S1 n:
 
             ⟦ If m [[ qv_m ]] Then S0 Else S1 End, n.+1 ⟧ (rho_s) 
@@ -492,14 +495,70 @@ End DeSemStep.
 
 
 
-
-Lemma deSem0 (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)₊) :
+Lemma deSem0 (qs : QvarScope) P (rho_s : 𝒫(𝒟( qs )⁻)) :
         
-        ⟦ P , 0 ⟧ (rho_s) = 𝕌.
+        ⟦ P , 0 ⟧ (rho_s) = ∅.
 
 Proof.
     rewrite /deSemN /fun_comp /mapR //=.
-    apply bigU_sgt_nem. apply NemSet.class.
+    case (em_classic rho_s).
+    move => ->. by apply bigU_sgt_em.
+    move => ?. by apply bigU_sgt_nem.
+Qed.
+
+
+Lemma deSem_em (qs : QvarScope) (P : prog qs) n :
+
+        ⟦ P , n ⟧ (∅) = ∅.
+
+Proof.
+    rewrite /deSemN /fun_comp => //=.
+    rewrite mapR_em. by apply big_union_em.
+Qed.
+    
+
+
+Lemma deSemN_monotonicMixin {qs : QvarScope} (P : prog qs) (n : nat) :
+    MonotonicFun.mixin_of (⟦ P, n ⟧).
+Proof.
+    rewrite /MonotonicFun.mixin_of => A B HAinB.
+
+    (** prove the special cases *)
+    case: n. by rewrite !deSem0.
+    move => n.
+    case: (em_classic A); case: (em_classic B).
+    move => -> ->. by rewrite deSem_em.
+    move => _ ->. by rewrite deSem_em.
+    move => HB HA. rewrite HB //= in HAinB. 
+        rewrite subset_emP in HAinB. by destruct (HA HAinB).
+
+    move => HB HA.
+
+    rewrite /deSemN /fun_comp.
+
+    case P; rewrite /mapR //=; intros; apply bigU_mor_sub;
+    by apply mapR_mor_sub.
+Qed.
+
+Canonical deSemN_monotonicfun {qs : QvarScope} (P : prog qs) (n : nat) :=
+    MonotonicFun _ (@deSemN_monotonicMixin qs P n).
+
+
+Lemma deSemN_continuousMixin {qs : QvarScope} (P : prog qs) (n : nat) :
+    ContinuousFun.mixin_of (MonotonicFun.class (⟦ P, n ⟧)).
+Proof.
+    rewrite /ContinuousFun.mixin_of //= => c.
+    rewrite /monotonic_mapR_chain  /CPO.join_op  //=.
+    rewrite /deSemN.
+    equal_f_comp c. 
+    (** LHS *)
+    rewrite -fun_assoc.
+    rewrite [((⋃ ◦ ⦗ P, n ⦘ [<]) ◦ ⋃)]fun_assoc. 
+    rewrite mapR_bigU_swapF.
+    (** RHS *)
+    rewrite -[in RHS]fun_assoc.
+    rewrite bigU_fun_distF.
+    by [].
 Qed.
 
 
@@ -507,7 +566,7 @@ Qed.
 (* The strong relation between opSemN and order *)
 Lemma deSemN_point_monotonic_strong {qs : QvarScope} :
     forall (S0 : prog qs) (rho : 𝒟( qs )⁻) n i, 
-        (i <= n)%nat -> ⦗ S0, i ⦘ (rho) ⊇ ⦗ S0, n ⦘ (rho).
+        (i <= n)%nat -> ⦗ S0, i ⦘ (rho) ⊆ ⦗ S0, n ⦘ (rho).
 Proof.
     move => S0 rho n.
 
@@ -551,7 +610,7 @@ Proof.
 Qed.
 
 Lemma deSemN_point_monotonic_step {qs : QvarScope} (P : prog qs) rho: 
-    forall n, ⦗ P, n ⦘ (rho) ⊇ ⦗ P, n.+1 ⦘ (rho).
+    forall n, ⦗ P, n ⦘ (rho) ⊆ ⦗ P, n.+1 ⦘ (rho).
 Proof. move => n. by apply deSemN_point_monotonic_strong. Qed.
 Arguments deSemN_point_monotonic_step {qs} P rho.
 
@@ -559,7 +618,7 @@ Arguments deSemN_point_monotonic_step {qs} P rho.
 (* The strong relation between deSemN and order *)
 Lemma deSemN_monotonic_strong {qs : QvarScope}:
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) (n i : nat), 
-        (i <= n)%nat -> r1 ⊇ r2 -> ⟦ S0, i ⟧ (r1) ⊇ ⟦ S0, n ⟧ (r2).
+        (i <= n)%nat -> r1 ⊆ r2 -> ⟦ S0, i ⟧ (r1) ⊆ ⟦ S0, n ⟧ (r2).
 Proof. 
     rewrite /deSemN => S0 r1 r2 n i Hi Hr1r2.
     apply bigU_mapR_mor_sub => // t.
@@ -569,7 +628,7 @@ Qed.
 
 Lemma deSemN_monotonic_rho {qs : QvarScope} :
     forall (S0 : prog qs) (r1 r2 : 𝒫(𝒟( qs )⁻)) n, 
-        r1 ⊇ r2 -> ⟦ S0, n ⟧ (r1) ⊇ ⟦ S0, n ⟧ (r2).
+        r1 ⊆ r2 -> ⟦ S0, n ⟧ (r1) ⊆ ⟦ S0, n ⟧ (r2).
 Proof.
     move => S0 r1 r2 n.
     by apply (@deSemN_monotonic_strong qs S0 r1 r2 n n).
@@ -579,28 +638,25 @@ Qed.
 
 (** Prove that [opSemN c i] is increasing when i increases. *)
 Lemma deSemN_monotonic_N {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
-    forall i n, (i <= n)%nat -> ⟦ P, i ⟧ (rho_s) ⊇ ⟦ P, n ⟧ (rho_s).
+    forall i n, (i <= n)%nat -> ⟦ P, i ⟧ (rho_s) ⊆ ⟦ P, n ⟧ (rho_s).
 Proof. move => i n Hin. 
     by apply deSemN_monotonic_strong.
 Qed.
 
 Lemma deSemN_monotonic_step {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)): 
-    forall n, ⟦ P, n ⟧ (rho_s) ⊇ ⟦ P, n.+1 ⟧ (rho_s).
+    forall n, ⟦ P, n ⟧ (rho_s) ⊆ ⟦ P, n.+1 ⟧ (rho_s).
 Proof. move => n. by apply deSemN_monotonic_strong. Qed.
 Arguments deSemN_monotonic_step {qs} P rho_s.
 
 
-(** use the number order *)
-Import NatLePoset.CanonicalStruct.
-Import SubsetOrder.CanonicalStruct.
 
 (** Construct the monotonic structure *)
 Definition deSemN_n {qs : QvarScope} (P : prog qs) rho_s n := deSemN P n rho_s.
-(*
+
 
 Lemma deSemN_n_monotonicMixin 
     {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)) : 
-    MonotonicFun.class_of (deSemN_n P rho_s).
+    MonotonicFun.mixin_of (deSemN_n P rho_s).
 Proof.
     rewrite /MonotonicFun.mixin_of => x y Hxy.
     rewrite /deSemN_n. apply deSemN_monotonic_N. apply /leP. by apply Hxy.
@@ -610,10 +666,11 @@ Canonical deSemN_n_monotonic
     {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)) := 
     MonotonicFun _ (@deSemN_n_monotonicMixin _ P rho_s).
 
-*)
-
 
 (*
+Lemma deSemN_n_continuousMixin
+    {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)) : True.
+    ContinuousFun.mixin_of (MonotonicFun.class (deSemN_n P rho_s)).
 
 
 (** Define the operationa semantics (infinite step) *)
@@ -630,16 +687,44 @@ Lemma chain_deSemN_n {qs : QvarScope} (P : prog qs) rho_s n :
 Proof. by []. Qed.
 *)
 
+
 Definition DeSem 
     {qs : QvarScope} (P : prog qs) (rho_s : 𝒫(𝒟( qs )⁻)) : 𝒫(𝒟( qs )⁻) := 
         
         ⊔ᶜˡ ((deSemN_n P rho_s) [<] 𝕌).
 
-
+Notation " ⟦ P ⟧ " := (@DeSem _ P) 
+        (at level 10, format "⟦  P  ⟧"): QPP_scope.  
 Notation " ⟦ P ⟧ ( rho_s ) " := (@DeSem _ P rho_s) 
     (at level 10, format "⟦  P  ⟧ ( rho_s )"): QPP_scope.
 
+Lemma DeSem_monotonicMixin {qs : QvarScope} (P : prog qs) : 
+    MonotonicFun.mixin_of (⟦ P ⟧).
+Proof.
+    rewrite /MonotonicFun.mixin_of //= => A B HAB.
+    rewrite !/DeSem /CLattice.join_op //=.
+    apply bigU_mapR_mor_sub => //=.
+    rewrite /deSemN_n => n.
+    by apply (MonotonicFun.class (⟦ P, n ⟧)).
+Qed.
+
+Canonical DeSem_monotonicfun {qs : QvarScope} (P : prog qs) :=
+    MonotonicFun _ (@DeSem_monotonicMixin qs P).
+
 (* 
+
+Lemma DeSem_continuousMixin {qs : QvarScope} (P : prog qs) :
+    ContinuousFun.mixin_of (MonotonicFun.class (⟦ P ⟧)).
+Proof.
+    rewrite /ContinuousFun.mixin_of /CPO.join_op //= => c.
+    rewrite /DeSem /CLattice.join_op //=. apply poset_antisym.
+    rewrite /mapR //=.
+    equal_f_comp c.
+    rewrite -fun_assoc.
+    rewrite 
+
+
+
 Lemma DeSem_ub : forall {qs : QvarScope} n (P : prog qs) rho_s, 
     ⟦ P, n ⟧ (rho_s) ⊑ ⟦ P ⟧ (rho_s).
 Proof.
@@ -667,7 +752,37 @@ Proof. split. by apply DeSem_lub.
 Qed.
 *)
 
+(*##################################################################*)
+(* tactic *)
 
+Ltac deSem_simpl :=
+    (   rewrite /deSemN_n
+    ); simpl.
+
+
+Ltac deSem_move_up := 
+    match goal with
+    | H : _ = ⦗ _, _ ⦘(_) |- _ => clear H
+    | H : _ = ⟦ _, _ ⟧(_) |- _ => clear H
+    | n : nat |- _ ∈ ⦗ Skip , ?n ⦘(_) -> _ =>
+        generalize dependent n; case => //=
+    | n : nat |- _ ∈ ⦗ Abort , ?n ⦘(_) -> _ =>
+        generalize dependent n; case => //=
+    | n : nat |- _ ∈ ⦗ _ <- 0, ?n ⦘(_) -> _ =>
+        generalize dependent n; case => //=
+    | n : nat |- _ ∈ ⦗ _ *= _, ?n ⦘(_) -> _ =>
+        generalize dependent n; case => //=
+
+    | n : nat |- _ ∈ ⦗ If _ [[_]] Then _ Else _ End , ?n ⦘(_) -> _ =>
+        generalize dependent n; case => //=
+    end.
+
+Ltac deSem_step := set_step ltac:(deSem_simpl || deSem_move_up) integer:(0).
+
+Ltac deSem_killer := 
+    search_framework deSem_step integer:(0).
+
+(*##################################################################*)
 
 
 
@@ -676,10 +791,13 @@ Qed.
 Lemma DeSem_skip {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)₊):
     ⟦ Skip ⟧ (rho_s) = rho_s.
 Proof.
+    deSem_killer.
+    instantiate (1:=1%nat). deSem_killer. 
+
+    (*
     rewrite /DeSem /CLattice.join_op //=. apply poset_antisym.
 
-
-    apply bigU_lub => a [] i [] _ <-.
+    apply bigU_lub => a [] i [] _ ->.
     rewrite /deSemN_n /deSemN -fun_compP.
     case: i.
     (** n = 0 *)
@@ -688,111 +806,51 @@ Proof.
     (** n > 0 *)
     rewrite /mapR //= => n. by rewrite bigU_rei.
 
-    apply bigU_glb => //=. exists 1%nat. split => //=.
+    apply bigU_ub => //=. exists 1%nat. split => //=.
     rewrite /deSemN_n /deSemN /fun_comp /mapR //=.
     by rewrite bigU_rei.
+    *)
 Qed.
 
 Lemma DeSem_abort {qs : QvarScope} (rho_s : 𝒫(𝒟( qs )⁻)₊):
     ⟦ Abort ⟧ (rho_s) = 𝕌.
 Proof.
-    rewrite /DeSem //=. apply poset_antisym.
-
-    apply bigI_glb => a [] i [] _ <-.
-    rewrite /deSemN_n. by rewrite deSemN_abort.
-
-    apply bigI_lb => //=. exists 1%nat. split => //=.
-    rewrite /deSemN_n /deSemN /fun_comp /mapR //=.
-    rewrite bigU_sgt_nem => //. by apply NemSet.class.
+    deSem_killer.
+    instantiate (1:=1%nat). deSem_killer. 
 Qed.
 
 Lemma DeSem_init {qs : QvarScope} qv (rho_s : 𝒫(𝒟( qs )⁻)₊):
     ⟦ qv <- 0 ⟧ (rho_s) = (InitStt qv) [<] rho_s.
 Proof.
-    rewrite /DeSem //=. apply poset_antisym.
-
-    apply bigI_glb => a [] i [] _ <-.
-    case: i.
-    rewrite /deSemN_n /deSemN /fun_comp /mapR => //=.
-    rewrite bigU_sgt_nem => //=. by apply NemSet.class.
-    move => n. rewrite /deSemN_n /deSemN /fun_comp /mapR => //=.
-    by rewrite bigU_fun_rei.
-
-    apply bigI_lb => //=. exists 1%nat. split => //=.
-    rewrite /deSemN_n /deSemN /fun_comp /mapR => //=.
-    by rewrite bigU_fun_rei.
+    deSem_killer.
+    instantiate (1:=1%nat). deSem_killer. 
 Qed.
 
 Lemma DeSem_unitary {qs : QvarScope} qv U (rho_s : 𝒫(𝒟( qs )⁻)₊):
     ⟦ qv *= U ⟧ (rho_s) = (Uapply U) [<] rho_s.
 Proof.
-    rewrite /DeSem //=. apply poset_antisym.
-    
-    apply bigI_glb => a [] i [] _ <-.
-    case: i.
-    rewrite /deSemN_n /deSemN /fun_comp /mapR => //=.
-    rewrite bigU_sgt_nem => //=. by apply NemSet.class.
-    move => n. rewrite /deSemN_n /deSemN /fun_comp /mapR => //=.
-    by rewrite bigU_fun_rei.
-
-    apply bigI_lb => //=. exists 1%nat. split => //=.
-    rewrite /deSemN_n /deSemN /fun_comp /mapR => //=.
-    by rewrite bigU_fun_rei.
+    deSem_killer.
+    instantiate (1:=1%nat). deSem_killer. 
 Qed.
 
 
-Lemma DeSem_if {qs : QvarScope} qv_m m S0 S1 (rho_s : 𝒫(𝒟( qs )⁻)₊):
+
+
+Lemma DeSem_if {qs : QvarScope} qv_m m S0 S1 (rho_s : 𝒫(𝒟( qs )⁻)):
     
     ⟦ If m [[qv_m]] Then S0 Else S1 End ⟧ (rho_s) 
-        = ⟦ S0 ⟧ ((Mapply m true) [<] rho_s) + ⟦ S1 ⟧ ((Mapply m false) [<] rho_s).
+        = ⋃ ((fun rho => 
+            (⟦ S0 ⟧ ({{ (Mapply m true) rho }}) + ⟦ S1 ⟧ ({{ (Mapply m false) rho}}))) [<] rho_s).
 
 Proof.
-    rewrite /add_set //=. 
-    rewrite /DeSem //=. 
-    rewrite [in LHS]/deSemN_n /deSemN [in LHS]
-            /fun_comp //=.
-    
-    
-    apply poset_antisym.
-
-    apply bigI_glb => a [] i [] _ <-.
-    case: i.
-
-    (*
-    rewrite [in X in _ ⊆ X]/deSemN_n /deSemN 
-            [in X in _ ⊆ X]/fun_comp [in X in _ ⊆ X]/mapR //=.
-    rewrite bigU_sgt_nem //. by apply NemSet.class.
-
-    move => i.
-    rewrite [in X in _ ⊆ X]/deSemN_n /deSemN 
-            [in X in _ ⊆ X]/fun_comp [in X in _ ⊆ X]/mapR //=.
-    apply bigU_ub.
-        *)
-    
-
-    (*
-           ⟦S0⟧  ⟦S1⟧ ⟦IF⟧
-            0  +  0   0
-                    \
-            1  +  1   1
-                    \
-            2  +  2   2
-                    \
-              ...    ...
-
-    *)
-    (* 
-    (* proof : ⟦S0⟧ + ⟦S1⟧ is the upper bound, therefore larger than lub ⟦IF⟧. *)
-    apply DeSem_lub. case. by rewrite deSem0_nem //.
-    move => n //. rewrite deSemN_if. apply PDenSetOrder_add_split; apply DeSem_ub.
-
-    (* proof : ⟦IF⟧ is the upper bound, therefore larger than lub ⟦S0⟧ + ⟦S1⟧.
-        For this purpose we need the continuity of add. *)
-    rewrite ![⟦ _ ⟧ (MapplyS m _ rho_s)]/DeSem. rewrite add_continuous.
-    apply chain_limit_lub => l. rewrite /chain_add /chain_add_obj => //=.
-    rewrite -deSemN_if. by apply DeSem_ub.
-    *)
-Abort.
+    deSem_killer. apply a0. apply a1.
+    instantiate(1:= (Nat.max x11 x5).+1) => //=.
+    repeat eexists. 
+    apply (set_belong_cut (⦗ S1, x5 ⦘((Mapply m false x1)))) => //.
+    apply deSemN_point_monotonic_strong. apply /leP. apply Nat.le_max_r.
+    apply (set_belong_cut (⦗ S0, x11 ⦘((Mapply m true x1)))) => //.
+    apply deSemN_point_monotonic_strong. apply /leP. apply Nat.le_max_l.
+Qed.
 
 
 Lemma DeSem_while {qs : QvarScope} qv_m m S0 (rho_s : 𝒫(𝒟( qs )⁻)):

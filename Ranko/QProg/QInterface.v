@@ -113,13 +113,13 @@ Definition PDensitySet (H: HilbertSpace) : Type := 𝒫(𝒟( H )⁻).
 (** Here we have the difference : we need to perform 'union' on the program
     state, but we cannot union two density operators. Therefore density 
     operator sets are needed.*)
-Definition union_set : forall {H : HilbertSpace}, 
+Definition union_set {H : HilbertSpace}:
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
-        fun _ a b => a ∪ b.
+        union.
 
-Definition add_set : forall {H : HilbertSpace}, 
+Definition add_set {H : HilbertSpace} :
     𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) -> 𝒫(𝒟( H )⁻) :=
-        fun H a b => ((@add_PDenOpt H) [<] a [><] b).
+        funlift2 (@add_PDenOpt H).
 
 (* Notation " A '∪' B " := (@union_set _ A B) (at level 10) : QTheorySet_scope. *)
 Notation " A + B " := (@add_set _ A B) : QTheorySet_scope.
@@ -129,7 +129,7 @@ Lemma add_set_nem {H : HilbertSpace} (A B : 𝒫(𝒟( H )⁻))
     (HA : A <> ∅) (HB : B <> ∅) : (A + B) <> ∅.
 Proof.
     rewrite /NemSet.mixin_of /add_set. 
-    apply UmapRL_nem => //. by apply mapR_nem.
+    apply UmapLR_nem => //. by apply mapR_nem.
 Qed.
         
 
@@ -170,7 +170,7 @@ Lemma scalar_convex_combS_nemMixin
         NemSet.mixin_of (A [ p ⊕ ] B).
 Proof.
     rewrite /NemSet.mixin_of /scalar_convex_combS. 
-    apply UmapRL_nem => //. by apply mapR_nem.
+    apply UmapLR_nem => //. by apply mapR_nem.
 Qed.
 
 Canonical scalar_convex_combS_nemType 
@@ -235,8 +235,25 @@ Qed.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 (* chain and CPO conclusions *)
 
+
+Lemma add_continuous {H : HilbertSpace} (A B : 𝒫(𝒫(𝒟( H )⁻))) :
+    add_set (⋃A) (⋃B) = ⋃ (add_set [<] A [><] B).
+Proof. apply funlift2_bigU_swap. Qed.
+
+(*
 (** Define the increasing set and least upper bound *)
 Record chain (T : Type) := mk_chain {
     chain_obj : nat -> 𝒫(T);
@@ -287,15 +304,18 @@ Proof.
     have temp := @chain_limit_ub _ (singleton_chain rho_s). 
     by apply (temp O).
 Qed.
-(* 
+
+
+
 
 Lemma repeat_chain_limit (T : Type) (ch : chain T) x :
     (forall i, ch _[i] = x) -> lim→∞ (ch) = x.
 Proof. move => H.
     apply subset_asymm.
-    transitivity (ch _[1]). by apply chain_limit_ub. by rewrite H.
     apply chain_limit_lub. move => i. by rewrite H.
+    transitivity (ch _[1]). by rewrite H.  by apply chain_limit_ub. 
 Qed.
+
 (* chain_add *)
 Definition chain_add_obj (H : HilbertSpace) 
     (ch_obj1 ch_obj2 : nat -> PDensitySet H) :=
@@ -358,7 +378,7 @@ Axiom union_continuous : forall H (ch1 ch2 : chain 𝒟( H )⁻),
 
 (* The chain of InitSttS ch *)
 Definition InitStt_chain_obj {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻) :=
-    fun i => InitSttS qv (ch _[i]).
+    fun i => InitStt qv [<] (ch _[i]).
 Lemma InitStt_chain_prop {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻)
     : forall i, InitStt_chain_obj qv ch i ⊑ InitStt_chain_obj qv ch i.+1.
 Proof.
@@ -371,12 +391,12 @@ Definition InitStt_chain {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻) :=
 
 (** We still need the assumption that addition is continuous *)
 Axiom init_continuous : forall {qs : QvarScope} (qv : qs) (ch : chain 𝒟(qs)⁻),
-    InitSttS qv (lim→∞ (ch)) = lim→∞ (InitStt_chain qv ch).
+    InitStt qv [<] (lim→∞ (ch)) = lim→∞ (InitStt_chain qv ch).
 
 (* The chain of UapplyS U ch *)
 Definition Uapply_chain_obj 
     {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻) :=
-    fun i => UapplyS U (ch _[i]).
+    fun i => Uapply U [<] (ch _[i]).
 Lemma Uapply_chain_prop 
     {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻)
     : forall i, Uapply_chain_obj U ch i ⊑ Uapply_chain_obj U ch i.+1.
@@ -392,13 +412,13 @@ Definition Uapply_chain
 (** We still need the assumption that addition is continuous *)
 Axiom unitary_continuous : 
     forall {qs : QvarScope} (qv : qs) (U : UnitaryOpt qv) (ch : chain 𝒟(qs)⁻),
-    UapplyS U (lim→∞ (ch)) = lim→∞ (Uapply_chain U ch).
+    Uapply U [<] (lim→∞ (ch)) = lim→∞ (Uapply_chain U ch).
 
 
 (* The chain of MapplyS M ch result *)
 Definition Mapply_chain_obj 
     {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (r : bool) (ch : chain 𝒟(qs)⁻) :=
-    fun i => MapplyS M r (ch _[i]).
+    fun i => Mapply M r [<] (ch _[i]).
 Lemma Mapply_chain_prop 
     {qs : QvarScope} (qv : qs) (M : MeaOpt qv) (ch : chain 𝒟(qs)⁻) (r : bool)
     : forall i, Mapply_chain_obj M r ch i ⊑ Mapply_chain_obj M r ch i.+1.
@@ -414,7 +434,7 @@ Definition Mapply_chain
 (** We still need the assumption that addition is continuous *)
 Axiom mea_continuous : forall {qs : QvarScope} 
     (qv : qs) (M : MeaOpt qv) (ch : chain 𝒟(qs)⁻) (r : bool),
-    MapplyS M r (lim→∞ (ch)) = lim→∞ (Mapply_chain M r ch).
+    Mapply M r [<] (lim→∞ (ch)) = lim→∞ (Mapply_chain M r ch).
 
 
 
@@ -423,9 +443,9 @@ Axiom mea_continuous : forall {qs : QvarScope}
 Definition bigU_chain_obj (T : Type) (ch : chain 𝒫(T)) :=
     fun i => ⋃ (ch _[i]).
 Lemma bigU_chain_prop (T : Type) (ch : chain 𝒫(T))
-    : forall i, bigU_chain_obj ch i ⊇ bigU_chain_obj ch i.+1.
+    : forall i, bigU_chain_obj ch i ⊑ bigU_chain_obj ch i.+1.
 Proof.
-    rewrite /bigU_chain_obj => i. apply big_union_mor_sub. by apply ch.
+    rewrite /bigU_chain_obj => i. apply bigU_mor_sub. by apply ch.
 Qed.
 Arguments bigU_chain_prop {T} ch.
 
@@ -442,7 +462,7 @@ Axiom bigU_continuous :
 Definition fmap_chain_obj (T V: Type) (f : T -> V) (ch : chain T):=
     fun i => f [<] (ch _[i]).
 Lemma fmap_chain_prop (T V: Type) (f : T -> V) (ch : chain T)
-    : forall i, fmap_chain_obj f ch i ⊇ fmap_chain_obj f ch i.+1.
+    : forall i, fmap_chain_obj f ch i ⊑ fmap_chain_obj f ch i.+1.
 Proof.
     move => i. apply mapR_mor_sub => //. by apply ch.
 Qed.
@@ -457,17 +477,9 @@ Axiom fmap_continuous :
         f [<] (lim→∞ (ch)) = lim→∞ (fmap_chain f ch).
     
 *)
+
 End QTheorySetType.
 
-
-(*
-
-Axiom MapplyS_repeat : forall (qs : QvarScope)
-         (qv_M : qs) (m : MeaOpt qv_M) 
-         (rho_s : 𝒫(𝒟( qs )⁻)) (result : bool), 
-         MapplyS m result (MapplyS m result rho_s ) 
-         = MapplyS m result rho_s .
-*)
 
 (*
 (* TODO #5 *)

@@ -365,7 +365,7 @@ Lemma bigU_ele2 {X : Type} (A B : 𝒫(X)) :
 
         ⋃ ({{A, B}}) = A ∪ B.
 
-Proof. set_killer. Qed.
+Proof. set_killer_full. Qed.
 
 Lemma bigI_ele1 {X : Type} (A : 𝒫(X)) :
 
