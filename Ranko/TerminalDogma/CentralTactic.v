@@ -72,21 +72,20 @@ Ltac is_only H :=
         match goal with | H' : T |- _ => idtac end)).
     
     
-(** This is a traversal and iterative proof search framework.
-    It takes in a parameter [tac], which is a tactic. 
-    
-    It will try to terminate the subgoals with [tac] after selecting a branch.
-    (For example, for a [?A \/ ?B] goal.) If the current branch fails, it will
-    try other branches. If all branches does not work, it will stop before the 
-    branch selecting stage.
+(** Layered Search Framework
 
     safe tactic *)
 
 Ltac search_framework 
-        tac             (* [ltac], the level-specific tactic *)
-        complete_split  (* [integer] controls the behaviour of split branch
-                                integer:(0) : not complete, but much quicker
-                                other value: complete, but may be slower*)
+        level_step      (* [ltac], the level-specific tactic *)
+        split_mode      (* [integer] controls the behaviour of split branch
+                                integer:(0) : unsafe split
+                                        unsafe, but much quicker
+                                integer:(1) : passive split
+                                        safe but not incomplete
+                                other value : aggressive split
+                                        safe and complete, but may be slower
+                        *)
         :=
 
     repeat multimatch goal with
@@ -95,34 +94,44 @@ Ltac search_framework
     (*
     | |- _ = _ -> _ => 
         let H := fresh "Heq" in 
-            (move => H; try rewrite H; by (search_framework tac))
-            || (move => H; try rewrite -H; by (search_framework tac))
+            (move => H; try rewrite H; by (search_framework level_step))
+            || (move => H; try rewrite -H; by (search_framework level_step))
     *)
 
     (** path selecting *)
 
     (** [and] goal*)
     | |- (_ /\ _) => 
+                    tryif guard split_mode = 0 
+        (** >>>>>> split_mode: unsafe split *)
+                    then
+                        split
 
-    (** >>>>>> complete_split: no *)
-                    (guard complete_split = 0; split)
+                    else tryif guard split_mode = 1
+
+        (** >>>>>> split_mode: passive split*)
+                    then
+                        split; by search_framework level_step split_mode
+                    
+        (** >>>>>> split_mode: aggressive split *)
+                    else
     
-    (** >>>>>> complete_split: yes *)
-    (** If the [and] goal has at least one side without any exsitential 
-        variable, we can directly split it. *)
-                    || (check_and_not_both_have_evar; split)
-    (** If the [and] goal has exsitential variables, the tactic must solve the
-        goal after [split], otherwise this [split] action can be unsafe. *)
-                    || (split; by search_framework tac complete_split)
-                    || (split; last first; by search_framework tac complete_split)
+        (** If the [and] goal has at least one side without any exsitential 
+            variable, we can directly split it. *)
+                        (check_and_not_both_have_evar; split)
+        (** If the [and] goal has exsitential variables, the tactic must solve 
+            the goal after [split], otherwise this [split] action can be unsafe. *)
+                    || (split; by search_framework level_step split_mode)
+                    || (split; last first; by search_framework level_step split_mode)
+                    
 
     (** [or] goal, complete branch *)
     | |- (_ \/ _) => 
-        (left; by (search_framework tac complete_split)) 
-        || (right; by (search_framework tac complete_split))
+        (left; by (search_framework level_step split_mode)) 
+        || (right; by (search_framework level_step split_mode))
 
     (** Conduct the tactic of this particualr level. *)
-    |  _ => tac
+    |  _ => level_step
 
     | |- _ <-> _ => unfold iff
 

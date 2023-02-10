@@ -13,8 +13,6 @@ Unset Printing Implicit Defensive.
 
 (** set_killer
 
-    关于集合证明技术的tactic，我有了一个天大的发现！
-
     It will try to solve equality propositions on sets.
     (within intuitionism)
     (This could even be a COMPLETE tactic.)
@@ -112,5 +110,5 @@ Ltac set_killer_with complete_split :=
 
 Ltac set_killer := set_killer_with integer:(0).
 
-Ltac set_killer_full := set_killer_with integer:(1).
+Ltac set_killer_full := set_killer_with integer:(2).
 
