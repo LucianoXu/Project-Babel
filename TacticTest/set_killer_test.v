@@ -251,7 +251,8 @@ Proof. set_killer. Qed.
 (** In a inhabited type, 𝕌 ≠ ∅. *)
 Lemma uni_neq_em (T : iType) : set_uni T <> set_em T.
 Proof. 
-    set_killer. Unshelve. apply [witness of T]. 
+    move: [witness of T].
+    set_killer.
 Qed.
 
 
@@ -261,7 +262,8 @@ Proof. set_killer. Qed.
 
 Lemma uni_nem (T : iType) : set_uni T <> ∅.
 Proof. 
-    set_killer. Unshelve. destruct T => //. 
+    move: [witness of T].
+    set_killer.
 Qed.
     
 Lemma union_nem_L {T : Type} (A : 𝒫(T)) (B : 𝒫(T)) :
