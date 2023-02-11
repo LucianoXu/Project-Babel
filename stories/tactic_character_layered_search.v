@@ -18,6 +18,9 @@
     [match] expressions will make the tactic try its best to search for a
     better proof. While on the hand, put incomplete branches in the front will
     make the tactic accept quick but partial progress.
+
+    progress guaranteed: this tactic will success only if it makes some
+    progress.
 *)
 
 (** The basic idea of layered search tactic is base on this fact: theories
@@ -62,7 +65,9 @@ Ltac alpha1_branch
 
 
 (** First we need a step tactic called [Alpha_step], corresponding to the
-    one-step progress in level Alpha. *)
+    one-step progress in level Alpha. 
+        
+    Note that the step tactics should be progress guaranteed. *)
 
 Ltac Alpha_step
         top_step
@@ -70,7 +75,7 @@ Ltac Alpha_step
 
         (** args : some extra arguments *)
         :=
-    multimatch goal with
+    match goal with
 
     | _ => idtac
     (** some proof logic of this level 
@@ -103,7 +108,7 @@ Ltac Beta_step
         (** args : some extra arguments *)
         :=
 
-    multimatch goal with
+    match goal with
 
     (** some proof logic of this level *)
 
@@ -115,6 +120,14 @@ Ltac Beta_step
 Ltac Beta_level := repeat ltac:(Beta_step idtac (* argvs *)).
 
 
+
+
+
+(** WORD OF WISDOM 
+
+    - Avoid the use of [simpl], which may bring unexpected unfolding. Use
+        [move => //=.] instead.
+*)
 
 
 

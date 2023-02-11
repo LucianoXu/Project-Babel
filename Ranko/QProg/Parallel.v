@@ -755,12 +755,13 @@ Qed.
 (*##################################################################*)
 (* tactic *)
 
-Ltac deSem_simpl :=
+Ltac deSem_simpl_branch :=
     (   rewrite /deSemN_n
-    ); simpl.
+        || rewrite /deSemN
+    ) => //=.
 
 
-Ltac deSem_move_up := 
+Ltac deSem_move_up_branch := 
     match goal with
     | H : _ = ⦗ _, _ ⦘(_) |- _ => clear H
     | H : _ = ⟦ _, _ ⟧(_) |- _ => clear H
@@ -793,10 +794,21 @@ Ltac deSem_move_up :=
         
     end.
 
-Ltac deSem_step := set_step ltac:(deSem_simpl || deSem_move_up) integer:(0).
+Ltac deSem_step
+        top_step
+        :=
+        match goal with
+        | _ => progress repeat deSem_simpl_branch
+        | _ => progress deSem_move_up_branch
+
+        | _ => set_step top_step integer:(0)
+        end.
+    
+Ltac deSem_step_sealed :=
+    idtac; let rec top := deSem_step_sealed in deSem_step top.
 
 Ltac deSem_killer := 
-    search_framework deSem_step integer:(0).
+    repeat deSem_step_sealed.
 
 (*##################################################################*)
 
@@ -907,7 +919,7 @@ Lemma DeSem_para {qs : QvarScope} S1 S2 (rho_s : 𝒫(𝒟( qs )⁻)):
         ⟦ Step S1 S2 true ⟧ (rho_s) ∪ ⟦ Step S1 S2 false ⟧ (rho_s).
 Proof.
     deSem_killer.
-    1,2: instantiate (1:=x1.+1); deSem_killer.
+    all : instantiate (1:=x1.+1); deSem_killer.
 Qed.
 
 (*

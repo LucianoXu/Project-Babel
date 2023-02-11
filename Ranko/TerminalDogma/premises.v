@@ -9,6 +9,7 @@ From Ranko.TerminalDogma Require Export TypeFacility.
 From Ranko.TerminalDogma Require Export function.
 From Ranko.TerminalDogma Require Export ProofFacility.
 From Ranko.TerminalDogma Require Export CentralTactic.
+From Ranko.TerminalDogma Require Export LogicTactic.
 
 From Coq Require Export ClassicalFacts.
 
