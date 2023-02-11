@@ -1,9 +1,9 @@
 (** * Parallel.v : describing parallel quantum programs *)
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Import QTheory POrder POrderSet POrderNat
+From Babel Require Import QTheory POrder POrderSet POrderNat
                             nd_seq.
 
 From Coq Require Import Classical Arith Relations Reals.

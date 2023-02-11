@@ -1,9 +1,11 @@
 (** SetTactic.v : the tactics about sets *)
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Export NaiveSet.
+From Babel.Ranko Require Import CentralTactic LogicTactic.
+
+From Babel Require Export NaiveSet.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

@@ -3,7 +3,7 @@
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.
 
-From Ranko Require Import CanonicalInfrastructure.
+From Babel Require Import CanonicalInfrastructure.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

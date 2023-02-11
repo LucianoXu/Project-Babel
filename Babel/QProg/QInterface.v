@@ -1,6 +1,6 @@
 (** QInterface.v *)
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality
                           NaiveSet
                           POrder

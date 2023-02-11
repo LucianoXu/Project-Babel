@@ -1,10 +1,10 @@
 (** * SetAdvanced.v : Advanced theories about set theory. *)
 
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Export NaiveSet SetBasic SetTactic.
+From Babel Require Export NaiveSet SetBasic SetTactic.
 
 From Coq Require Import Classical.
 

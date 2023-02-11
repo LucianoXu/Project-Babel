@@ -1,11 +1,11 @@
-; Ranko/dune
+; Babel/dune
 
 (coq.theory
     (flags -w -ambiguous-paths
         -w -notation-overridden
         -w -redundant-canonical-projection
         -w -projection-no-head-constant)
-    (name Ranko))
+    (name Babel))
 
 
 (include_subdirs qualified)

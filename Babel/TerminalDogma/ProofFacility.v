@@ -3,7 +3,7 @@
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.
 
-From Ranko Require Import TerminalDogma.TypeFacility.
+From Babel Require Import TerminalDogma.TypeFacility.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

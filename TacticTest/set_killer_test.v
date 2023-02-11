@@ -1,9 +1,9 @@
 (** set_killer_test.v *)
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Export SetFacility.
+From Babel Require Export SetFacility.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

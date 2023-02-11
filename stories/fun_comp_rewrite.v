@@ -96,7 +96,7 @@ Abort.
 (** But if we use the new definition ... *)
 Reset Initial.
 
-From Ranko Require Import TerminalDogma.premises
+From Babel Require Import TerminalDogma.premises
                           TerminalDogma.Extensionality.
 
 Set Implicit Arguments.

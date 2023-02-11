@@ -1,4 +1,4 @@
-From Ranko Require Export FQP.premises.
+From Babel Require Export FQP.premises.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

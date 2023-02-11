@@ -1,4 +1,4 @@
-From Ranko Require Export TerminalDogma.premises.
+From Babel Require Export TerminalDogma.premises.
 
 (** We use classical logic. *)
 Require Export Classical.

@@ -101,6 +101,9 @@ Ltac logic_step
 
     | |- exists i, _ => eexists
 
+    (** [firstorder] as the last resort *)
+    (* | _ => progress firstorder *)
+
     (** try to finish the goal after path searching*)
-    |  _ => terminate
+    | _ => terminate
     end.

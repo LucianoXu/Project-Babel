@@ -1,6 +1,6 @@
 (** Isomorphism.v *)
 (*
-From Ranko Require Import TerminalDogma.premises.
+From Babel Require Import TerminalDogma.premises.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

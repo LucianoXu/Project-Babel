@@ -3,10 +3,10 @@
     Including special structures about nonempty sets. *)
 
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Export NaiveSet SetBasic SetAdvanced SetTactic.
+From Babel Require Export NaiveSet SetBasic SetAdvanced SetTactic.
 
 From Coq Require Import Relations Classical.
 

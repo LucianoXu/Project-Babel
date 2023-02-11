@@ -1,7 +1,7 @@
 (** * POrder.v : Library for partial orders. *)
 
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality
                           SetFacility.
 

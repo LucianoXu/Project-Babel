@@ -1,9 +1,9 @@
 (** SetBasic.v : basic theorems about set *)
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
 TerminalDogma.Extensionality.
 
-From Ranko Require Export NaiveSet SetTactic.
+From Babel Require Export NaiveSet SetTactic.
 
 From Coq Require Import Classical.
 

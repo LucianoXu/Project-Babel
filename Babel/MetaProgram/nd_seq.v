@@ -1,9 +1,9 @@
 (** * nd_seq.v  *)
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Import SetFacility.
+From Babel Require Import SetFacility.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

@@ -1,9 +1,9 @@
 (** QTheory.v *)
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Export QInterface.
+From Babel Require Export QInterface.
 
 (** This file contains the extended implementation of quantum theories needed
     in quantum programs. *)

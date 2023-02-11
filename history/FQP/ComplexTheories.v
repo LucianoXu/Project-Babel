@@ -1,12 +1,12 @@
-From Ranko Require Export FQP.premises.
+From Babel Require Export FQP.premises.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-From Ranko Require FieldTheories.
-From Ranko Require RealTheories.
+From Babel Require FieldTheories.
+From Babel Require RealTheories.
 
 
 

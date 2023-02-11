@@ -1,5 +1,5 @@
-From Ranko Require Import FQP.premises.
-From Ranko Require Import TerminalDogma.Sequence.
+From Babel Require Import FQP.premises.
+From Babel Require Import TerminalDogma.Sequence.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

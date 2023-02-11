@@ -3,7 +3,7 @@
 From mathcomp Require Export all_ssreflect.
 Require Export Coq.Unicode.Utf8_core.
 
-From Ranko Require Import CanonicalInfrastructure.
+From Babel Require Import CanonicalInfrastructure.
 
 (*　世界の創造のため、魂の共鳴を聴くのだ！ *)
 

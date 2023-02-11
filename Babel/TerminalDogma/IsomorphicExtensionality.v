@@ -1,7 +1,7 @@
 (** IsomorphicExtensioniality.v *)
 (*
-From Ranko Require Import TerminalDogma.premises.
-From Ranko Require Import TerminalDogma.Isomorphism.
+From Babel Require Import TerminalDogma.premises.
+From Babel Require Import TerminalDogma.Isomorphism.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

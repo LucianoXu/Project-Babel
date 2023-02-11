@@ -1,13 +1,13 @@
 (** * POrderSet.v : Library for partial orders with sets. *)
 
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
 
 From Coq Require Import Relations Classical.
 
-From Ranko Require Export POrder SetFacility.
+From Babel Require Export POrder SetFacility.
 
 
 Set Implicit Arguments.

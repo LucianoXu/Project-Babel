@@ -1,13 +1,13 @@
 (** * POrderNat.v : Partial order of nat *)
 
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
 
 From Coq Require Import Relations Classical Arith.
 
-From Ranko Require Export NaiveSet POrder.
+From Babel Require Export NaiveSet POrder.
 
 
 Set Implicit Arguments.

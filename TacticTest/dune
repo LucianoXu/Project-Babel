@@ -7,7 +7,7 @@
         -w -projection-no-head-constant
         -async-proofs-cache force)
     (name TacticTest)
-    (theories Ranko))
+    (theories Babel))
 
 
 (include_subdirs qualified)

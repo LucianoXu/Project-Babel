@@ -2,10 +2,10 @@
             with Feng Yuan *)
 (*
 
-From Ranko Require Import TerminalDogma.premises 
+From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Ranko Require Import QTheory
+From Babel Require Import QTheory
                           NaiveSet.
 
 From Coq Require Import Classical
