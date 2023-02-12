@@ -36,6 +36,7 @@ Reserved Notation "⋃".
 Reserved Notation "⋂".
 Reserved Notation " f [<] " (at level 11, right associativity).
 Reserved Notation " F [>] " (at level 11, right associativity).
+Reserved Notation " F [<<] " (at level 11, right associativity).
 Reserved Notation " F [><] " (at level 11, right associativity).
 
 (** TODO #11 *)
@@ -426,6 +427,18 @@ Qed.
 
 
 (** Note that this operator automatically contains a big union. *)
+Definition UmapR {X Y: Type} (F : X -> 𝒫(Y)) : 𝒫(X) -> 𝒫(Y)
+    := fun x => ⋃ (F [<] x).
+
+Notation " F [<<] " := (@UmapR _ _ F) : NSet_scope.
+
+Lemma UmapR_fold {X Y: Type} (F : X -> 𝒫(Y)) (A :  𝒫(X)) :
+
+    ⋃ (F [<] A) = F [<<] A.
+
+Proof. by rewrite /UmapR. Qed.
+
+(** Note that this operator automatically contains a big union. *)
 Definition UmapLR {X Y: Type} (F : 𝒫(X -> Y)) : 𝒫(X) -> 𝒫(Y)
     := fun x => ⋃ (F [>][<] x).
 
@@ -437,7 +450,6 @@ Lemma UmapLR_fold {X Y: Type} (F : 𝒫(X -> Y)) (A :  𝒫(X)) :
 
 Proof. by rewrite /UmapLR. Qed.
 
-
 (*
 (*  Example: Function Lifting 
     言の葉ではなく…秘められし真意を伝えん!
@@ -445,15 +457,15 @@ Proof. by rewrite /UmapLR. Qed.
 Axiom (A B C D: Type) (f : A -> B -> C -> D).
 Check (fun x => f [<] x).
 Check (fun x => f [<] x [>]).
-Check (fun x => f [<] x [><]).
+Check (fun x => f [<] x [>][<<]).
 Check (fun x y => ((f [<] x) [>])[<] y).
-Check (fun x y z => f [<] x [><] y [><] z).
+Check (fun x y z => f [<] x [>][<<] y [>][<<] z).
 *)
 
 
 (** lift operator of a function with two parameters *)
 Definition funlift2 {X Y Z: Type} (f : X -> Y -> Z) : 𝒫(X) -> 𝒫(Y) -> 𝒫(Z) :=
-    fun A B => f[<]A[><]B.
+    fun A B => f[<]A[>][<<]B.
 
 (*
 

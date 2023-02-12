@@ -32,6 +32,7 @@ Ltac set_simpl_branch :=
         || rewrite /itsct
         || rewrite /big_union 
         || rewrite /big_itsct
+        || rewrite /UmapR
         || rewrite /UmapLR
         || rewrite /mapL
         || rewrite /mapR) => //=.
