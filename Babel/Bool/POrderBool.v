@@ -8,7 +8,7 @@ From Babel Require Import TerminalDogma.premises
 
 From Coq Require Import Relations Classical Arith.
 
-From Babel Require Export POrder.
+From Babel Require Export POrderFacility.
 
 From Babel.Ranko Require Import LogicTactic SetTactic.
 

@@ -3,7 +3,7 @@
 From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality
                           NaiveSet
-                          POrder
+                          POrderFacility
                           POrderSet.
 
 From Coq Require Import Classical Reals.

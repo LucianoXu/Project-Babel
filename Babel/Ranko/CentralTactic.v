@@ -28,3 +28,9 @@ Ltac is_only H :=
     let T := type of H in 
     (assert_fails (generalize dependent H; 
         match goal with | H' : T |- _ => idtac end)).
+
+(** Push all premise to the goal *)
+Ltac all_move_down :=
+    repeat match goal with 
+    | H : _ |- _ => generalize dependent H 
+    end.

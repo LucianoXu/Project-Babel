@@ -104,7 +104,7 @@ Definition poset_antisym (T : type) := ord_antisym _ _ (ord (class T)).
 Notation " a ⊑ ( p ) b " := (op (class p) a b) (only parsing): POrder_scope.
 Notation " a ⊑ b " := (op (class _) a b) : POrder_scope.
 Notation " a ⊒ ( p ) b " := (op (class p) b a) (only parsing): POrder_scope.
-Notation " a ⊒ b " := (op (class _) b a) : POrder_scope.
+Notation " a ⊒ b " := (op (class _) b a) (only parsing): POrder_scope.
 
 Notation " a ⋢ ( p ) b " := (~ a ⊑ (p) b) (only parsing): POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.

@@ -28,6 +28,8 @@
     And each proof goal falls in some theory level. 
     An algorithm to proof this goal, can be like this:
 
+    0.) Push all premises to the goal.
+
     1.) Make some progress on goal using techniques in the current level.
     2.) If 1 fails, break the goal into the next lower level, and enter the
         step tactic of the lower level.
@@ -53,6 +55,8 @@
     to see the execution state.
 
     The branch tactic should be in the following form.
+
+    Note: sometimes this method is not equivalent to the original one.
 *)
 
 Ltac alpha1_branch 
@@ -96,7 +100,21 @@ Ltac Alpha_step
 
 (** Then we wrap this step tactic to get the tactic for this level. *)
 
-Ltac Alpha_level := repeat ltac:(Alpha_step idtac (* argvs *)).
+Ltac Alpha_step_sealed (* args *) := 
+    idtac; let rec top_step (* args *) := Alpha_step_sealed in 
+        Alpha_step top_step (* arvgs *).
+
+(** Push all premise to the goal *)
+Ltac all_move_down :=
+    repeat match goal with 
+    | H : _ |- _ => generalize dependent H 
+    end.
+
+Ltac Alpha_level := 
+    all_move_down;
+    repeat Alpha_step_sealed (* argvs *).
+
+(** The "level" tactic can be customed to fit different needs. *)
 
 
 (** Tactic nesting: Assume now we have another theory Beta which is dependent
@@ -117,16 +135,23 @@ Ltac Beta_step
     | _ => Alpha_step top_step (* argvs*)
     end.
 
-Ltac Beta_level := repeat ltac:(Beta_step idtac (* argvs *)).
+Ltac Beta_step_sealed (* args *) := 
+    idtac; let rec top_step := Beta_step_sealed (* args *) in 
+        Beta_step top_step (* arvgs *).
 
-
-
-
+Ltac Beta_level := repeat Beta_step_sealed.
+    
 
 (** WORD OF WISDOM 
 
+    - Tactics should avoid operating the premises. Instead, operator the
+        pre-condition before moving it up. Also, avoid adding new intermediate
+        conclusions to the premises.
+
     - Avoid the use of [simpl], which may bring unexpected unfolding. Use
         [move => //=.] instead.
+
+    - The most rare cases should be put in the latter part.
 *)
 
 

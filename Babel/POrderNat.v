@@ -7,7 +7,7 @@ From Babel Require Import TerminalDogma.premises
 
 From Coq Require Import Relations Classical Arith.
 
-From Babel Require Export NaiveSet POrder.
+From Babel Require Export NaiveSet POrderFacility.
 
 
 Set Implicit Arguments.

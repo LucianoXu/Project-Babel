@@ -3,25 +3,22 @@
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.
 
+From Babel.Ranko Require Import CentralTactic.
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 (** This tactic will break the premise into atomic small pieces.
     safe tactic, progress guaranteed tactic *)
-Ltac premise_break_branch := 
+Ltac precond_break_branch := 
     match goal with
-    (** break the premise *)
-    | H: _ /\ _ |- _ => destruct H as [? ?]
-    | H: _ \/ _ |- _ => destruct H as [?|?]
-    | H: exists _, _ |- _ => destruct H as [? ?]
-    | H: True |- _ => clear H
-
     (** break the implication precondition *)
     | |- False -> _ => move => []
     | |- (_ \/ _) -> _ => move => [|]
     | |- (exists i, _) -> _ => move => []
     | |- (_ /\ _) -> _ => move => []
+    | |- True -> _ => move => _
     | |- forall i, _ => intros ?
     end.
 
@@ -65,7 +62,7 @@ Ltac logic_step
     *)
 
     (** Note : this premise break branch cannot be repeated here. *)
-    | _ => premise_break_branch
+    | _ => precond_break_branch
     (** path selecting *)
     (** [and] goal*)
     | |- (_ /\ _) => 
@@ -101,6 +98,15 @@ Ltac logic_step
 
     | |- exists i, _ => eexists
 
+    (** try to utilize [forall] premises 
+        Note that this method is not complete, because we cannot control which
+        term to use for instantiating [forall] 
+        
+        This branch is a little arbitrary indeed. *)
+    | H : forall a : ?A, _, Hterm : ?A |- _ => 
+        move: (H Hterm); clear H; 
+        by repeat top_step
+
     (** [firstorder] as the last resort *)
     (* | _ => progress firstorder *)
 
@@ -113,4 +119,5 @@ Ltac logic_step_sealed split_mode :=
         logic_step top split_mode.
 
 Ltac logic_level split_mode :=
+    all_move_down;
     repeat logic_step_sealed split_mode.

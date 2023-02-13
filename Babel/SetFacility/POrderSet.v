@@ -7,7 +7,7 @@ From Babel Require Import TerminalDogma.premises
 
 From Coq Require Import Relations Classical.
 
-From Babel Require Export POrder SetFacility.
+From Babel Require Export POrderFacility SetFacility.
 
 
 Set Implicit Arguments.

@@ -26,8 +26,8 @@ Unset Printing Implicit Defensive.
 (** expand all definitions *)
 Ltac set_simpl_branch := 
     (    rewrite /subset
-        || rewrite /singleton
         || rewrite /supset
+        || rewrite /singleton
         || rewrite /union
         || rewrite /itsct
         || rewrite /big_union 
@@ -40,14 +40,14 @@ Ltac set_simpl_branch :=
 Ltac set_move_up_branch := 
     match goal with
 
+    | |- _ <> ∅ -> _ =>
+        rewrite nonemptyP
+    
     (** break NemSet structure *)
-    | A : 𝒫( _ )₊ |- _ => 
-        let H := fresh "Hnem" in 
-            destruct A as [? H]=> //=;
-            rewrite /NemSet.class_of /NemSet.mixin_of nonemptyP in H
-
-    | H : _ <> ∅ |- _ =>
-        rewrite nonemptyP in H; generalize dependent H
+    | |- 𝒫( _ )₊ -> _ => 
+    let H := fresh "Hnem" in 
+        intros [? H] => //=;
+        rewrite /NemSet.class_of /NemSet.mixin_of nonemptyP in H; destruct H
 
     | |- (_ ∈ _) -> _ => move => []
     | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H
@@ -95,13 +95,6 @@ Ltac set_step
     | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => 
         eapply H; by repeat top_step
 
-    (** try to utilize [forall] premises 
-        Note that this method is not complete, because we cannot control which
-        term to use for instantiating [forall] *)
-    | H : forall a : ?A, _, Hterm : ?A |- _ => 
-        move: (H Hterm); clear H; 
-        by repeat top_step
-    
     | _ => logic_step top_step split_mode
 
     (** if the goal is a set equality that must be taken apart, just do it *)
@@ -110,13 +103,15 @@ Ltac set_step
     end.
 
 
-Ltac set_killer_sealed := 
-    idtac; let rec top := set_killer_sealed in set_step top integer:(0).
+Ltac set_killer_sealed split_mode:= 
+    idtac; let rec top := set_killer_sealed split_mode in 
+        set_step top split_mode.
 
-Ltac set_killer := repeat set_killer_sealed.
+Ltac set_killer := 
+    all_move_down;
+    repeat (set_killer_sealed integer:(0)).
 
-Ltac set_killer_full_sealed :=
-    idtac; let rec top := set_killer_full_sealed in set_step top integer:(2).
-
-Ltac set_killer_full := repeat set_killer_full_sealed.
+Ltac set_killer_full := 
+    all_move_down;
+    repeat (set_killer_sealed integer:(2)).
 

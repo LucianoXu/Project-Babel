@@ -44,6 +44,10 @@ Reserved Notation "'forall'' x '∈' A , expr" (at level 80, x at level 20, A at
 Reserved Notation "'exists'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
 Reserved Notation "'forall'' A '⊆' B , expr" (at level 80, A at level 20, B at level 80, expr at level 80).
 Reserved Notation "'exists'' A '⊆' B , expr" (at level 80, A at level 20, B at level 80, expr at level 80).
+Reserved Notation "'∀'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
+Reserved Notation "'∃'' x '∈' A , expr" (at level 80, x at level 20, A at level 80, expr at level 80).
+Reserved Notation "'∀'' A '⊆' B , expr" (at level 80, A at level 20, B at level 80, expr at level 80).
+Reserved Notation "'∃'' A '⊆' B , expr" (at level 80, A at level 20, B at level 80, expr at level 80).
 
 Reserved Notation " {{ x , .. , y }} " (at level 20).
 
@@ -75,10 +79,13 @@ Notation "{  x | P  }" := (mk_set (fun x => P)) : NSet_scope.
 Notation "{ expr , x .. y | cond }" :=
     { a | (exists x, .. (exists y, cond /\ a = expr ) ..) } : NSet_scope.
 
-Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr) : NSet_scope.
-Notation "'exists'' x '∈' A , expr" := (exists x , x ∈ A /\ expr) : NSet_scope.
-        
-        
+Notation "'forall'' x '∈' A , expr" := (forall x , x ∈ A -> expr) 
+        (only parsing): NSet_scope.
+Notation "'exists'' x '∈' A , expr" := (exists x , x ∈ A /\ expr) 
+        (only parsing): NSet_scope.
+Notation "'∀'' x '∈' A , expr" := (forall x , x ∈ A -> expr) : NSet_scope.
+Notation "'∃'' x '∈' A , expr" := (exists x , x ∈ A /\ expr) : NSet_scope.
+            
 (** TODO We should add a lemma to move the binder right and left in the set description 
     { f a b , a b | a ∈ A /\ b ∈ B } = { f a [<] B , a | a ∈ A }
 *)
@@ -194,8 +201,13 @@ Notation " A '⊆' B " := (subset A B) : NSet_scope.
 Definition supset {T : Type} (A B : 𝒫(T)) : Prop := B ⊆ A.
 Notation " A '⊇' B " := (supset A B) : NSet_scope.
 
-Notation "'forall'' A '⊆' B , expr" := (forall A , A ⊆ B -> expr) : NSet_scope.
-Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_scope.
+Notation "'forall'' A '⊆' B , expr" := (forall A , A ⊆ B -> expr) 
+        (only parsing): NSet_scope.
+Notation "'exists'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) 
+        (only parsing): NSet_scope.
+Notation "'∀'' A '⊆' B , expr" := (forall A , A ⊆ B -> expr) : NSet_scope.
+Notation "'∃'' A '⊆' B , expr" := (exists A , A ⊆ B /\ expr) : NSet_scope.
+
     
 Lemma subsupP {T : Type} (A B : 𝒫(T)) : A ⊆ B <-> B ⊇ A.
 Proof. split; auto. Qed.

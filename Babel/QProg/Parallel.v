@@ -3,8 +3,10 @@
 From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Babel Require Import QTheory POrder POrderSet POrderNat
+From Babel Require Import QTheory POrderFacility POrderSet POrderNat
                             nd_seq.
+
+From Babel.Ranko Require Import CentralTactic.
 
 From Coq Require Import Classical Arith Relations Reals.
 
@@ -808,6 +810,7 @@ Ltac deSem_step_sealed :=
     idtac; let rec top := deSem_step_sealed in deSem_step top.
 
 Ltac deSem_killer := 
+    all_move_down;
     repeat deSem_step_sealed.
 
 (*##################################################################*)
