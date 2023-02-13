@@ -107,3 +107,10 @@ Ltac logic_step
     (** try to finish the goal after path searching*)
     | _ => terminate
     end.
+
+Ltac logic_step_sealed split_mode :=
+    idtac; let rec top := logic_step_sealed in 
+        logic_step top split_mode.
+
+Ltac logic_level split_mode :=
+    repeat logic_step_sealed split_mode.

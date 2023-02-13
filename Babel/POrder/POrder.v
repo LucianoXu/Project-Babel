@@ -2,8 +2,9 @@
 
 
 From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality
-                          SetFacility.
+                          TerminalDogma.Extensionality.
+
+From Babel Require Export SetFacility.
 
 From Coq Require Import Relations Classical.
 
@@ -35,7 +36,7 @@ Reserved Notation " P '†po' " (at level 10).
 Reserved Notation " L '†L' " (at level 10).
 Reserved Notation " cL '†cL' " (at level 10).
 
-Reserved Notation "'⊔ᶜᵖᵒ' A" (at level 40).
+Reserved Notation "⊔ᶜᵖᵒ" (at level 40).
 Reserved Notation "⊔ˡ" (at level 40).
 Reserved Notation "⊓ˡ" (at level 40).
 Reserved Notation "⊔ᶜˡ" (at level 40).
@@ -505,7 +506,7 @@ Abort.
 Lemma sup_lb_is_inf (T : poset) (A : 𝒫(T)):
     forall a, supremum (lb A) a -> infimum A a.
 Proof.
-Abort.
+Admitted.
 
 
 
@@ -610,7 +611,7 @@ Notation cpo := type.
 Notation CPO t m := (@pack t _ m).
 Notation "[ 'cpo' 'of' T ]" := (T : cpo)
     (at level 0, format "[ 'cpo'  'of'  T ]") : POrder_scope.
-Notation "'⊔ᶜᵖᵒ' A" := (join_op A) : POrder_scope.
+Notation "⊔ᶜᵖᵒ" := join_op : POrder_scope.
 End Exports.
 
 End CPO.
@@ -717,13 +718,22 @@ Section ClassDef.
     Breaking the mixin into [essence_of] and the consistency requirements makes
     it easier to build CLattice directly.
     *)
-Structure essence_of (T : poset) := Essence {
+Structure join_essence_of (T : poset) := JoinEssence {
     join_of : 𝒫(T) -> T;
     join_prop : forall A : 𝒫(T), supremum A (join_of A);
+}.
+Structure meet_essence_of (T : poset) := MeetEssence {
     meet_of : 𝒫(T) -> T;
     meet_prop : forall A : 𝒫(T), infimum A (meet_of A);
+}.
+
+Structure essence_of (T : poset) := Essence {
+    join_half : join_essence_of T;
+    meet_half : meet_essence_of T;
     (** we don't put top and bottom here, since they can be derived.*)
 }.
+Local Coercion join_half : essence_of >-> join_essence_of.
+Local Coercion meet_half : essence_of >-> meet_essence_of.
 
 Record mixin_of (T0 : Type) (b : Lattice.class_of T0) 
                     (T := Lattice T0 b) := Mixin {
@@ -771,6 +781,17 @@ Definition meet_op := meet_of (essence class).
 
 End ClassDef.
 
+(** From half essence to full essence. *)
+Definition join_half_to_essence (T : poset) 
+    : join_essence_of T -> essence_of T.
+Proof.
+    move => je. constructor. by apply je.
+    set meet_of := fun A => (join_of je) (lb A).
+    refine (@MeetEssence _ meet_of _) => A.
+    apply sup_lb_is_inf.
+    by apply (join_prop je).
+Defined.
+
 
 (** EXPERIMENTAL
     Build CLattice directly from [essence_of]. *)
@@ -778,10 +799,10 @@ End ClassDef.
 Definition essence_to_lattice_mixin
     (T : poset) (e : essence_of T ) : Lattice.mixin_of (Poset.class T) :=
     {|
-      Lattice.join_of := λ x y : T, join_of e ({{x, y}});
-      Lattice.join_prop := λ x y : T, join_prop e ({{x, y}});
-      Lattice.meet_of := λ x y : T, meet_of e ({{x, y}});
-      Lattice.meet_prop := λ x y : T, meet_prop e ({{x, y}})
+      Lattice.join_of := λ x y : T, join_of (join_half e) ({{x, y}});
+      Lattice.join_prop := λ x y : T, join_prop (join_half e) ({{x, y}});
+      Lattice.meet_of := λ x y : T, meet_of (meet_half e) ({{x, y}});
+      Lattice.meet_prop := λ x y : T, meet_prop (meet_half e) ({{x, y}})
     |}.
 
 Definition essence_to_lattice (T : poset) (e : essence_of T) :=
@@ -802,8 +823,16 @@ Proof.
     Unshelve. by destruct T.
 Defined.
 
+(** Build [mixin_of] from [join_essence_of]. 
+    WARNING: using this technique will cause the other half to be hard to use.
+*)
+Definition join_essence_to_mixin (T : poset) (je : join_essence_of T) :=
+    essence_to_mixin (join_half_to_essence je).
 
 Module Exports.
+#[reversible] Coercion join_half : essence_of >-> join_essence_of.
+#[reversible] Coercion meet_half : essence_of >-> meet_essence_of.
+#[reversible] Coercion essence : mixin_of >-> essence_of.
 #[reversible] Coercion base : class_of >-> Lattice.class_of.
 #[reversible] Coercion mixin : class_of >-> mixin_of.
 #[reversible] Coercion cpo : type >-> CPO.type.
@@ -829,10 +858,14 @@ Export CLattice.Exports.
 (** dual lattice canonical structure *)
 Definition dual_clattice_essence (T : clattice) : CLattice.essence_of (T †L).
 Proof. 
-    refine (@CLattice.Essence (T †L) 
-        (@CLattice.meet_op T) _ (@CLattice.join_op T) _) => A.
-    by apply (@CLattice.meet_prop T).
-    by apply (@CLattice.join_prop T).
+
+    refine (@CLattice.Essence (T †L) _ _ ).
+    refine (@CLattice.JoinEssence (T †L) 
+                (CLattice.meet_of (CLattice.class T)) _).
+    by apply (CLattice.meet_prop(CLattice.class T)).
+    refine (@CLattice.MeetEssence (T †L) 
+                (CLattice.join_of (CLattice.class T)) _).
+    by apply (CLattice.join_prop(CLattice.class T)).
 Defined.
 
 Definition dual_clattice_mixin (T : clattice) : 

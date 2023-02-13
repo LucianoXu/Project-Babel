@@ -37,8 +37,10 @@ Canonical poset_type (T : Type) := Poset 𝒫(T) (poset_mixin T).
 (** Directly construction of complete lattice. *)
 Definition clattice_essence (T : Type) : CLattice.essence_of 𝒫(T).
 Proof.
-    refine (@CLattice.Essence _ big_union _ big_itsct _) => A.
+    constructor.
+    refine (@CLattice.JoinEssence _ big_union _) => A.
     apply lubP; split. by apply bigU_ub. by apply bigU_lub.
+    refine (@CLattice.MeetEssence _ big_itsct _) => A.
     apply glbP; split. by apply bigI_lb. by apply bigI_glb.
 Defined.
 
