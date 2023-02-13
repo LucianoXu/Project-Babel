@@ -1,4 +1,4 @@
-(** CentralTactic.v *)
+(** CentralCharacter.v *)
 
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.

@@ -1,9 +1,9 @@
-(** LogicTactic.v *)
+(** LogicCharacter.v *)
 
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.
 
-From Babel.Ranko Require Import CentralTactic.
+From Babel.Ranko Require Import CentralCharacter.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

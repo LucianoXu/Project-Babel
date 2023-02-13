@@ -70,7 +70,7 @@ Definition mapR_monotonicMixin {X Y: Type} (f : X -> Y) :
     MonotonicFun.mixin_of (f [<]).
 Proof.
     rewrite /MonotonicFun.mixin_of => //= A B HAinB. by apply mapR_mor_sub.
-Defined.
+Qed.
 
 Canonical mapR_monotonicType {X Y: Type} (f : X -> Y) :=
     MonotonicFun (f [<]) (@mapR_monotonicMixin _ _ f).
@@ -82,7 +82,7 @@ Proof.
     rewrite /ContinuousFun.mixin_of /CPO.join_op => //= c.
     equal_f_comp c. rewrite -[LHS]fun_assoc -[RHS]fun_assoc. 
     by rewrite mapR_bigU_swapF.
-Defined.
+Qed.
 
 Canonical mapR_continuousType {X Y: Type} (f : X -> Y) :=
     ContinuousFun (f[<]) (@mapR_continuousMixin _ _ f).
@@ -93,7 +93,7 @@ Definition bigU_monotonicMixin {X : Type} :
     MonotonicFun.mixin_of (@big_union X).
 Proof.
     rewrite /MonotonicFun.mixin_of => //= A B. by apply bigU_mor_sub.
-Defined.
+Qed.
 
 Canonical bigU_monotonicType (X : Type) :=
     MonotonicFun big_union (@bigU_monotonicMixin X).
@@ -109,7 +109,7 @@ Proof.
     (** 来一点神奇的咒语…… *)
     equal_f_comp c. rewrite -[LHS]fun_assoc -[RHS]fun_assoc. 
     by rewrite bigU_swapF.
-Defined.
+Qed.
 
 Canonical bigU_continuousType {X : Type} :=
     ContinuousFun big_union (@bigU_continuousMixin X).

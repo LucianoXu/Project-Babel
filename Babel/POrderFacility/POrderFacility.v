@@ -6,5 +6,5 @@ From Babel.POrderFacility Require Export
 
 
 From Babel.Ranko Require Export
-    POrderTactic
-    SetTactic.
+    POrderCharacter
+    SetCharacter.

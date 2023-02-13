@@ -6,7 +6,7 @@
 From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Babel Require Export NaiveSet SetBasic SetAdvanced SetTactic.
+From Babel Require Export NaiveSet SetBasic SetAdvanced SetCharacter.
 
 From Coq Require Import Relations Classical.
 
@@ -59,7 +59,7 @@ Lemma big_union_em {T : Type} :
         ⋃ ∅ = set_em T.
 
 Proof.
-    set_killer.
+    set_level.
     (*
     rewrite /big_union. apply seteqP => x. split.
     move => [?] [H]. by destruct H.
@@ -71,7 +71,7 @@ Lemma big_itsct_em {T : Type} :
 
         ⋂ ∅ = set_uni T.
 
-Proof. set_killer.
+Proof. set_level.
     (* rewrite /big_itsct. by apply seteqP => /=. *)
 Qed.
 

@@ -4,7 +4,7 @@
 From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Babel Require Export NaiveSet SetBasic SetTactic.
+From Babel Require Export NaiveSet SetBasic SetCharacter.
 
 From Coq Require Import Classical.
 
@@ -62,7 +62,7 @@ Proof.
     exists (g t). split => //. exists t. split => //. by apply HAinB.
 
     (** provable with 
-    set_killer. apply H. apply a. apply H0. apply b.
+    set_level. apply H. apply a. apply H0. apply b.
     *)
 Qed.
 
@@ -75,7 +75,7 @@ Proof.
     by move => [] X0 [] ->.
     move => Hxin. exists A. by split.
 
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 Lemma bigI_sgt {X : Type} (A : 𝒫(X)) :
@@ -87,7 +87,7 @@ Proof.
     by move => /(_ A Logic.eq_refl).
     by move => Hxin X0 ->.
 
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 
@@ -106,7 +106,7 @@ Proof.
     eexists. split. eexists. split. apply Hx0in. rewrite Hxeq.
     by []. by apply singletonP.
 
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
     
 
@@ -121,7 +121,7 @@ Proof.
     move => Hx.
     exists ({{x}}). split. exists x. by split. by apply singletonP.
 
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 
@@ -136,7 +136,7 @@ Proof.
     by move => [[SX [HSXin Hxin]]|[SX [HSXin Hxin]]]; exists SX; split => //;
     [left|right] => //.
     
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 
@@ -153,7 +153,7 @@ Lemma bigI_itsct_sgt_dist   {X : Type} (A : 𝒫(X)) (B: 𝒫(𝒫(X))) :
     
         ⋂ (singleton A ∪ B) = A ∩ ⋂ B.
 
-Proof. set_killer. Qed.
+Proof. set_level. Qed.
 
 (** Note: The following one is also a unique lemma. *)
 Lemma union_bigU_mapR_dist {X Y : Type} (A : 𝒫(X)) (f g : X -> 𝒫(Y)) :
@@ -178,7 +178,7 @@ Proof.
     { left. exists (f x0). split => //. exists x0. by split. }
     { right. exists (g x0). split => //. exists x0. by split. }
     
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 
@@ -217,7 +217,7 @@ Proof.
     rewrite Hyeq in Heq. destruct Heq as [x0 [Hx01 Hx02]].
     exists x0. split => //. exists a. by split.
 
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 Lemma mapR_bigU_swapF {X Y : Type} (f : X -> Y) :
@@ -243,7 +243,7 @@ Proof.
     rewrite Hyeq in Heq. destruct Heq as [x0 [Hx01 Hx02]].
     exists x0. split => //. exists a'. by split.
 
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 Lemma mapL_bigU_swapF {X Y : Type} (F : 𝒫(𝒫(X -> Y))) :
@@ -270,7 +270,7 @@ Proof.
     move => [v] [[a [Hain Hveq]] Hxeq]. exists a. rewrite -Hveq. by split.
     move => [a] [Hain Hxeq]. exists (g a). split => //=. by exists a.
 
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 Lemma double_mapRF {X Y Z : Type} (g : X -> Y) (f : Y -> Z) :
@@ -304,7 +304,7 @@ Proof.
     eexists. split. eexists. split; last first. eexists. 2: eexists.
     apply HSSxin. split. apply HSxin. by apply Hxin.
     
-    (** provable with set_killer. *)
+    (** provable with set_level. *)
 Qed.
 
 Lemma bigU_swapF {X : Type}  :
@@ -332,7 +332,7 @@ Proof.
     rewrite fun_assoc.
     by rewrite -double_mapRF.
         
-    (* provable with set_killer. *)
+    (* provable with set_level. *)
 Qed.
 
 Lemma bigU_fun_distF {X Y: Type} (f : X -> 𝒫(𝒫(Y))):
@@ -353,7 +353,7 @@ Lemma UmapLR_bigU_swap {X Y: Type} (F : 𝒫(X -> Y)) (A : 𝒫(𝒫(X))) :
 Proof.
     rewrite /UmapLR. equal_f_comp A.
     by rewrite mapR_bigU_swapF.
-    (* provable with set_killer. *)
+    (* provable with set_level. *)
 Qed.
 
 Lemma parlift_mapR {X Y Z : Type} (f : X -> Y -> Z) (A : 𝒫(𝒫(X))) :
@@ -364,7 +364,7 @@ Proof.
     rewrite [_ [<] A]/mapR [UmapLR [<] _]/mapR.
     rewrite double_mapR.
     by [].
-    (** provable with set_killer. *) 
+    (** provable with set_level. *) 
 Qed.
 
 
@@ -372,18 +372,18 @@ Lemma bigU_mapLR_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (A : 𝒫(X)):
 
     (⋃ F) [><] A = ⋃ ((UmapLR [<] F) [>] A).
 
-Proof. set_killer. Qed.    
+Proof. set_level. Qed.    
 
 Lemma UmapLR_2bigU_swap {X Y : Type} (F : 𝒫(𝒫(X -> Y))) (A : 𝒫(𝒫(X))):
 
     (⋃ F) [><] (⋃ A) = ⋃ ((UmapLR [<] F) [><] A).
 
-Proof. set_killer. Qed.
+Proof. set_level. Qed.
 
 
 Lemma funlift2_bigU_swap {X Y Z: Type} (f : X -> Y -> Z) A B :
     (funlift2 f) (⋃ A) (⋃ B) = ⋃ (funlift2 f [<] A [><] B).
-Proof. set_killer. Qed.
+Proof. set_level. Qed.
 
 
 

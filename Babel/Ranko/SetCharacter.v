@@ -1,9 +1,9 @@
-(** SetTactic.v : the tactics about sets *)
+(** SetCharacter.v : the tactics about sets *)
 
 From Babel Require Import TerminalDogma.premises 
                           TerminalDogma.Extensionality.
 
-From Babel.Ranko Require Import CentralTactic LogicTactic.
+From Babel.Ranko Require Import CentralCharacter LogicCharacter.
 
 From Babel Require Export NaiveSet.
 
@@ -13,7 +13,7 @@ Unset Printing Implicit Defensive.
 
 
 
-(** set_killer
+(** set_level
 
     It will try to solve equality propositions on sets.
     (within intuitionism)
@@ -103,15 +103,15 @@ Ltac set_step
     end.
 
 
-Ltac set_killer_sealed split_mode:= 
-    idtac; let rec top := set_killer_sealed split_mode in 
+Ltac set_step_sealed split_mode:= 
+    idtac; let rec top := set_step_sealed split_mode in 
         set_step top split_mode.
 
-Ltac set_killer := 
+Ltac set_level := 
     all_move_down;
-    repeat (set_killer_sealed integer:(0)).
+    repeat (set_step_sealed integer:(0)).
 
-Ltac set_killer_full := 
+Ltac set_level_full := 
     all_move_down;
-    repeat (set_killer_sealed integer:(2)).
+    repeat (set_step_sealed integer:(2)).
 

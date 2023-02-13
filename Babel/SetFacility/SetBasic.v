@@ -3,7 +3,7 @@
 From Babel Require Import TerminalDogma.premises 
 TerminalDogma.Extensionality.
 
-From Babel Require Export NaiveSet SetTactic.
+From Babel Require Export NaiveSet SetCharacter.
 
 From Coq Require Import Classical.
 

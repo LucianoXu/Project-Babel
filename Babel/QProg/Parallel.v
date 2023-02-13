@@ -6,7 +6,7 @@ From Babel Require Import TerminalDogma.premises
 From Babel Require Import QTheory POrderFacility POrderSet POrderNat
                             nd_seq.
 
-From Babel.Ranko Require Import CentralTactic.
+From Babel.Ranko Require Import CentralCharacter.
 
 From Coq Require Import Classical Arith Relations Reals.
 

@@ -10,7 +10,7 @@ From Coq Require Import Relations Classical Arith.
 
 From Babel Require Export POrderFacility.
 
-From Babel.Ranko Require Import LogicTactic SetTactic.
+From Babel.Ranko Require Import LogicCharacter SetCharacter.
 
 
 Set Implicit Arguments.
@@ -58,10 +58,10 @@ Lemma pred_join_iotaMixin (A : 𝒫(bool)) : Iota.mixin_of (pred_join A).
 Proof. rewrite /Iota.mixin_of /pred_join /unique => //=.
     case (classic (true ∈ A)). 
     
-    exists true. set_killer.
+    exists true. set_level.
     apply /impl_antisym => //=. rewrite /impl => //=. by rewrite -H0 => _.
 
-    exists false. set_killer.
+    exists false. set_level.
     apply /impl_antisym => //=. rewrite /impl => //=. by rewrite -H0.
 Qed.
 
@@ -71,6 +71,7 @@ Canonical pred_join_iota (A : 𝒫(bool)) :=
 Definition clattice_join_essence : CLattice.join_essence_of bool.
 Proof. 
     refine (@CLattice.JoinEssence _ (fun A => ι(pred_join A)) _) => A.
+
     rewrite /supremum /least /ub => //=. split.
     rewrite /upper_bound => a Hain Ha //=.
     apply (iota_spec (pred_join A)). by rewrite -Ha.

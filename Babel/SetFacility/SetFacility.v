@@ -7,4 +7,4 @@ From Babel.SetFacility Require Export
     SetAdvanced.
 
 From Babel.Ranko Require Export
-    SetTactic.
+    SetCharacter.
