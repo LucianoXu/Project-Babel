@@ -108,10 +108,8 @@ Ltac set_step_sealed split_mode:=
         set_step top split_mode.
 
 Ltac set_level := 
-    all_move_down;
     repeat (set_step_sealed integer:(0)).
 
 Ltac set_level_full := 
-    all_move_down;
     repeat (set_step_sealed integer:(2)).
 

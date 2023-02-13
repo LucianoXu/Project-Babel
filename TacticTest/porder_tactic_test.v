@@ -47,13 +47,13 @@ Proof. porder_level. Qed.
 Lemma lar_unique (T : poset) (A : 𝒫(T)) (a b : T)
         (Ha_largest : largest A a) (Hb_largest : largest A b)
         : a = b.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
 
 (* lea_unique : least element of A is unique *)
 Lemma lea_unique (T : poset) (A : 𝒫(T)) (a b : T)
         (Ha_least : least A a) (Hb_least : least A b)
         : a = b.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
 
 (* lar_in_ub : largest element is an upper bound *)
 Lemma lar_in_ub (T : poset) (A : 𝒫(T)) (x : T) : 
@@ -77,13 +77,13 @@ Proof. porder_level. Qed.
 Lemma lar_subset (T : poset) (A B: 𝒫(T))
     (a b : T) (HAinB : A ⊆ B)
     (Ha_lar : largest A a) (Hb_lar : largest B b) : a ⊑ b.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
 
 (* lea_subset : A ⊆ B -> least (B) ⊑ least (A) *)
 Lemma lea_subset (T : poset) (A B: 𝒫(T))
     (a b : T) (HAinB : A ⊆ B)
     (Ha_lea : least A a) (Hb_lea : least B b) : b ⊑ a.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
     
 (** Another view of supremum (least upper bound). *)
 Lemma lubP (T : poset) (A : 𝒫(T)) (x : T) :
@@ -170,24 +170,24 @@ Proof. porder_level. Qed.
 (* sup_in_is_lar : sup A ∈ A -> sup A = largest A *)
 Lemma sup_in_is_lar (T : poset) (A : 𝒫(T)) (a : T)
     (Ha_sup : supremum A a) (Ha_in : a ∈ A) : largest A a.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
 
 (* inf_in_is_lea : inf A ∈ A -> inf A = least A *)
 Lemma inf_in_is_lea (T : poset) (A : 𝒫(T)) (a : T)
     (Ha_inf : infimum A a) (Ha_in : a ∈ A) : least A a.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
 
 (* sup_subset : A ⊆ B -> sup A ⊑ sup B *)
 Lemma sup_subset (T : poset) (A B: 𝒫(T))
     (a b : T) (HAinB : A ⊆ B)
     (Ha_sup : supremum A a) (Hb_sup : supremum B b) : a ⊑ b.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
 
 (* inf_subset : A ⊆ B -> inf B ⊑ inf A *)
 Lemma inf_subset (T : poset) (A B: 𝒫(T))
     (a b : T) (HAinB : A ⊆ B)
     (Ha_inf : infimum A a) (Hb_inf : infimum B b) : b ⊑ a.
-Proof. porder_level. Qed.
+Proof. all_move_down. porder_level. Qed.
 
 
 (* inf_ub_is_sup : the infimum of upper bounds of A is the supremum of A *)

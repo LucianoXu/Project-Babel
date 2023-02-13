@@ -19,14 +19,8 @@ Declare Scope POrder_scope.
 Open Scope POrder_scope.
 
 
-Reserved Notation " a ⊑ ( p ) b " 
-    (at level 60, p at next level, format " a  ⊑ ( p )  b ").
 Reserved Notation " a ⊑ b " (at level 60).
-Reserved Notation " a ⊒ ( p ) b " 
-    (at level 60, p at next level, format " a  ⊒ ( p )  b ").
 Reserved Notation " a ⊒ b " (at level 60).
-Reserved Notation " a ⋢ ( p ) b " 
-    (at level 60, p at next level, format " a  ⋢ ( p )  b ").
 Reserved Notation " a ⋢ b " (at level 60).
 
 Reserved Notation " f '†r' " (at level 20).
@@ -101,12 +95,9 @@ Definition poset_refl (T : type) := ord_refl _ _ (ord (class T)).
 Definition poset_trans (T : type) := ord_trans _ _ (ord (class T)).
 Definition poset_antisym (T : type) := ord_antisym _ _ (ord (class T)).
 
-Notation " a ⊑ ( p ) b " := (op (class p) a b) (only parsing): POrder_scope.
 Notation " a ⊑ b " := (op (class _) a b) : POrder_scope.
-Notation " a ⊒ ( p ) b " := (op (class p) b a) (only parsing): POrder_scope.
 Notation " a ⊒ b " := (op (class _) b a) (only parsing): POrder_scope.
 
-Notation " a ⋢ ( p ) b " := (~ a ⊑ (p) b) (only parsing): POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
 
 End Exports.
@@ -114,6 +105,10 @@ End Exports.
 End Poset.
 Export Poset.Exports.
 
+Add Parametric Relation (po : poset): _ (@Poset.op _ (Poset.class po))
+    reflexivity proved by (@poset_refl po)
+    transitivity proved by (@poset_trans po)
+    as poset_le_rel.
 
 (** dual poset *)
 
@@ -991,9 +986,15 @@ Canonical monotonic_mapR_chain (T T' : poset) (f : monotonicfun T T') (c : chain
     Chain (f [<] c) (@monotonic_mapR_chainMixin _ _ f c).
 
 
-
-
-
+(** The equivalence of monotonicfun. *)
+Lemma monotonicfun_eqP (T T' : poset) (f g : monotonicfun T T') :
+    f = g <-> (f : T -> T') = (g : T -> T').
+Proof. split.
+    by move => ->.
+    destruct f as [objf  cf], g as [objg cg] => //= Hobjeq.
+    move: cf cg. rewrite Hobjeq => cf cg. f_equal.
+    by apply proof_irrelevance.
+Qed.
 
 
 (* continuous *)

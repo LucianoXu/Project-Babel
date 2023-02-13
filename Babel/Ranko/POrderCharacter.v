@@ -44,6 +44,10 @@ Ltac porder_basic_step
     match goal with
     | _ => progress porder_basic_simpl_branch
     | _ => progress porder_basic_move_up_branch
+
+    (** reflexivity *)
+    | |- ?a ⊑ ?a => apply poset_refl
+
     | _ => set_step top_step split_mode
 
     | H : forall a, _ -> ?b ⊑ _ |- ?b ⊑ _ => 
@@ -51,6 +55,7 @@ Ltac porder_basic_step
     | H : forall a, _ -> _ ⊑ ?c |- _ ⊑ ?c => 
         eapply H; by repeat top_step
 
+    (** anti-symmetry *)
     | T : poset |- @eq ?T _ _ => apply poset_antisym
     end.
 
@@ -61,7 +66,10 @@ Ltac porder_basic_step
 (** We don't plan to destruct order structures. *)
 Ltac porder_simpl_branch := 
     (    rewrite /CPO.join_op
+        || rewrite /CLattice.join_op
+        || rewrite /CLattice.meet_op
         || rewrite /MonotonicFun.mixin_of
+        || rewrite /MonotonicFun.class_of
         || rewrite /ContinuousFun.mixin_of
         ) => //=.
 
@@ -81,8 +89,12 @@ Ltac porder_step
     | _ => progress porder_simpl_branch
     | _ => progress porder_move_up_branch
 
-    | C : cpo |- Poset.op (@CPO.base _ (CPO.class ?C)) _ _ => 
+    | C : cpo |- @Poset.op (CPO.sort ?C) _ _ _ => 
         apply (CPO.join_prop (CPO.class C));
+        by repeat top_step
+
+    | L : clattice |- @Poset.op (CLattice.sort ?L) _ _ _ =>
+        apply (CLattice.join_prop (CLattice.class L));
         by repeat top_step
 
     | _ => porder_basic_step top_step split_mode
@@ -94,5 +106,4 @@ Ltac porder_step_sealed split_mode :=
         porder_step top_step split_mode.
 
 Ltac porder_level := 
-    all_move_down;
     repeat porder_step_sealed integer:(0).

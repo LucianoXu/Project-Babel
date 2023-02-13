@@ -119,5 +119,4 @@ Ltac logic_step_sealed split_mode :=
         logic_step top split_mode.
 
 Ltac logic_level split_mode :=
-    all_move_down;
     repeat logic_step_sealed split_mode.

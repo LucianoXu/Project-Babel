@@ -104,17 +104,12 @@ Ltac Alpha_step_sealed (* args *) :=
     idtac; let rec top_step (* args *) := Alpha_step_sealed in 
         Alpha_step top_step (* arvgs *).
 
-(** Push all premise to the goal *)
-Ltac all_move_down :=
-    repeat match goal with 
-    | H : _ |- _ => generalize dependent H 
-    end.
 
 Ltac Alpha_level := 
-    all_move_down;
     repeat Alpha_step_sealed (* argvs *).
 
-(** The "level" tactic can be customed to fit different needs. *)
+(** The "level" tactic can be customed to fit different needs.
+    Level tactics will merely operate on existsing premises. *)
 
 
 (** Tactic nesting: Assume now we have another theory Beta which is dependent

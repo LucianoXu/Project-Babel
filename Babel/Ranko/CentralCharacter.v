@@ -1,4 +1,4 @@
-(** CentralCharacter.v *)
+(** CentralTactic.v *)
 
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.
@@ -29,7 +29,9 @@ Ltac is_only H :=
     (assert_fails (generalize dependent H; 
         match goal with | H' : T |- _ => idtac end)).
 
-(** Push all premise to the goal *)
+(** Push all premise to the goal 
+    WARNING: this tactic will loop forever in some situations in sections, when
+    then premise cannot be cleared after generalization. *)
 Ltac all_move_down :=
     repeat match goal with 
     | H : _ |- _ => generalize dependent H 

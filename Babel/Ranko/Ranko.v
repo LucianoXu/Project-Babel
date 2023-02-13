@@ -19,6 +19,7 @@ Ltac ranko_step :=
     end.
 
 
-
+(** Don't call her inside a section, as she cannot stop moving down the 
+    premises sometimes. *)
 Ltac ranko := repeat ranko_step.
 
