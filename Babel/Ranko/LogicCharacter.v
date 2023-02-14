@@ -19,7 +19,6 @@ Ltac precond_break_branch :=
     | |- (exists i, _) -> _ => move => []
     | |- (_ /\ _) -> _ => move => []
     | |- True -> _ => move => _
-    | |- forall i, _ => intros ?
     end.
 
 
@@ -88,30 +87,22 @@ Ltac logic_step
                     || (split; by repeat top_step)
                     || (split; last first; by repeat top_step)
                     
+    | |- _ <-> _ => unfold iff
+
+    | |- exists i, _ => eexists
 
     (** [or] goal, complete branch *)
     | |- (_ \/ _) =>
         (left; by repeat top_step) 
         || (right; by repeat top_step)
 
-    | |- _ <-> _ => unfold iff
-
-    | |- exists i, _ => eexists
-
-    (** try to utilize [forall] premises 
-        Note that this method is not complete, because we cannot control which
-        term to use for instantiating [forall] 
-        
-        This branch is a little arbitrary indeed. *)
-    | H : forall a : ?A, _, Hterm : ?A |- _ => 
-        move: (H Hterm); clear H; 
-        by repeat top_step
-
     (** [firstorder] as the last resort *)
     (* | _ => progress firstorder *)
 
     (** try to finish the goal after path searching*)
     | _ => terminate
+
+    | _ => central_step top_step
     end.
 
 Ltac logic_step_sealed split_mode :=

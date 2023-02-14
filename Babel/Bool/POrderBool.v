@@ -17,11 +17,12 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Module BoolPoset.
+Module BoolOrder.
 Open Scope NSet_scope.
 
 Definition impl : relation bool := 
     fun x y => x -> y.
+#[local] Hint Unfold impl : magic_book.
 
 Lemma impl_refl : reflexive _ impl.
 Proof. by rewrite /reflexive /impl. Qed.
@@ -53,16 +54,17 @@ Canonical poset_type := Poset bool poset_mixin.
 (** join *)
 Definition pred_join (A : 𝒫(bool)) (b : bool) : Prop :=
     (true ∈ A) <-> b.
+#[local] Hint Unfold pred_join : magic_book.
 
 Lemma pred_join_iotaMixin (A : 𝒫(bool)) : Iota.mixin_of (pred_join A).
 Proof. rewrite /Iota.mixin_of /pred_join /unique => //=.
     case (classic (true ∈ A)). 
     
     exists true. set_level.
-    apply /impl_antisym => //=. rewrite /impl => //=. by rewrite -H0 => _.
+    symmetry. by apply H0.
 
     exists false. set_level.
-    apply /impl_antisym => //=. rewrite /impl => //=. by rewrite -H0.
+    rewrite H0 in H. by destruct x' => //=.
 Qed.
 
 Canonical pred_join_iota (A : 𝒫(bool)) := 
@@ -103,7 +105,9 @@ Canonical poset_type.
 Canonical lattice_type.
 Canonical cpo_type.
 Canonical clattice_type.
+#[export] Hint Unfold impl : magic_book.
+#[export] Hint Unfold pred_join : magic_book.
 
 End CanonicalStruct.
 
-End BoolPoset.
+End BoolOrder.

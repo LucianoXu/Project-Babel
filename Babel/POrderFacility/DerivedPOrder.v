@@ -22,17 +22,18 @@ Section OrderDef.
 
 Definition fun_ord (X : Type) (Y : poset) : relation (X -> Y) :=
     fun f g => forall x, f x ⊑ g x.
+Hint Unfold fun_ord : magic_book.
 
 Lemma fun_ord_refl (X : Type) (Y : poset) : reflexive _ (@fun_ord X Y).
-Proof. rewrite /reflexive /fun_ord. porder_level. Qed.
+Proof. rewrite /reflexive. porder_level. Qed.
     
 Lemma fun_ord_trans (X : Type) (Y : poset) : transitive _ (@fun_ord X Y).
-Proof. rewrite /transitive /fun_ord. porder_level.
+Proof. rewrite /transitive. porder_level.
     by transitivity (y x0).
 Qed.
 
 Lemma fun_ord_antisym (X : Type) (Y : poset) : antisymmetric _ (@fun_ord X Y).
-Proof. rewrite /antisymmetric /fun_ord. porder_level.
+Proof. rewrite /antisymmetric. porder_level.
     apply functional_extensionality. porder_level.
 Qed.
 
@@ -53,21 +54,18 @@ Canonical fun_poset_type (X : Type) (Y : poset) :=
 
 Definition monofun_ord (X Y : poset) : relation ([X ↦ᵐ Y]) :=
     fun f g => (f : X -> Y) ⊑ g.
+Hint Unfold monofun_ord : magic_book.
 
 Lemma monofun_ord_refl (X Y : poset) : reflexive _ (@monofun_ord X Y).
-Proof. rewrite /reflexive /monofun_ord. porder_level.
-    rewrite /fun_ord. porder_level.
-Qed.
+Proof. rewrite /reflexive. porder_level. Qed.
     
 Lemma monofun_ord_trans (X Y : poset) : transitive _ (@monofun_ord X Y).
-Proof. rewrite /transitive /monofun_ord. porder_level.
-    unfold fun_ord in *. porder_level.
+Proof. rewrite /transitive. porder_level.
     by transitivity (y x0).
 Qed.
 
 Lemma monofun_ord_antisym (X Y : poset) : antisymmetric _ (@monofun_ord X Y).
-Proof. rewrite /antisymmetric /monofun_ord. porder_level.
-    unfold fun_ord in *.
+Proof. rewrite /antisymmetric. porder_level.
     apply monotonicfun_eqP.
     apply functional_extensionality. porder_level.
 Qed.
@@ -89,6 +87,8 @@ Module CanonicalStruct.
 
 Canonical fun_poset_type.
 Canonical monofun_poset_type.
+#[export] Hint Unfold fun_ord : magic_book.
+#[export] Hint Unfold monofun_ord : magic_book.
 
 End CanonicalStruct.
 

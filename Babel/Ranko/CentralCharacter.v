@@ -36,3 +36,38 @@ Ltac all_move_down :=
     repeat match goal with 
     | H : _ |- _ => generalize dependent H 
     end.
+
+
+
+(*################################################################################*)
+
+Create HintDb magic_book.
+#[export] Hint Constants Transparent : magic_book.
+#[export] Hint Variables Transparent : magic_book.
+
+(** This should be the last resort after all attemps. *)
+Ltac central_step
+        top_step
+        :=
+    match goal with
+    | _ => progress autounfold with magic_book
+
+    | |- forall i, _ => intros ?
+    
+    (** try to utilize [forall] premises 
+        Note that this method is not complete, because we cannot control which
+        term to use for instantiating [forall] 
+        
+        This branch is a little arbitrary indeed. *)
+    | H : forall a : ?A, _, Hterm : ?A |- _ => 
+        move: (H Hterm); clear H; 
+        by repeat top_step
+
+
+    (*| _ => progress auto with magic_book *)
+    end.
+
+Ltac central_step_sealed :=
+    let rec top := central_step_sealed in central_step top.
+
+Ltac central_level := repeat central_step_sealed.
