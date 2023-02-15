@@ -1,8 +1,8 @@
 (** * POrderNat.v : Partial order of nat *)
 
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 
 From Coq Require Import Relations Classical Arith.

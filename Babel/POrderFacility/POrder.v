@@ -1,8 +1,8 @@
 (** * POrder.v : Library for partial orders. *)
 
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 From Babel Require Export SetFacility.
 
@@ -848,6 +848,20 @@ End Exports.
 End CLattice.
 Export CLattice.Exports.
 
+(** TODO #25 *)
+Lemma cl_join_eqP (T : clattice) (A : 𝒫(T)) (x : T): 
+        ⊔ᶜˡ A = x <-> supremum A x.
+Proof. 
+    split; [move <- => //= | apply sup_unique].
+    all : by apply CLattice.join_prop.
+Qed.
+
+Lemma cl_meet_eqP (T : clattice) (A : 𝒫(T)) (x : T): 
+        ⊓ᶜˡ A = x <-> infimum A x.
+Proof. 
+    split; [move <- => //= | apply inf_unique].
+    all : by apply CLattice.meet_prop.
+Qed.
 
 
 (** dual lattice canonical structure *)

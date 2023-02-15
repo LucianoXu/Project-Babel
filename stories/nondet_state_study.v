@@ -1,6 +1,6 @@
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 
 From Coq Require Import Classical Reals.

@@ -1,7 +1,7 @@
 (** POrderCharacter.v : the tactics about partial orders *)
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 From Babel.Ranko Require Import CentralCharacter 
                                 LogicCharacter

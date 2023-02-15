@@ -89,6 +89,7 @@ Ltac logic_step
                     
     | |- _ <-> _ => unfold iff
 
+    (** TODO #26 *)
     | |- exists i, _ => eexists
 
     (** [or] goal, complete branch *)

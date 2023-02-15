@@ -3,8 +3,8 @@
     Including special structures about nonempty sets. *)
 
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 From Babel Require Export NaiveSet SetBasic SetAdvanced SetCharacter.
 

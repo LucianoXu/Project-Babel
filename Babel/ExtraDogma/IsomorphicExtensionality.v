@@ -1,6 +1,6 @@
 (** IsomorphicExtensioniality.v *)
 (*
-From Babel Require Import TerminalDogma.premises.
+From Babel Require Import TerminalDogma.
 From Babel Require Import TerminalDogma.Isomorphism.
 
 Set Implicit Arguments.

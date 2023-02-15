@@ -1,9 +1,9 @@
 (** * POrderBool.v : Partial order of bool *)
 
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality
-                          TerminalDogma.IotaDescription.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality
+                          ExtraDogma.IotaDescription.
 
 
 From Coq Require Import Relations Classical Arith.

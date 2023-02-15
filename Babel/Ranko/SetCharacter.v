@@ -1,7 +1,7 @@
 (** SetCharacter.v : the tactics about sets *)
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 From Babel.Ranko Require Import CentralCharacter LogicCharacter.
 
@@ -86,7 +86,10 @@ Ltac set_step
         apply H; 
         by repeat top_step
 
+    (** this branch is not safe when the goal is something like
+            [?f x = y] *)
     | |- ?A = ?B => 
+        is_var A; is_var B;
         apply Logic.eq_refl
 
     | |- ~ (@eq 𝒫(_) _ _) => rewrite setneqP

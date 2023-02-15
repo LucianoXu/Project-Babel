@@ -1,7 +1,7 @@
 (** porder_tactic_test.v *)
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 From Babel Require Export POrderFacility.
 

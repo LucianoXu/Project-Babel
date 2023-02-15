@@ -1,7 +1,7 @@
 (** QInterface.v *)
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality
                           NaiveSet
                           POrderFacility
                           POrderSet.

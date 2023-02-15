@@ -1,6 +1,6 @@
 (** Sequence.v *)
 
-From Babel Require Import TerminalDogma.premises.
+From Babel Require Import TerminalDogma.
 From Babel Require Import TerminalDogma.Infinity.
 From Babel Require Import TerminalDogma.Isomorphism.
 

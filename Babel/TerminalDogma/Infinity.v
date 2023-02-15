@@ -1,6 +1,6 @@
 (** Infinity.v : builds the structures of finity and infinity *)
 (*
-From Babel Require Import TerminalDogma.premises.
+From Babel Require Import TerminalDogma.
 From Babel Require Import TerminalDogma.Isomorphism.
 
 Set Implicit Arguments.

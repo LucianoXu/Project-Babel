@@ -1,8 +1,8 @@
 (** * POrderLeibnizEq.v : Library for the partial order of Leibniz equality. *)
 
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 
 From Coq Require Import Relations Classical.

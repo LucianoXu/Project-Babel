@@ -1,7 +1,7 @@
 (** * Parallel.v : describing parallel quantum programs *)
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 From Babel Require Import QTheory POrderFacility POrderSet POrderNat
                             nd_seq.

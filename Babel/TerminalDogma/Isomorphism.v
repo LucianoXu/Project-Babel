@@ -1,6 +1,6 @@
 (** Isomorphism.v *)
 (*
-From Babel Require Import TerminalDogma.premises.
+From Babel Require Import TerminalDogma.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

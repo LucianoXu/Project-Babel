@@ -96,8 +96,8 @@ Abort.
 (** But if we use the new definition ... *)
 Reset Initial.
 
-From Babel Require Import TerminalDogma.premises
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma
+                          ExtraDogma.Extensionality.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

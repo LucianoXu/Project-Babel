@@ -2,8 +2,8 @@
             with Feng Yuan *)
 (*
 
-From Babel Require Import TerminalDogma.premises 
-                          TerminalDogma.Extensionality.
+From Babel Require Import TerminalDogma 
+                          ExtraDogma.Extensionality.
 
 From Babel Require Import QTheory
                           NaiveSet.
