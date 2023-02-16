@@ -12,7 +12,8 @@ Unset Printing Implicit Defensive.
 (** Assume we have an oracle which tells us whether the proposition is provable
     or not.
     
-    Question: Does this axiom violates Godel's incompleteness theorem? *)
+    Question: Does this axiom violates Godel's incompleteness theorem? 
+    TODO #30 *)
 
 Axiom decide_oracle : Prop -> bool.
 
@@ -25,6 +26,7 @@ Proof. rewrite /decidable => P.
     right. destruct (decide_oracleP P) => //=.
 Qed.
 
+(** These two lemmas may be more useful in practice. *)
 Lemma decide_oracle_true (P : Prop) :
 
     decide_oracle P = true <-> P.

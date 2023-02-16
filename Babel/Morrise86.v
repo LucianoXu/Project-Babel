@@ -206,8 +206,8 @@ Proof.
 
     apply /decide_oracleP => s. apply /implyP => HQs. apply H.
 
-    have Htemp : (∀ s : Stt, Q s ==> x s).
-    - apply /decide_oracleP. apply H1.
+    rewrite decide_oracle_true in H1.
+
     move : HQs. by apply /implyP.
 Qed.
 
@@ -253,8 +253,7 @@ Proof.
     rewrite /is_true Bool.andb_true_iff in H0. destruct H0.
     apply H in H0. move: x0 H0. 
     apply (MonotonicFun.class (wp s)).
-    have t : ∀ s : Stt, Q s ==> x s.
-    apply /decide_oracleP. apply H1.
+    rewrite decide_oracle_true in H1.
     ranko. move : H0. by apply /implyP.
 Qed.
 
@@ -345,32 +344,49 @@ Lemma prog_property_2 (s : specif) (P Q : Asn):
 
 Proof.
     elim: s P Q.
-    ranko.
-    ranko.
-    ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
+    - ranko.
+    - ranko.
+    - ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
         rewrite !asn_sub_eq. ranko.
 
-    move => g1 g2 s1 Hs1 s2 Hs2 P Q.
+    - move => g1 g2 s1 Hs1 s2 Hs2 P Q.
     move : (Hs1 P Q) (Hs2 P Q). clear Hs1 Hs2.
     ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
     by case: (g1 x); case: (g2 x); 
     case: (s1 {[P]} x); case: (s2 {[P]} x);
     case: (s1 {[Q]} x); case: (s2 {[Q]} x) => //=.
 
-    ranko.
+    (** Oh my god. Ranko did this! *)
+    - ranko.
 
-    (** Oh my god. *)
-    ranko.
+    - ranko.
 
-    ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
+    - ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
 
     have t : ((∀ s : Stt, Q s ==> P0 s && Q0 s) : bool) =
     (∀ s : Stt, Q s ==> P0 s) && (∀ s : Stt, Q s ==> Q0 s).
-    give_up.
-    
-    case: (P x); case: (Q x); case: (P0 x); case: (Q0 x) => //=.
+    case E: (decide_oracle (∀ s : Stt, Q s ==> P0 s && Q0 s)).
 
-Admitted.
+    * rewrite decide_oracle_true in E.
+    symmetry. apply Bool.andb_true_iff. split; rewrite decide_oracle_true => s;
+    have t := (E s).
+    rewrite Bool.implb_andb_distrib_r in t.
+    rewrite /is_true Bool.andb_true_iff in t. apply t.
+    rewrite Bool.implb_andb_distrib_r in t.
+    rewrite /is_true Bool.andb_true_iff in t. apply t.
+
+    * rewrite decide_oracle_false in E. apply not_all_ex_not in E.
+        destruct E. rewrite /is_true Bool.implb_true_iff in H.
+        apply imply_to_and in H. destruct H. apply Bool.not_true_is_false in H0.
+        apply Bool.andb_false_iff in H0.
+        symmetry. apply Bool.andb_false_iff. rewrite !decide_oracle_false.
+        destruct H0.
+        -- left. apply ex_not_not_all. exists x0. by rewrite H H0.
+        -- right. apply ex_not_not_all. exists x0. by rewrite H H0.
+    
+    - case: (P x); case: (Q x); case: (P0 x); case: (Q0 x) => //=.
+
+Qed.
 
 
 Lemma prog_property_3 (p : specif) (prog_p : is_program p) (asnC : chain Asn) :
