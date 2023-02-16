@@ -1,7 +1,6 @@
 (** IotaDescription.v : Russel's iota operator and definite description*)
 
-From mathcomp Require Import all_ssreflect.
-Require Import Coq.Unicode.Utf8_core.
+From Babel Require Import TerminalDogma.
 
 From Coq Require Export Description.
 

@@ -22,6 +22,7 @@ Open Scope POrder_scope.
 Reserved Notation " a ⊑ b " (at level 60).
 Reserved Notation " a ⊒ b " (at level 60).
 Reserved Notation " a ⋢ b " (at level 60).
+Reserved Notation " a ⊑ b ⊑ c " (at level 60, b at next level, c at next level).
 
 Reserved Notation " f '†r' " (at level 20).
 Reserved Notation " P '†po' " (at level 10).
@@ -99,6 +100,14 @@ Notation " a ⊑ b " := (op (class _) a b) : POrder_scope.
 Notation " a ⊒ b " := (op (class _) b a) (only parsing): POrder_scope.
 
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
+
+Notation " a ⊑ b ⊑ c " := (a ⊑ b /\ b ⊑ c): POrder_scope.
+
+(*
+Notation "x  ⊑ y  ⊑ ..  ⊑ z  ⊑ t" :=
+  ((fun b A a => a ⊑ b /\ A b) y .. ((fun b A a => a ⊑ b /\ A b) z (fun b => b ⊑ t)) .. x)
+  (at level 70, y at next level, z at next level, t at next level).
+*)
 
 End Exports.
 
