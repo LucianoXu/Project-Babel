@@ -3,7 +3,8 @@
 From Babel Require Import TerminalDogma 
                           ExtraDogma.Extensionality.
 
-From Babel Require Export SetFacility.
+From Babel Require Export SetFacility 
+                            Ranko.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -367,7 +368,7 @@ Lemma bigU_ele2 {X : Type} (A B : 𝒫(X)) :
 
         ⋃ ({{A, B}}) = A ∪ B.
 
-Proof. set_level_full. Qed.
+Proof. ranko 2 0. Qed.
 
 Lemma bigI_ele1 {X : Type} (A : 𝒫(X)) :
 

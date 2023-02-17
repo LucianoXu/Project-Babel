@@ -7,7 +7,7 @@ From Babel.Ranko Require Import CentralCharacter
                                 LogicCharacter
                                 SetCharacter.
 
-From Babel Require Export POrder.
+From Babel Require Import POrder.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -40,6 +40,7 @@ Ltac porder_basic_move_up_branch :=
 Ltac porder_basic_step
         top_step
         split_mode
+        general_apply_depth
         :=
     match goal with
     | _ => progress porder_basic_simpl_branch
@@ -48,12 +49,12 @@ Ltac porder_basic_step
     (** reflexivity *)
     | |- ?a ⊑ ?a => apply poset_refl
 
-    | _ => set_step top_step split_mode
+    | _ => set_step top_step split_mode general_apply_depth
 
     | H : forall a, _ -> ?b ⊑ _ |- ?b ⊑ _ => 
-        eapply H; by repeat top_step
+        eapply H; by repeat top_step split_mode general_apply_depth
     | H : forall a, _ -> _ ⊑ ?c |- _ ⊑ ?c => 
-        eapply H; by repeat top_step
+        eapply H; by repeat top_step split_mode general_apply_depth
 
     (** anti-symmetry *)
     | T : poset |- @eq ?T _ _ => apply poset_antisym
@@ -84,6 +85,7 @@ Ltac porder_move_up_branch :=
 Ltac porder_step
         top_step
         split_mode
+        general_apply_depth
         :=
     match goal with
     | _ => progress porder_simpl_branch
@@ -91,19 +93,22 @@ Ltac porder_step
 
     | C : cpo |- @Poset.op (CPO.sort ?C) _ _ _ => 
         apply (CPO.join_prop (CPO.class C));
-        by repeat top_step
+        by repeat top_step split_mode general_apply_depth
 
     | L : clattice |- @Poset.op (CLattice.sort ?L) _ _ _ =>
         apply (CLattice.join_prop (CLattice.class L));
-        by repeat top_step
+        by repeat top_step split_mode general_apply_depth
 
-    | _ => porder_basic_step top_step split_mode
+    | _ => porder_basic_step top_step split_mode general_apply_depth
 
     end.
 
-Ltac porder_step_sealed split_mode :=
-    idtac; let rec top_step := porder_step_sealed split_mode in
-        porder_step top_step split_mode.
+Ltac porder_step_sealed 
+        split_mode 
+        general_apply_depth
+        :=
+    idtac; let rec top_step := porder_step_sealed in
+        porder_step top_step split_mode general_apply_depth.
 
 Ltac porder_level := 
-    repeat porder_step_sealed integer:(0).
+    repeat porder_step_sealed integer:(0) 100.

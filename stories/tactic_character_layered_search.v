@@ -61,10 +61,11 @@
 
 Ltac alpha1_branch 
         (** (Optional arg) 
-        top_step Type: [ltac]. The step tactic of top level. *)
+        top_step Type: [ltac]. The step tactic of top level. 
+                        (without parameters) *)
         :=
     (** the branch tactic *)
-    (** (Optional) End with [by top_step]. *)
+    (** (Optional) End with [by top_step (* argvs *)]. *)
     idtac.
 
 
@@ -75,7 +76,8 @@ Ltac alpha1_branch
 
 Ltac Alpha_step
         top_step
-            (** Type: [ltac]. The step tactic of top level. *)
+            (** Type: [ltac]. The step tactic of top level. 
+                        (without parameters) *)
 
         (** args : some extra arguments *)
         :=
@@ -84,13 +86,13 @@ Ltac Alpha_step
     | _ => idtac
     (** some proof logic of this level 
         Note: if one branch is unsafe, we recommand to postfix the branch with
-        [ by repeat top_step ]
+        [ by repeat top_step (* argvs *)]
         to make the branch safe. *)
 
     (** (Optional) If we want the tactic to rewort to tactics of lower levels,
         put them here in the following form:
 
-    | _ => Some_step top_step (* argvs*)
+    | _ => Some_step top_step (* argvs *)
         
         ( In some situations we will want such lower steps placed in the middle
         of the current step.)
@@ -147,6 +149,8 @@ Ltac Beta_level := repeat Beta_step_sealed.
         [move => //=.] instead.
 
     - The most rare cases should be put in the latter part.
+
+    - Use Coq [nat] and [match] in Ltac to do number calculating.
 *)
 
 

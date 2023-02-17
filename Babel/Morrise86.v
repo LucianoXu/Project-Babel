@@ -182,14 +182,16 @@ Proof.
     ranko.
     ranko. rewrite asn_sub_eq. apply H. by rewrite -asn_sub_eq.
 
+
     move => P Q HPQ. 
-    move : (IHp1 _ _ HPQ) (IHp2 _ _ HPQ). clear IHp1 IHp2.
-    ranko. 
+    move : (IHp1 _ _ HPQ) (IHp2 _ _ HPQ).
+    ranko 0 0. 
     
-    move: H (IHp1 x) (IHp2 x). rewrite -!Bool.implb_true_iff.
+    move: H (IHp0 x) (IHp3 x). rewrite -!Bool.implb_true_iff.
     case: (p1 {[P]} x); case: (p1 {[Q]} x); 
     case: (p2 {[P]} x); case: (p2 {[Q]} x); 
     case: (g2 x); case (g1 x) => //=.
+
     
     move => P Q HPQ.
     move: (IHp2 _ _ HPQ). move: (IHp1 p2 {[P]} p2 {[Q]}).

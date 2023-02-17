@@ -5,7 +5,7 @@ From Babel Require Import TerminalDogma
 
 From Babel.Ranko Require Import CentralCharacter LogicCharacter.
 
-From Babel Require Export NaiveSet.
+From Babel Require Import NaiveSet.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -59,17 +59,17 @@ Ltac set_move_up_branch :=
     This low level reasoning. *)
 
 Ltac set_step 
-        top_step     (* [ltac] the step tactic of higher level, not 
-                                including the step_tactic of this level. *)
+        top_step
         split_mode
+        general_apply_depth
         := 
 
     match goal with
 
     (** [or] goal, complete branch *)
     | |- (_ \/ _) =>
-        (left; by repeat top_step) 
-        || (right; by repeat top_step)
+        (left; by repeat top_step split_mode general_apply_depth) 
+        || (right; by repeat top_step split_mode general_apply_depth)
 
 
     | _ => progress repeat set_simpl_branch
@@ -80,11 +80,11 @@ Ltac set_step
     (** try to solve the goal *)
     | H : ?x ∈ _ |- ?x ∈ _ =>
         apply H; 
-        by repeat top_step
+        by repeat top_step split_mode general_apply_depth
 
     | H : _ ∈ ?A |- _ ∈ ?A => 
         apply H; 
-        by repeat top_step
+        by repeat top_step split_mode general_apply_depth
 
     (** this branch is not safe when the goal is something like
             [?f x = y] *)
@@ -96,9 +96,9 @@ Ltac set_step
 
     (** possible goal from big_itsct *)
     | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => 
-        eapply H; by repeat top_step
+        eapply H; by repeat top_step split_mode general_apply_depth
 
-    | _ => logic_step top_step split_mode
+    | _ => central_step top_step split_mode general_apply_depth
 
     (** if the goal is a set equality that must be taken apart, just do it *)
     | _ => rewrite seteqP; intros ?; split
@@ -106,13 +106,16 @@ Ltac set_step
     end.
 
 
-Ltac set_step_sealed split_mode:= 
-    idtac; let rec top := set_step_sealed split_mode in 
-        set_step top split_mode.
+Ltac set_step_sealed 
+        split_mode 
+        general_apply_depth 
+        := 
+    idtac; let rec top := set_step_sealed in 
+        set_step top split_mode general_apply_depth.
 
 Ltac set_level := 
-    repeat (set_step_sealed integer:(0)).
+    repeat (set_step_sealed integer:(0) 100).
 
 Ltac set_level_full := 
-    repeat (set_step_sealed integer:(2)).
+    repeat (set_step_sealed integer:(2) 100).
 
