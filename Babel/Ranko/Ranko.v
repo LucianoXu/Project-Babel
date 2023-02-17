@@ -4,10 +4,15 @@
 
 (** 为她创造了这个世界，又在这个世界中生出她来。 *)
 
+
 From Babel.Ranko Require Export CentralCharacter 
                                 LogicCharacter
                                 SetCharacter
                                 POrderCharacter.
+                                
+(** Hooks only, to avoid introducing extra axioms into the system 
+    unintentionally.*)
+From Babel.Ranko Require Export ExtensionalityHook.
 
 From Coq Require Export Zify.
 From mathcomp Require Export zify ssrZ.
@@ -23,7 +28,7 @@ Ltac ranko_step
 
     (* this branch includes set_step and logic_step *)
     | _ => porder_step top split_mode general_apply_depth
-
+    | _ => extensionality_step ltac:(top split_mode general_apply_depth)
     end.
 
 

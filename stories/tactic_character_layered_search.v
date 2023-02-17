@@ -137,7 +137,13 @@ Ltac Beta_step_sealed (* args *) :=
         Beta_step top_step (* arvgs *).
 
 Ltac Beta_level := repeat Beta_step_sealed.
-    
+
+
+(** About axiom specified layers 
+    Use hook technique to avoid introducing axioms into the system 
+    unintentionally.
+*)
+
 
 (** WORD OF WISDOM 
 
@@ -151,6 +157,7 @@ Ltac Beta_level := repeat Beta_step_sealed.
     - The most rare cases should be put in the latter part.
 
     - Use Coq [nat] and [match] in Ltac to do number calculating.
+
 *)
 
 

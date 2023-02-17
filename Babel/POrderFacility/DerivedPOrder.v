@@ -65,10 +65,7 @@ Proof. rewrite /transitive. porder_level.
 Qed.
 
 Lemma monofun_ord_antisym (X Y : poset) : antisymmetric _ (@monofun_ord X Y).
-Proof. rewrite /antisymmetric. porder_level.
-    apply monotonicfun_eqP.
-    apply functional_extensionality. porder_level.
-Qed.
+Proof. rewrite /antisymmetric. porder_level. Qed.
         
 Definition monofun_poset_mixin (X Y : poset) : Poset.mixin_of ([X ↦ᵐ Y]):=
     Poset.Mixin {|

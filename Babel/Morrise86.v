@@ -12,7 +12,8 @@ From Babel Require Import Maps.
 
 Require Import Classical Relations.
 
-Require Import Ranko.
+Require Import Ranko
+                ExtensionalityCharacter.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -106,8 +107,6 @@ Canonical EQtf_iota (B : 𝒫(Asn)) := Iota (EQtf B) (EQtf_iota_mixin B).
 Lemma Lemma_3_2 (B : 𝒫(Asn)) :
     ⊔ᶜˡ B = ι(EQtf B).
 Proof.
-    apply monotonicfun_eqP.
-    apply functional_extensionality.
     move : (iota_spec (EQtf B)) => //=.
     ranko.
     apply iota_eqP.
@@ -230,7 +229,7 @@ Proof.
     ranko.
     rewrite /transitive. ranko.
     rewrite /antisymmetric. ranko.
-        apply wp_extensionality. apply functional_extensionality. ranko.
+        apply wp_extensionality. 
         apply poset_antisym. ranko. ranko.
 Defined.
 
@@ -279,27 +278,19 @@ Lemma specif_abort1_prop (R : Asn):
 
         specif_abort1 {[ R ]} = asn_false.
 
-Proof. 
-    apply monotonicfun_eqP. apply functional_extensionality.
-    ranko.
-Qed.
+Proof. ranko. Qed.
 
 Lemma specif_abort2_prop (R : Asn): 
 
         specif_abort2 {[ R ]} = asn_false.
 
-Proof. 
-    apply monotonicfun_eqP. apply functional_extensionality.
-    ranko.
-Qed.
+Proof. ranko. Qed.
 
 Lemma specif_miracle_prop (R : Asn):
 
         specif_miracle {[ R ]} = asn_true.
 
-Proof.
-    apply monotonicfun_eqP. apply functional_extensionality.
-    ranko. apply /decide_oracleP. by move => _.
+Proof. ranko. apply /decide_oracleP. by move => _.
 Qed.
 
 
@@ -307,10 +298,7 @@ Lemma specif_chance_prop (R : Asn):
 
         specif_chance {[ R ]} = [monotonicfun of (fun _ => ⌈ R ⌉) : Sta -> bool].
 
-Proof.
-    apply monotonicfun_eqP. apply functional_extensionality.
-    ranko.
-Qed.
+Proof. ranko. Qed.
 
 
 Lemma prog_property_1 (p : specif) (prog_p : is_program p) :
@@ -318,7 +306,6 @@ Lemma prog_property_1 (p : specif) (prog_p : is_program p) :
         p {[ asn_false ]} = asn_false.
 
 Proof.
-    apply monotonicfun_eqP. apply functional_extensionality.
     elim: p prog_p.
     ranko.
     ranko.
@@ -332,7 +319,7 @@ Proof.
 
     ranko. rewrite /is_true Bool.andb_true_iff in prog_p. destruct prog_p.
     have t : s2 {[LeibnizEqOrder.fun_monotonicType xpred0]} = asn_false.
-        apply monotonicfun_eqP. apply functional_extensionality. ranko.
+        ranko.
     rewrite t. ranko.
 
     ranko.
@@ -348,12 +335,12 @@ Proof.
     elim: s P Q.
     - ranko.
     - ranko.
-    - ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
+    - ranko.
         rewrite !asn_sub_eq. ranko.
 
     - move => g1 g2 s1 Hs1 s2 Hs2 P Q.
     move : (Hs1 P Q) (Hs2 P Q). clear Hs1 Hs2.
-    ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
+    ranko.
     by case: (g1 x); case: (g2 x); 
     case: (s1 {[P]} x); case: (s2 {[P]} x);
     case: (s1 {[Q]} x); case: (s2 {[Q]} x) => //=.
@@ -363,7 +350,7 @@ Proof.
 
     - ranko.
 
-    - ranko. apply monotonicfun_eqP. apply functional_extensionality. ranko.
+    - ranko.
 
     have t : ((∀ s : Stt, Q s ==> P0 s && Q0 s) : bool) =
     (∀ s : Stt, Q s ==> P0 s) && (∀ s : Stt, Q s ==> Q0 s).
@@ -396,10 +383,9 @@ Lemma prog_property_3 (p : specif) (prog_p : is_program p) (asnC : chain Asn) :
     p {[ ι(EQtf asnC) ]} = ι(EQtf (wp p [<] asnC)).
 
 Proof.
-    apply monotonicfun_eqP. apply functional_extensionality.
     elim: p prog_p.
 
-    ranko. apply equal_f. move : (iota_spec (EQtf asnC)). ranko. apply iota_eqP. ranko.
+    ranko. apply equal_f. move : (iota_spec (EQtf asnC)). intros?. apply iota_eqP. ranko.
 
 Abort.
 

@@ -101,6 +101,7 @@ Ltac porder_step
 
     | _ => porder_basic_step top_step split_mode general_apply_depth
 
+    | _ => rewrite monotonicfun_eqP
     end.
 
 Ltac porder_step_sealed 
