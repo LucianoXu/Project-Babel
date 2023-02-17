@@ -32,6 +32,7 @@ Ltac ranko_step
     | _ => logic_branch top split_mode general_apply_depth eexists_mode
     | _ => iotaDescription_step ltac:(top split_mode general_apply_depth eexists_mode)
     | _ => extensionality_step ltac:(top split_mode general_apply_depth eexists_mode)
+    | _ => allDecidable_step ltac:(top split_mode general_apply_depth eexists_mode)
     end.
 
 

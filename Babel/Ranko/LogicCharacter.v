@@ -18,6 +18,18 @@ Ltac logic_branch
         :=
 
     match goal with
+    | H : true = true |- _ => clear H
+    | H : false = false |- _ => clear H
+    | H : true = _ |- _ => symmetry in H
+    | H : false = true |- _ => by inversion H
+    | H : false = _ |- _ => symmetry in H
+
+    | |- true = true => by reflexivity
+    | |- false = false => by reflexivity
+    | |- true = _ => symmetry
+    | |- false = true => fail
+    | |- false = _ => symmetry
+    
     | _ => progress unfold is_true in *
     end.
 

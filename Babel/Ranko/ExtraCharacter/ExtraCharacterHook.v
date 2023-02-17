@@ -18,3 +18,7 @@ Ltac extensionality_step
 Ltac iotaDescription_step
         top_step
         := fail.
+
+Ltac allDecidable_step
+        top_step
+        := fail.

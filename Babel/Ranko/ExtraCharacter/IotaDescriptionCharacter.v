@@ -28,7 +28,6 @@ Ltac iotaDescription_step
     match goal with
     | _ => rewrite iota_eqP
     | _ => rewrite iota_spec
-    | i : _ |- true = ι (?i) _ => rewrite (iota_spec (i))
     | i : _ |- ι (?i) _ = true => rewrite (iota_spec (i))
     end.
 

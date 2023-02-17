@@ -98,14 +98,6 @@ Ltac central_step
         :=
 
     match goal with
-    (** for equality, try to use it in two ways 
-        This is a dangerous technique, and we don't use for now. *)
-    (*
-    | |- _ = _ -> _ => 
-        let H := fresh "Heq" in 
-            (move => H; try rewrite H; by (search_framework level_step))
-            || (move => H; try rewrite -H; by (search_framework level_step))
-    *)
 
     (** Note : this premise break branch cannot be repeated here. *)
     | _ => precond_break_branch

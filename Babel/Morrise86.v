@@ -14,7 +14,8 @@ Require Import Classical Relations.
 
 Require Import Ranko
                 ExtensionalityCharacter
-                IotaDescriptionCharacter.
+                IotaDescriptionCharacter
+                AllDecidableCharacter.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -205,10 +206,7 @@ Proof.
 
     rewrite Bool.andb_true_iff in H0.
     destruct H0. apply /andP. split. by [].
-
-    apply /decide_oracleP => s. apply /implyP => HQs. apply H.
-
-    rewrite decide_oracle_true in H1.
+    ranko. apply /implyP => HQs. apply H.
 
     move : HQs. by apply /implyP.
 Qed.
@@ -248,14 +246,12 @@ Theorem Theorem_3_4a (P Q : Asn) (s : specif) :
 Proof.
     split.
     ranko. 
-    apply H. apply /andP. ranko.
-    apply /decide_oracleP => s0. by apply /implyP.
+    apply H. apply /andP. ranko. by apply /implyP.
 
     ranko.
     rewrite  Bool.andb_true_iff in H0. destruct H0.
     apply H in H0. move: x0 H0. 
     apply (MonotonicFun.class (wp s)).
-    rewrite decide_oracle_true in H1.
     ranko. move : H0. by apply /implyP.
 Qed.
 
@@ -291,8 +287,7 @@ Lemma specif_miracle_prop (R : Asn):
 
         specif_miracle {[ R ]} = asn_true.
 
-Proof. ranko. apply /decide_oracleP. by move => _.
-Qed.
+Proof. ranko. Qed.
 
 
 Lemma specif_chance_prop (R : Asn):
@@ -357,19 +352,19 @@ Proof.
     (∀ s : Stt, Q s ==> P0 s) && (∀ s : Stt, Q s ==> Q0 s).
     case E: (decide_oracle (∀ s : Stt, Q s ==> P0 s && Q0 s)).
 
-    * rewrite decide_oracle_true in E.
-    symmetry. apply Bool.andb_true_iff. split; rewrite decide_oracle_true => s;
+    * ranko.
+    apply Bool.andb_true_iff. split; rewrite decide_oracle_true => s;
     have t := (E s).
     rewrite Bool.implb_andb_distrib_r in t.
     rewrite /is_true Bool.andb_true_iff in t. apply t.
     rewrite Bool.implb_andb_distrib_r in t.
     rewrite /is_true Bool.andb_true_iff in t. apply t.
 
-    * rewrite decide_oracle_false in E. apply not_all_ex_not in E.
+    * ranko. apply not_all_ex_not in E.
         destruct E. rewrite /is_true Bool.implb_true_iff in H.
         apply imply_to_and in H. destruct H. apply Bool.not_true_is_false in H0.
         apply Bool.andb_false_iff in H0.
-        symmetry. apply Bool.andb_false_iff. rewrite !decide_oracle_false.
+        apply Bool.andb_false_iff. ranko.
         destruct H0.
         -- left. apply ex_not_not_all. exists x0. by rewrite H H0.
         -- right. apply ex_not_not_all. exists x0. by rewrite H H0.
