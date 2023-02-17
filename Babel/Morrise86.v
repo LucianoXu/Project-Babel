@@ -13,7 +13,8 @@ From Babel Require Import Maps.
 Require Import Classical Relations.
 
 Require Import Ranko
-                ExtensionalityCharacter.
+                ExtensionalityCharacter
+                IotaDescriptionCharacter.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -108,10 +109,10 @@ Lemma Lemma_3_2 (B : 𝒫(Asn)) :
     ⊔ᶜˡ B = ι(EQtf B).
 Proof.
     move : (iota_spec (EQtf B)) => //=.
+    ranko 0 10 10.
     ranko.
-    apply iota_eqP.
-    rewrite /BoolOrder.pred_join //=. split. intros. apply iota_spec. move: H. ranko.
-    move => HEQtf. apply iota_spec in HEQtf. move: HEQtf. ranko.
+    rewrite iota_spec in H.
+    move : H. ranko.
 Qed.
 
 
@@ -184,7 +185,7 @@ Proof.
 
     move => P Q HPQ. 
     move : (IHp1 _ _ HPQ) (IHp2 _ _ HPQ).
-    ranko 0 0. 
+    ranko 0 0 0. 
     
     move: H (IHp0 x) (IHp3 x). rewrite -!Bool.implb_true_iff.
     case: (p1 {[P]} x); case: (p1 {[Q]} x); 
@@ -202,7 +203,7 @@ Proof.
     (** prescription *)
     ranko.
 
-    rewrite /is_true Bool.andb_true_iff in H0.
+    rewrite Bool.andb_true_iff in H0.
     destruct H0. apply /andP. split. by [].
 
     apply /decide_oracleP => s. apply /implyP => HQs. apply H.
@@ -251,7 +252,7 @@ Proof.
     apply /decide_oracleP => s0. by apply /implyP.
 
     ranko.
-    rewrite /is_true Bool.andb_true_iff in H0. destruct H0.
+    rewrite  Bool.andb_true_iff in H0. destruct H0.
     apply H in H0. move: x0 H0. 
     apply (MonotonicFun.class (wp s)).
     rewrite decide_oracle_true in H1.
@@ -385,7 +386,7 @@ Lemma prog_property_3 (p : specif) (prog_p : is_program p) (asnC : chain Asn) :
 Proof.
     elim: p prog_p.
 
-    ranko. apply equal_f. move : (iota_spec (EQtf asnC)). intros?. apply iota_eqP. ranko.
+    ranko.
 
 Abort.
 

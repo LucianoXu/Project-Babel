@@ -19,7 +19,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 From Babel Require Import ExtraDogma.Extensionality.
-From Babel.Ranko Require Import ExtensionalityHook.
+From Babel.Ranko Require Import ExtraCharacterHook.
 
 
 Ltac extensionality_step
@@ -34,7 +34,7 @@ Ltac extensionality_step
 
 Ltac extensionality_step_sealed :=
     idtac; let rec top := extensionality_step_sealed in 
-        extensionality_step_sealed top.
+        extensionality_step top.
 
 Ltac extensionality_level :=
     repeat extensionality_step_sealed.

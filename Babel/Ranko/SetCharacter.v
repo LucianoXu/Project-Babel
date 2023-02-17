@@ -50,7 +50,6 @@ Ltac set_move_up_branch :=
         rewrite /NemSet.class_of /NemSet.mixin_of nonemptyP in H; destruct H
 
     | |- (_ ∈ _) -> _ => move => []
-    | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H
 
     end.
 
@@ -62,14 +61,15 @@ Ltac set_step
         top_step
         split_mode
         general_apply_depth
+        eexists_mode
         := 
 
     match goal with
 
     (** [or] goal, complete branch *)
     | |- (_ \/ _) =>
-        (left; by repeat top_step split_mode general_apply_depth) 
-        || (right; by repeat top_step split_mode general_apply_depth)
+        (left; by repeat top_step split_mode general_apply_depth eexists_mode) 
+        || (right; by repeat top_step split_mode general_apply_depth eexists_mode)
 
 
     | _ => progress repeat set_simpl_branch
@@ -78,13 +78,14 @@ Ltac set_step
 
     (*##################################################*)
     (** try to solve the goal *)
+
     | H : ?x ∈ _ |- ?x ∈ _ =>
         apply H; 
-        by repeat top_step split_mode general_apply_depth
+        by repeat top_step split_mode general_apply_depth eexists_mode
 
     | H : _ ∈ ?A |- _ ∈ ?A => 
         apply H; 
-        by repeat top_step split_mode general_apply_depth
+        by repeat top_step split_mode general_apply_depth eexists_mode
 
     (** this branch is not safe when the goal is something like
             [?f x = y] *)
@@ -96,9 +97,9 @@ Ltac set_step
 
     (** possible goal from big_itsct *)
     | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => 
-        eapply H; by repeat top_step split_mode general_apply_depth
+        eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
 
-    | _ => central_step top_step split_mode general_apply_depth
+    | _ => central_step top_step split_mode general_apply_depth eexists_mode
 
     (** if the goal is a set equality that must be taken apart, just do it *)
     | _ => rewrite seteqP; intros ?; split
@@ -109,13 +110,14 @@ Ltac set_step
 Ltac set_step_sealed 
         split_mode 
         general_apply_depth 
+        eexists_mode
         := 
     idtac; let rec top := set_step_sealed in 
-        set_step top split_mode general_apply_depth.
+        set_step top split_mode general_apply_depth eexists_mode.
 
 Ltac set_level := 
-    repeat (set_step_sealed integer:(0) 100).
+    repeat (set_step_sealed integer:(0) 100 integer:(0)).
 
 Ltac set_level_full := 
-    repeat (set_step_sealed integer:(2) 100).
+    repeat (set_step_sealed integer:(2) 100 integer:(0)).
 

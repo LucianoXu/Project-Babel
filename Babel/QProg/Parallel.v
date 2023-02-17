@@ -800,24 +800,26 @@ Ltac deSem_step
         top_step
         split_mode 
         general_apply_depth
+        eexists_mode
         :=
         match goal with
         | _ => progress repeat deSem_simpl_branch
         | _ => progress deSem_move_up_branch
 
-        | _ => set_step top_step split_mode general_apply_depth
+        | _ => set_step top_step split_mode general_apply_depth eexists_mode
         end.
     
 Ltac deSem_step_sealed 
         split_mode
         general_apply_depth
+        eexists_mode
         :=
     idtac; let rec top := deSem_step_sealed in 
-        deSem_step top split_mode general_apply_depth.
+        deSem_step top split_mode general_apply_depth eexists_mode.
 
 Ltac deSem_killer := 
     all_move_down;
-    repeat deSem_step_sealed integer:(0) 100.
+    repeat deSem_step_sealed integer:(0) 100 integer:(0).
 
 (*##################################################################*)
 

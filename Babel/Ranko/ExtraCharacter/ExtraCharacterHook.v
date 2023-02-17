@@ -1,4 +1,4 @@
-(** ExtensionalityCharacterHook.v 
+(** ExtraCharacterHook.v 
 
     Imported by [Ranko.v] as a hook.
     
@@ -12,5 +12,9 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Ltac extensionality_step
+        top_step
+        := fail.
+
+Ltac iotaDescription_step
         top_step
         := fail.

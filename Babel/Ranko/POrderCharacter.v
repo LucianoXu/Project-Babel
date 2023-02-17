@@ -41,6 +41,7 @@ Ltac porder_basic_step
         top_step
         split_mode
         general_apply_depth
+        eexists_mode
         :=
     match goal with
     | _ => progress porder_basic_simpl_branch
@@ -49,12 +50,12 @@ Ltac porder_basic_step
     (** reflexivity *)
     | |- ?a ⊑ ?a => apply poset_refl
 
-    | _ => set_step top_step split_mode general_apply_depth
+    | _ => set_step top_step split_mode general_apply_depth eexists_mode
 
     | H : forall a, _ -> ?b ⊑ _ |- ?b ⊑ _ => 
-        eapply H; by repeat top_step split_mode general_apply_depth
+        eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
     | H : forall a, _ -> _ ⊑ ?c |- _ ⊑ ?c => 
-        eapply H; by repeat top_step split_mode general_apply_depth
+        eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
 
     (** anti-symmetry *)
     | T : poset |- @eq ?T _ _ => apply poset_antisym
@@ -86,6 +87,7 @@ Ltac porder_step
         top_step
         split_mode
         general_apply_depth
+        eexists_mode
         :=
     match goal with
     | _ => progress porder_simpl_branch
@@ -93,13 +95,13 @@ Ltac porder_step
 
     | C : cpo |- @Poset.op (CPO.sort ?C) _ _ _ => 
         apply (CPO.join_prop (CPO.class C));
-        by repeat top_step split_mode general_apply_depth
+        by repeat top_step split_mode general_apply_depth eexists_mode
 
     | L : clattice |- @Poset.op (CLattice.sort ?L) _ _ _ =>
         apply (CLattice.join_prop (CLattice.class L));
-        by repeat top_step split_mode general_apply_depth
+        by repeat top_step split_mode general_apply_depth eexists_mode
 
-    | _ => porder_basic_step top_step split_mode general_apply_depth
+    | _ => porder_basic_step top_step split_mode general_apply_depth eexists_mode
 
     | _ => rewrite monotonicfun_eqP
     end.
@@ -107,9 +109,10 @@ Ltac porder_step
 Ltac porder_step_sealed 
         split_mode 
         general_apply_depth
+        eexists_mode
         :=
     idtac; let rec top_step := porder_step_sealed in
-        porder_step top_step split_mode general_apply_depth.
+        porder_step top_step split_mode general_apply_depth eexists_mode.
 
 Ltac porder_level := 
-    repeat porder_step_sealed integer:(0) 100.
+    repeat porder_step_sealed integer:(0) 100 integer:(0).

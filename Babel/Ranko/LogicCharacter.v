@@ -9,21 +9,40 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-
-
 (** progress guaranteed *)
-Ltac logic_step
-        top_step        (* [ltac], the level-specific tactic *)
+Ltac logic_branch
+        top_step
         split_mode      
+        general_apply_depth
+        eexists_mode
         :=
 
     match goal with
-    | _ => central_step top_step
+    | _ => progress unfold is_true in *
     end.
 
-Ltac logic_step_sealed split_mode :=
+Ltac logic_step 
+        top_step
+        split_mode      
+        general_apply_depth
+        eexists_mode
+        :=
+    match goal with
+    | _ => logic_branch top_step split_mode general_apply_depth eexists_mode
+    | _ => central_step top_step split_mode general_apply_depth eexists_mode
+    end.
+    
+Ltac logic_step_sealed 
+        split_mode      
+        general_apply_depth
+        eexists_mode
+        :=
     idtac; let rec top := logic_step_sealed in 
-        logic_step top split_mode.
+        logic_step top split_mode general_apply_depth eexists_mode.
 
-Ltac logic_level split_mode :=
-    repeat logic_step_sealed split_mode.
+Ltac logic_level 
+        split_mode      
+        general_apply_depth
+        eexists_mode 
+        :=
+    repeat logic_step_sealed split_mode general_apply_depth eexists_mode.

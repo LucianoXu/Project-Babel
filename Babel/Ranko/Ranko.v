@@ -12,7 +12,7 @@ From Babel.Ranko Require Export CentralCharacter
                                 
 (** Hooks only, to avoid introducing extra axioms into the system 
     unintentionally.*)
-From Babel.Ranko Require Export ExtensionalityHook.
+From Babel.Ranko Require Export ExtraCharacterHook.
 
 From Coq Require Export Zify.
 From mathcomp Require Export zify ssrZ.
@@ -21,25 +21,35 @@ From mathcomp Require Export zify ssrZ.
 Ltac ranko_step 
         split_mode 
         general_apply_depth
+        eexists_mode
         :=
     idtac; let rec top := 
         ranko_step
     in match goal with
 
     (* this branch includes set_step and logic_step *)
-    | _ => porder_step top split_mode general_apply_depth
-    | _ => extensionality_step ltac:(top split_mode general_apply_depth)
+    | _ => porder_step top split_mode general_apply_depth eexists_mode
+    | _ => logic_branch top split_mode general_apply_depth eexists_mode
+    | _ => iotaDescription_step ltac:(top split_mode general_apply_depth eexists_mode)
+    | _ => extensionality_step ltac:(top split_mode general_apply_depth eexists_mode)
     end.
 
 
 (** Don't call her inside a section, as she cannot stop moving down the 
     premises sometimes. *)
-Ltac ranko split_mode general_apply_depth 
-        := repeat ranko_step split_mode general_apply_depth.
+Ltac ranko 
+        split_mode 
+        general_apply_depth 
+        eexists_mode
+        := 
+        repeat ranko_step split_mode general_apply_depth eexists_mode.
 
 Tactic Notation "ranko" 
-        integer(split_mode) constr(general_apply_depth)
-    := ranko split_mode general_apply_depth.
+        integer(split_mode) 
+        constr(general_apply_depth)
+        integer(eexists_mode)
+        := 
+        ranko split_mode general_apply_depth eexists_mode.
 
-Tactic Notation "ranko" := ranko 0 7.
+Tactic Notation "ranko" := ranko 0 7 0.
 

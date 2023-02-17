@@ -368,7 +368,7 @@ Lemma bigU_ele2 {X : Type} (A B : 𝒫(X)) :
 
         ⋃ ({{A, B}}) = A ∪ B.
 
-Proof. ranko 2 0. Qed.
+Proof. ranko 2 0 0. Qed.
 
 Lemma bigI_ele1 {X : Type} (A : 𝒫(X)) :
 

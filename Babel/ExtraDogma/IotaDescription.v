@@ -54,14 +54,16 @@ End Iota.
 Export Iota.Exports.
 
 Lemma iota_eqP (T : Type) (P : iota T) (t : T) : 
-    P t <-> ι(P) = t.
+    ι(P) = t <-> P t.
 Proof.
-    split. move : (Iota.class P).
+    split. 
+    move <-. by apply iota_spec.
+
+    move : (Iota.class P).
     rewrite /Iota.class_of /Iota.mixin_of //= => [] [] x [] HPx H.
     move => HPt.
     transitivity x.
     symmetry. apply H. by apply iota_spec.
     by apply H.
 
-    move <-. by apply iota_spec.
 Qed.

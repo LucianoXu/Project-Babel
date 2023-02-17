@@ -77,12 +77,24 @@ Ltac central_step
                                         unsafe, but much quicker
                                 integer:(1) : passive split
                                         safe but not incomplete
-                                other value : aggressive split
+                                integer:(2) : aggressive split
                                         safe and complete, but may be slower
+                                other value : do not use split
                         *)
         general_apply_depth     
                         (* [Coq nat] constrols the searching depth of general
                                 apply branch.*)
+        eexists_mode    (* [integer] controls the behaviour of eexists branch
+
+                                This provents Ranko from a early eexists, which
+                                can be unsafe.
+
+                                integer:(0) : unsafe eexists
+                                        unsafe, but much quicker
+                                integer:(1) : aggressive eexists
+                                        safe and complete, but may be slower
+                                other value : do not use eexists 
+                        *)
         :=
 
     match goal with
@@ -97,6 +109,10 @@ Ltac central_step
 
     (** Note : this premise break branch cannot be repeated here. *)
     | _ => precond_break_branch
+
+    (** This branch is really troublesome. *)
+    | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H
+
     (** path selecting *)
     (** [and] goal*)
     | |- (_ /\ _) => 
@@ -109,28 +125,49 @@ Ltac central_step
 
         (** >>>>>> split_mode: passive split*)
                     then
-                        split; by repeat top_step split_mode general_apply_depth
+                        split; by repeat 
+                                top_step split_mode general_apply_depth eexists_mode
                     
+                    else tryif guard split_mode = 2
+
         (** >>>>>> split_mode: aggressive split *)
-                    else
+                    then
     
         (** If the [and] goal has at least one side without any exsitential 
             variable, we can directly split it. *)
                         (check_and_not_both_have_evar; split)
         (** If the [and] goal has exsitential variables, the tactic must solve 
             the goal after [split], otherwise this [split] action can be unsafe. *)
-                    || (split; by repeat top_step split_mode general_apply_depth)
-                    || (split; last first; by repeat top_step split_mode general_apply_depth)
+                    || (split; by repeat top_step split_mode general_apply_depth eexists_mode)
+                    || (split; last first; 
+                            by repeat top_step split_mode general_apply_depth eexists_mode)
+                    
+                    else
+        (** >>>>>> other value: do not use split *)
+                        fail
                     
     | |- _ <-> _ => unfold iff
 
     (** TODO #26 *)
-    | |- exists i, _ => eexists
+    | |- exists i, _ => 
+                    tryif guard eexists_mode = 0
+        (** >>>>>> eexists_mode: unsafe eexists *)
+                    then
+                        eexists
+
+                    else tryif guard eexists_mode = 1
+        (** >>>>>> eexists_mode: aggressive eexists *)
+                    then
+                        eexists; by repeat top_step split_mode general_apply_depth eexists_mode
+
+        (** >>>>>> other value: do not use eexists *)
+                    else
+                        fail
 
     (** [or] goal, complete branch *)
     | |- (_ \/ _) =>
-        (left; by repeat top_step split_mode general_apply_depth) 
-        || (right; by repeat top_step split_mode general_apply_depth)
+        (left; by repeat top_step split_mode general_apply_depth eexists_mode) 
+        || (right; by repeat top_step split_mode general_apply_depth eexists_mode)
 
     (** [firstorder] as the last resort *)
     (* | _ => progress firstorder *)
@@ -153,7 +190,7 @@ Ltac central_step
         match general_apply_depth with
         | O => idtac
         | S ?n =>   move: (H Hterm); clear H; 
-                    by repeat top_step split_mode n
+                    by repeat top_step split_mode n eexists_mode
         end
 
 
@@ -165,12 +202,14 @@ Ltac central_step
 Ltac central_step_sealed 
         split_mode 
         general_apply_depth
+        eexists_mode
         :=
     let rec top := central_step_sealed in 
-    central_step top split_mode general_apply_depth.
+    central_step top split_mode general_apply_depth eexists_mode.
 
 Ltac central_level 
         split_mode 
         general_apply_depth
+        eexists_mode
         := 
-    repeat central_step_sealed split_mode general_apply_depth.
+    repeat central_step_sealed split_mode general_apply_depth eexists_mode.
