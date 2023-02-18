@@ -56,8 +56,7 @@ Ltac set_move_up_branch :=
 
 (** Note: [top_step] is the tactic to do high-level reasonings before fall to
     This low level reasoning. *)
-
-Ltac set_step 
+Ltac set_step_PRE
         top_step
         split_mode
         general_apply_depth
@@ -98,13 +97,28 @@ Ltac set_step
     (** possible goal from big_itsct *)
     | H : forall a, _ -> ?x ∈ _ |- ?x ∈ _ => 
         eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
+    end.
 
-    | _ => central_step top_step split_mode general_apply_depth eexists_mode
-
+Ltac set_step_POST
+        top_step
+        split_mode
+        general_apply_depth
+        eexists_mode
+        := 
+    match goal with
     (** if the goal is a set equality that must be taken apart, just do it *)
     | _ => rewrite seteqP; intros ?; split
-
     end.
+
+Ltac set_step 
+        top_step
+        split_mode
+        general_apply_depth
+        eexists_mode
+        := 
+    set_step_PRE top_step split_mode general_apply_depth eexists_mode 
+    || central_step top_step split_mode general_apply_depth eexists_mode
+    || set_step_POST top_step split_mode general_apply_depth eexists_mode.
 
 
 Ltac set_step_sealed 

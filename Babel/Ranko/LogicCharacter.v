@@ -30,7 +30,7 @@ Ltac logic_branch
     | |- false = true => fail
     | |- false = _ => symmetry
     
-    | _ => progress unfold is_true in *
+    | _ => progress rewrite /is_true
     end.
 
 Ltac logic_step 

@@ -99,6 +99,26 @@ Ltac Alpha_step
         *)
     end.
 
+(** Note: For some complex layers, which are dependent on other layers, we use
+    [Alpha_step_PRE] and [Alpha_step_POST] to make this layer easy to be
+    reused. *)
+    
+Ltac Alpha_step_PRE :=
+    match goal with
+    | _ => idtac
+    end.
+
+Ltac Alpha_step_POST :=
+    match goal with
+    | _ => idtac
+    end.
+
+Ltac Alpha_step' :=
+    Alpha_step_PRE
+    || idtac (** This tactic can be replaced with other step tactics. *)
+    || Alpha_step_POST.
+
+
 
 (** Then we wrap this step tactic to get the tactic for this level. *)
 

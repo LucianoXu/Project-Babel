@@ -27,12 +27,17 @@ Ltac ranko_step
         ranko_step
     in match goal with
 
-    (* this branch includes set_step and logic_step *)
-    | _ => porder_step top split_mode general_apply_depth eexists_mode
-    | _ => logic_branch top split_mode general_apply_depth eexists_mode
-    | _ => iotaDescription_step ltac:(top split_mode general_apply_depth eexists_mode)
-    | _ => extensionality_step ltac:(top split_mode general_apply_depth eexists_mode)
-    | _ => allDecidable_step ltac:(top split_mode general_apply_depth eexists_mode)
+    | _ => porder_step_PRE top split_mode general_apply_depth eexists_mode
+        | _ => set_step_PRE top split_mode general_apply_depth eexists_mode
+            | _ => logic_branch top split_mode general_apply_depth eexists_mode
+            | _ => iotaDescription_step ltac:(top split_mode general_apply_depth eexists_mode)
+            | _ => extensionality_step ltac:(top split_mode general_apply_depth eexists_mode)
+            | _ => allDecidable_step ltac:(top split_mode general_apply_depth eexists_mode)
+            
+            | _ => central_step top split_mode general_apply_depth eexists_mode
+        | _ => set_step_POST top split_mode general_apply_depth eexists_mode
+    | _ => porder_step_POST top split_mode general_apply_depth eexists_mode
+    
     end.
 
 

@@ -37,7 +37,7 @@ Ltac porder_basic_move_up_branch :=
 
     Another problem: searching about infimum and supremum can be very slow.
 *)
-Ltac porder_basic_step
+Ltac porder_basic_step_PRE
         top_step
         split_mode
         general_apply_depth
@@ -49,9 +49,15 @@ Ltac porder_basic_step
 
     (** reflexivity *)
     | |- ?a ⊑ ?a => apply poset_refl
+    end.
 
-    | _ => set_step top_step split_mode general_apply_depth eexists_mode
-
+Ltac porder_basic_step_POST
+        top_step
+        split_mode
+        general_apply_depth
+        eexists_mode
+        :=
+    match goal with
     | H : forall a, _ -> ?b ⊑ _ |- ?b ⊑ _ => 
         eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
     | H : forall a, _ -> _ ⊑ ?c |- _ ⊑ ?c => 
@@ -60,6 +66,17 @@ Ltac porder_basic_step
     (** anti-symmetry *)
     | T : poset |- @eq ?T _ _ => apply poset_antisym
     end.
+
+
+Ltac porder_basic_step
+        top_step
+        split_mode
+        general_apply_depth
+        eexists_mode
+        :=
+    porder_basic_step_PRE top_step split_mode general_apply_depth eexists_mode
+    || set_step top_step split_mode general_apply_depth eexists_mode
+    || porder_basic_step_POST top_step split_mode general_apply_depth eexists_mode.
 
 
 (*####################################################################*)
@@ -83,7 +100,7 @@ Ltac porder_move_up_branch :=
     end.
 
 
-Ltac porder_step
+Ltac porder_step_PRE
         top_step
         split_mode
         general_apply_depth
@@ -101,10 +118,30 @@ Ltac porder_step
         apply (CLattice.join_prop (CLattice.class L));
         by repeat top_step split_mode general_apply_depth eexists_mode
 
-    | _ => porder_basic_step top_step split_mode general_apply_depth eexists_mode
+    | _ => porder_basic_step_PRE top_step split_mode general_apply_depth eexists_mode
+    end.
 
+Ltac porder_step_POST
+        top_step
+        split_mode
+        general_apply_depth
+        eexists_mode
+        :=
+    match goal with
+    | _ => porder_basic_step_POST top_step split_mode general_apply_depth eexists_mode
     | _ => rewrite monotonicfun_eqP
     end.
+
+
+Ltac porder_step
+        top_step
+        split_mode
+        general_apply_depth
+        eexists_mode
+        :=
+    porder_step_PRE top_step split_mode general_apply_depth eexists_mode
+    || set_step top_step split_mode general_apply_depth eexists_mode
+    || porder_step_POST top_step split_mode general_apply_depth eexists_mode.
 
 Ltac porder_step_sealed 
         split_mode 

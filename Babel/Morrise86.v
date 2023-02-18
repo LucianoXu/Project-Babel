@@ -109,11 +109,8 @@ Canonical EQtf_iota (B : 𝒫(Asn)) := Iota (EQtf B) (EQtf_iota_mixin B).
 Lemma Lemma_3_2 (B : 𝒫(Asn)) :
     ⊔ᶜˡ B = ι(EQtf B).
 Proof.
-    move : (iota_spec (EQtf B)) => //=.
-    ranko 0 10 10.
-    ranko.
-    rewrite iota_spec in H.
-    move : H. ranko.
+    ranko. 
+    rewrite Heq. ranko.
 Qed.
 
 
@@ -309,11 +306,11 @@ Proof.
 
     ranko. by apply asn_sub_eq.
 
-    ranko. rewrite /is_true Bool.andb_true_iff in prog_p. destruct prog_p.
+    ranko. rewrite Bool.andb_true_iff in prog_p. destruct prog_p.
     rewrite (H H1). rewrite (H0 H2).
     by case: (g1 x); case: (g2 x) => //=.
 
-    ranko. rewrite /is_true Bool.andb_true_iff in prog_p. destruct prog_p.
+    ranko. rewrite Bool.andb_true_iff in prog_p. destruct prog_p.
     have t : s2 {[LeibnizEqOrder.fun_monotonicType xpred0]} = asn_false.
         ranko.
     rewrite t. ranko.
