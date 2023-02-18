@@ -22,3 +22,7 @@ Ltac iotaDescription_step
 Ltac allDecidable_step
         top_step
         := fail.
+
+Ltac classical_step
+        top_step
+        := fail.

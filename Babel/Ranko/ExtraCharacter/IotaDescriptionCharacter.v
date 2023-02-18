@@ -18,6 +18,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+From Coq Require Import Bool.
 From Babel Require Import ExtraDogma.IotaDescription.
 From Babel.Ranko Require Import ExtraCharacterHook.
 
@@ -27,8 +28,18 @@ Ltac iotaDescription_step
         ::=
     match goal with
     | _ => rewrite iota_eqP
-    | |- ι (?i) _ = true -> _ => rewrite (iota_spec (i))
-    | |- ι (?i) _ = true => rewrite (iota_spec (i))
+
+    | |- ι (?i) _ = true -> _ => 
+        rewrite (iota_spec (i))
+
+    | |- ι (?i) _ = true => 
+        rewrite (iota_spec (i))
+
+    | |- ι (?i) _ = false -> _ => 
+        rewrite -Bool.not_true_iff_false /not (iota_spec (i))
+
+    | |- ι (?i) _ = false => 
+        rewrite -not_true_iff_false /not
     end.
 
 

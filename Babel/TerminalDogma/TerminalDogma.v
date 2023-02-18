@@ -9,8 +9,6 @@ From Babel.TerminalDogma Require Export TypeFacility.
 From Babel.TerminalDogma Require Export function.
 From Babel.TerminalDogma Require Export ProofFacility.
 
-From Babel.Ranko Require Export CentralCharacter LogicCharacter.
-
 From Coq Require Export ClassicalFacts.
 
 

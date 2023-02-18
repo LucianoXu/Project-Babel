@@ -14,8 +14,12 @@ From Babel.Ranko Require Export CentralCharacter
     unintentionally.*)
 From Babel.Ranko Require Export ExtraCharacterHook.
 
-From Coq Require Export Zify.
-From mathcomp Require Export zify ssrZ.
+From Coq Require Import Zify.
+From mathcomp Require Import all_ssreflect zify ssrZ.
+
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 
 Ltac ranko_step 
@@ -33,11 +37,12 @@ Ltac ranko_step
             | _ => iotaDescription_step ltac:(top split_mode general_apply_depth eexists_mode)
             | _ => extensionality_step ltac:(top split_mode general_apply_depth eexists_mode)
             | _ => allDecidable_step ltac:(top split_mode general_apply_depth eexists_mode)
+            | _ => classical_step ltac:(top split_mode general_apply_depth eexists_mode)
             
             | _ => central_step top split_mode general_apply_depth eexists_mode
         | _ => set_step_POST top split_mode general_apply_depth eexists_mode
     | _ => porder_step_POST top split_mode general_apply_depth eexists_mode
-    
+    | H : _ |- _ => by apply H
     end.
 
 

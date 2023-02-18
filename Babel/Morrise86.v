@@ -15,7 +15,8 @@ Require Import Classical Relations.
 Require Import Ranko
                 ExtensionalityCharacter
                 IotaDescriptionCharacter
-                AllDecidableCharacter.
+                AllDecidableCharacter
+                ClassicalCharacter.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -82,16 +83,9 @@ Notation "⌈ P ⌉" := (uni_quantification P).
 #[local] Hint Unfold uni_quantification : magic_book.
 
 
-
 Lemma Lemma_3_1 (P Q : Asn) :
     P ⊑ Q <-> ⌈ P ⇒ Q ⌉.
-Proof.
-    ranko.
-
-    apply /implyP. by apply (H s).
-
-    by move : (implyP (H x) H0).
-Qed.
+Proof. ranko. Qed.
 
 
 (** big exists and big forall *)
@@ -100,7 +94,7 @@ Definition EQtf (B : 𝒫(Asn)) (f : Sta -> bool) : Prop :=
 #[local] Hint Unfold EQtf : magic_book.
 
 Lemma EQtf_iota_mixin (B : 𝒫(Asn)): Iota.mixin_of (EQtf B).
-Proof.
+Proof. rewrite /Iota.mixin_of /unique.
 Admitted.
 
 Canonical EQtf_iota (B : 𝒫(Asn)) := Iota (EQtf B) (EQtf_iota_mixin B).
@@ -108,10 +102,7 @@ Canonical EQtf_iota (B : 𝒫(Asn)) := Iota (EQtf B) (EQtf_iota_mixin B).
 
 Lemma Lemma_3_2 (B : 𝒫(Asn)) :
     ⊔ᶜˡ B = ι(EQtf B).
-Proof.
-    ranko. 
-    rewrite Heq. ranko.
-Qed.
+Proof. ranko. Qed.
 
 
 Notation guard := (Stt -> bool).
@@ -181,14 +172,10 @@ Proof.
     ranko. rewrite asn_sub_eq. apply H. by rewrite -asn_sub_eq.
 
 
+
     move => P Q HPQ. 
     move : (IHp1 _ _ HPQ) (IHp2 _ _ HPQ).
-    ranko 0 0 0. 
-    
-    move: H (IHp0 x) (IHp3 x). rewrite -!Bool.implb_true_iff.
-    case: (p1 {[P]} x); case: (p1 {[Q]} x); 
-    case: (p2 {[P]} x); case: (p2 {[Q]} x); 
-    case: (g2 x); case (g1 x) => //=.
+    ranko.
 
     
     move => P Q HPQ.
@@ -200,12 +187,13 @@ Proof.
 
     (** prescription *)
     ranko.
-
+    (*
     rewrite Bool.andb_true_iff in H0.
     destruct H0. apply /andP. split. by [].
     ranko. apply /implyP => HQs. apply H.
 
     move : HQs. by apply /implyP.
+    *)
 Qed.
 
 Canonical wp_monotonicfun (p : specif) := 
@@ -243,13 +231,11 @@ Theorem Theorem_3_4a (P Q : Asn) (s : specif) :
 Proof.
     split.
     ranko. 
-    apply H. apply /andP. ranko. by apply /implyP.
+    apply H. ranko.
 
-    ranko.
-    rewrite  Bool.andb_true_iff in H0. destruct H0.
-    apply H in H0. move: x0 H0. 
+    ranko. apply H in a. move: x0 a.
     apply (MonotonicFun.class (wp s)).
-    ranko. move : H0. by apply /implyP.
+    ranko.
 Qed.
 
 Theorem Theorem_3_4b (P Q : Asn) (s : specif) :
@@ -306,14 +292,12 @@ Proof.
 
     ranko. by apply asn_sub_eq.
 
-    ranko. rewrite Bool.andb_true_iff in prog_p. destruct prog_p.
-    rewrite (H H1). rewrite (H0 H2).
+
+    ranko 0 1 0. repeat prop_2_bool_ssr_branch.
+    rewrite (H a). rewrite (H0 b).
     by case: (g1 x); case: (g2 x) => //=.
 
-    ranko. rewrite Bool.andb_true_iff in prog_p. destruct prog_p.
-    have t : s2 {[LeibnizEqOrder.fun_monotonicType xpred0]} = asn_false.
-        ranko.
-    rewrite t. ranko.
+    ranko.
 
     ranko.
 
@@ -339,7 +323,7 @@ Proof.
     case: (s1 {[Q]} x); case: (s2 {[Q]} x) => //=.
 
     (** Oh my god. Ranko did this! *)
-    - ranko.
+    - give_up. (* ranko. *)
 
     - ranko.
 
@@ -347,28 +331,24 @@ Proof.
 
     have t : ((∀ s : Stt, Q s ==> P0 s && Q0 s) : bool) =
     (∀ s : Stt, Q s ==> P0 s) && (∀ s : Stt, Q s ==> Q0 s).
-    case E: (decide_oracle (∀ s : Stt, Q s ==> P0 s && Q0 s)).
+    case E: (decide_oracle (∀ s : Stt, Q s ==> P0 s && Q0 s));
+    move: E.
 
     * ranko.
+    (*
     apply Bool.andb_true_iff. split; rewrite decide_oracle_true => s;
     have t := (E s).
     rewrite Bool.implb_andb_distrib_r in t.
     rewrite /is_true Bool.andb_true_iff in t. apply t.
     rewrite Bool.implb_andb_distrib_r in t.
     rewrite /is_true Bool.andb_true_iff in t. apply t.
+    *)
 
-    * ranko. apply not_all_ex_not in E.
-        destruct E. rewrite /is_true Bool.implb_true_iff in H.
-        apply imply_to_and in H. destruct H. apply Bool.not_true_is_false in H0.
-        apply Bool.andb_false_iff in H0.
-        apply Bool.andb_false_iff. ranko.
-        destruct H0.
-        -- left. apply ex_not_not_all. exists x0. by rewrite H H0.
-        -- right. apply ex_not_not_all. exists x0. by rewrite H H0.
+    * ranko.
     
     - case: (P x); case: (Q x); case: (P0 x); case: (Q0 x) => //=.
 
-Qed.
+Admitted. (* Qed. *)
 
 
 Lemma prog_property_3 (p : specif) (prog_p : is_program p) (asnC : chain Asn) :
@@ -378,7 +358,32 @@ Lemma prog_property_3 (p : specif) (prog_p : is_program p) (asnC : chain Asn) :
 Proof.
     elim: p prog_p.
 
-    ranko.
+    - ranko.
+
+    - ranko.
+
+
+    - ranko. rewrite asn_sub_eq. ranko.
+    case E: (ι (EQtf_iota { (x0) [(b) : e], x0 : 
+        monotonicfun Sta BoolOrder.clattice_type | x0 ∈ asnC }) x); move: E.
+    ranko. by rewrite -asn_sub_eq.
+    ranko. apply E. ranko. by rewrite asn_sub_eq.
+
+    - ranko. rewrite (H a) (H0 b). clear H H0. ranko.
+    case E: (ι (EQtf_iota { LeibnizEqOrder.fun_monotonicType
+         (λ s : Stt, (g1 s || g2 s) && (g1 s ==> s1 {[x0]} s) && (g2 s ==> s2 {[x0]} s)),
+       x0 : monotonicfun Sta BoolOrder.clattice_type | x0 ∈ asnC }) x); move: E.
+    ranko. ranko.
+    prop_2_bool_ssr.
+    case: (g1 x); case: (g2 x).
+    case E1: (ι
+    (EQtf_iota
+       { s1 {[x0]}, x0 : monotonicfun Sta BoolOrder.clattice_type | 
+       x0 ∈ asnC }) x);
+    case E2: (ι
+    (EQtf_iota
+       { s2 {[x0]}, x0 : monotonicfun Sta BoolOrder.clattice_type | 
+       x0 ∈ asnC }) x) => //=; move: E1 E2.
 
 Abort.
 

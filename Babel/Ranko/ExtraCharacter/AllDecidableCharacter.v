@@ -26,10 +26,6 @@ Ltac allDecidable_step
         top_step
         ::=
     match goal with
-    | H : decide_oracle _ = true |- _ => 
-        rewrite decide_oracle_true in H
-    | H : decide_oracle _ = false |- _ => 
-        rewrite decide_oracle_false in H
     | _ => rewrite decide_oracle_true
     | _ => rewrite decide_oracle_false
     end.
