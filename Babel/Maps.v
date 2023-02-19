@@ -16,6 +16,11 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Declare Scope Maps_scope.
+Open Scope Maps_scope.
+Delimit Scope Maps_scope with MAP.
+
+
 (* ################################################################# *)
 (** * Identifiers *)
 
@@ -74,12 +79,12 @@ Definition t_update {A : Type} (m : total_map A)
 (** First, we use the following notation to represent an empty total
     map with a default value. *)
 Notation "'_' '!->' v" := (t_empty v)
-    (at level 100, right associativity).
+    (at level 100, right associativity) : Maps_scope.
 
 (** We next introduce a convenient notation for extending an existing
     map with a new binding. *)
 Notation "x '!->' v ';' m" := (t_update m x v)
-    (at level 100, v at next level, right associativity).
+    (at level 100, v at next level, right associativity) : Maps_scope.
 
 
 (** This completes the definition of total maps. *)
@@ -203,11 +208,11 @@ Definition update {A : Type} (m : partial_map A)
 
 (** We introduce a similar notation for partial maps: *)
 Notation "x '?->' v ';' m" := (update m x v)
-    (at level 100, v at next level, right associativity).
+    (at level 100, v at next level, right associativity) : Maps_scope.
 
 (** We can also hide the last case when it is empty. *)
 Notation "x '?->' v" := (update empty x v)
-    (at level 100).
+    (at level 100) : Maps_scope.
 
 
 

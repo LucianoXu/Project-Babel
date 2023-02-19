@@ -11,13 +11,23 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Ltac prop_2_bool_ssr_branch :=
+Ltac ssr_simpl_branch :=
     match goal with
     | _ => rewrite not_true_iff_false
     | _ => rewrite not_false_iff_true
+    | _ => rewrite negb_true_iff
+    | _ => rewrite negb_false_iff
+    | Ht : ?A = true, Hf : ?A = false |- _ => 
+        by rewrite Ht in Hf; inversion Hf
+    end.
+
+Ltac prop_2_bool_ssr_branch :=
+    match goal with
     | _ => rewrite -implb_true_iff
     | _ => rewrite -andb_true_iff
     | _ => rewrite -andb_false_iff
+    | _ => rewrite -orb_true_iff
+    | _ => rewrite -orb_false_iff
     | _ => rewrite -implb_andb_distrib_r
     end.
 
@@ -26,13 +36,21 @@ Ltac prop_2_bool_ssr :=
 
 Ltac bool_2_prop_ssr_branch :=
     match goal with
-    | _ => rewrite not_true_iff_false
-    | _ => rewrite not_false_iff_true
-    | _ => rewrite implb_true_iff
+    | |- _ ==> _ = true -> _ => rewrite implb_true_iff
+    | |- _ ==> _ = true => rewrite implb_true_iff
     | _ => rewrite andb_true_iff
     | _ => rewrite andb_false_iff
-    | _ => rewrite implb_andb_distrib_r
+    | |- _ ==> _ && _ -> _ => rewrite implb_andb_distrib_r
+    | |- _ ==> _ && _ => rewrite implb_andb_distrib_r
     end.
+
+Ltac bool_2_prop_ssr_full_branch :=
+    match goal with
+    | _ => bool_2_prop_ssr_branch
+    | _ => rewrite orb_true_iff
+    | _ => rewrite orb_false_iff
+    end.
+    
 Ltac bool_2_prop_ssr := 
     repeat bool_2_prop_ssr_branch.
     
@@ -50,9 +68,9 @@ Ltac bool_const_switch_branch :=
 
     | |- true = true => by reflexivity
     | |- false = false => by reflexivity
-    | |- true = _ => symmetry
-    | |- false = true => rewrite true_eq_false_False
     | |- false = _ => symmetry
+    | |- true = false => rewrite true_eq_false_False
+    | |- true = _ => symmetry
     end.
 
 (** progress guaranteed *)
@@ -66,6 +84,7 @@ Ltac logic_branch
     | _ => bool_2_prop_ssr_branch
     | _ => progress rewrite /is_true
     | _ => bool_const_switch_branch
+    | _ => ssr_simpl_branch
     end.
 
 
