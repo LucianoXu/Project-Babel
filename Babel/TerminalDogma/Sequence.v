@@ -2,7 +2,6 @@
 
 From Babel Require Import TerminalDogma.
 From Babel Require Import TerminalDogma.Infinity.
-From Babel Require Import TerminalDogma.Isomorphism.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

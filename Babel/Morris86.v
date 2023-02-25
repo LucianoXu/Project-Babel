@@ -37,10 +37,12 @@ Definition Stt := partial_map nat.
 Definition expression := Stt -> nat.
 
 
+Section Sta.
 (** >>> *)
 Import LeibnizEqOrder.CanonicalStruct.
 
 Definition Sta := [poset of Stt].
+End Sta.
 
 
 
@@ -51,7 +53,7 @@ Import BoolOrder.CanonicalStruct.
 (** Asn : complete lattice *)
 Definition Asn := [clattice of [Sta ↦ᵐ bool]].
 
-Definition asn_true : Asn := (fun _ => true) : Stt -> bool.
+Definition asn_true : Asn := (fun _ => true) : Sta -> bool.
 #[local] Hint Unfold asn_true : magic_book.
 
 Definition asn_false : Asn := (fun _ => false) : Stt -> bool.
@@ -201,12 +203,11 @@ Proof.
     *)
 Qed.
 
+Axiom wp_extensionality : forall (p q : specif), wp p = wp q -> p = q.
+
 (** Every specification s ∈ [Asn ↦ᵐ Asn] *)
 Canonical wp_monotonicfun (p : specif) := 
     MonotonicFun (wp p) (@wp_monotonicMixin p).
-
-
-Axiom wp_extensionality : forall (p q : specif), wp p = wp q -> p = q.
 
 (** embed specifications in the complete lattice *)
 (** 
@@ -217,27 +218,16 @@ Check (wp   : specif -> [Asn  ↦ᵐ  Asn])
             : [[poset of specif] ↦ᵐ [clattice of [Asn  ↦ᵐ  Asn]]].
 
 *)
-Lemma specif_porderMixin : Poset.mixin_of specif.
-Proof.
-    refine (@Poset.Mixin specif (fun s1 s2 => wp s1 ⊑ wp s2) _).
-    constructor.
-    ranko.
-    rewrite /transitive. ranko.
-    rewrite /antisymmetric. ranko.
-        apply wp_extensionality. 
-        apply poset_antisym. ranko. ranko.
-Defined.
 
-Canonical specif_porder := Poset specif specif_porderMixin.
+Definition Spec := [clattice of [Asn  ↦ᵐ  Asn]].
 
-Definition Spec := [poset of specif].
-
+Coercion wp : specif >-> Funclass.
 
 
 (** Theorem 3.4 *)
-Theorem Theorem_3_4a (P Q : Asn) (s : Spec) :
+Theorem Theorem_3_4a (P Q : Asn) (s : specif) :
 
-        P ‖ Q ⊑ s <-> P ⊑ s{[Q]}.
+        (P ‖ Q) ⊑{Spec} s <-> P ⊑ s{[Q]}.
 
 Proof.
     split.
@@ -249,7 +239,7 @@ Proof.
     ranko.
 Qed.
 
-Theorem Theorem_3_4b (P Q : Asn) (s : Spec) :
+Theorem Theorem_3_4b (P Q : Asn) (s : specif) :
 
         P ⊑ s{[Q]} <-> ⌈ P ⇒ s{[Q]} ⌉.
 
@@ -291,7 +281,7 @@ Lemma specif_chance_prop (R : Asn):
 Proof. ranko. Qed.
 
 
-Lemma prog_property_1 (p : Spec) (prog_p : is_program p) :
+Lemma prog_property_1 (p : specif) (prog_p : is_program p) :
 
         p {[ asn_false ]} = asn_false.
 
@@ -315,7 +305,7 @@ Proof.
     ranko.
 Qed.
 
-Lemma prog_property_2 (s : Spec) (P Q : Asn):
+Lemma prog_property_2 (s : specif) (P Q : Asn):
 
     s {[ P and Q ]} = s {[ P ]} and s {[ Q ]}.
 
@@ -362,7 +352,7 @@ Proof.
 Admitted. (* Qed. *)
 
 
-Lemma prog_property_3 (p : Spec) (prog_p : is_program p) (asnC : chain Asn) :
+Lemma prog_property_3 (p : specif) (prog_p : is_program p) (asnC : chain Asn) :
 
     p {[ ι(EQtf asnC) ]} = ι(EQtf (wp p [<] asnC)).
 
@@ -403,7 +393,7 @@ Abort.
 
 Theorem Theorem_4_1 (P Q : Asn) :
 
-        P ‖ Q ⊑ Skip <-> ⌈ P ⇒ Q ⌉.
+        P ‖ Q ⊑{Spec} Skip <-> ⌈ P ⇒ Q ⌉.
 
 Proof. ranko. apply H. ranko. Qed.
 
@@ -411,7 +401,7 @@ Proof. ranko. apply H. ranko. Qed.
 
 Theorem Theorem_4_2 (P Q : Asn) (b : variable) (e : expression) :
 
-        P ‖ Q ⊑ b <- e <-> ⌈ P ⇒ Q[b : e] ⌉.
+        P ‖ Q ⊑{Spec} b <- e <-> ⌈ P ⇒ Q[b : e] ⌉.
 
 Proof. ranko. apply H. ranko.
     move: (H x0); clear H.
@@ -424,7 +414,7 @@ Qed.
 
 Theorem Theorem_4_3 (P Q R S : Asn) :
 
-        P ‖ Q ⊑ R ‖ S <-> (⌈ P ⇒ R ⌉ /\ ⌈ S ⇒ Q ⌉) \/ ⌈ not P ⌉.
+        P ‖ Q ⊑{Spec} R ‖ S <-> (⌈ P ⇒ R ⌉ /\ ⌈ S ⇒ Q ⌉) \/ ⌈ not P ⌉.
 
 Proof. 
     rewrite Theorem_3_4a Theorem_3_4b.
@@ -434,10 +424,12 @@ Proof.
     ranko.
 Qed.
 
-Theorem Theorem_4_4 (P Q : Asn) (g1 g2 :guard) (s1 s2 : Spec) :
+Theorem Theorem_4_4 (P Q : Asn) (g1 g2 :guard) (s1 s2 : specif) :
         
-        P ‖ Q ⊑ If g1 ↦ s1 □ g2 ↦ s2 Fi <->
-            ⌈ P ⇒ g1 or g2 ⌉ /\ (P and g1 ‖ Q ⊑ s1) /\ (P and g2 ‖ Q ⊑ s2).
+        P ‖ Q ⊑{Spec} If g1 ↦ s1 □ g2 ↦ s2 Fi <->
+            ⌈ P ⇒ g1 or g2 ⌉ /\ 
+            (P and g1 ‖ Q ⊑{Spec} s1) /\ 
+            (P and g2 ‖ Q ⊑{Spec} s2).
 
 Proof.
     rewrite Theorem_3_4a Theorem_3_4b.
@@ -472,21 +464,22 @@ Qed.
 Theorem Theorem_4_5 (P Q R S T U : Asn) :
 
         ⌈ P ⇒ R ⌉ /\ ⌈ S ⇒ T ⌉ /\ ⌈ U ⇒ Q ⌉ 
-        -> P ‖ Q ⊑ (R ‖ S) ⨾ (T ‖ U).
+        -> P ‖ Q ⊑{Spec} (R ‖ S) ⨾ (T ‖ U).
 
 Proof. ranko. Qed.
 
 
-Theorem Theorem_4_6 (P Q : Asn) (s : Spec) :
+Theorem Theorem_4_6 (P Q : Asn) (s : specif) :
 
-        P ‖ Q ⊑ s -> P ‖ Q ⊑ [ Block ; s ].
+        P ‖ Q ⊑{Spec} s -> P ‖ Q ⊑{Spec} [ Block ; s ].
 
 Proof. ranko. Qed.
 
 
-Lemma Lemma_4_7a (P Q R S : Asn) (s : Spec):
+Lemma Lemma_4_7a (P Q R S : Asn) (s : specif):
 
-        P ‖ Q ⊑ s /\ R ‖ S ⊑ s -> (P and R) ‖ (Q and S) ⊑ s.
+        P ‖ Q ⊑{Spec} s /\ R ‖ S ⊑{Spec} s 
+        -> (P and R) ‖ (Q and S) ⊑{Spec} s.
 
 Proof. ranko 3 0 3.
     have HQ : s {[Q]} x0 = true. apply a. ranko.
@@ -500,17 +493,17 @@ Proof. ranko 3 0 3.
 Qed.
 
 
-Lemma Lemma_4_8a (P Q : Asn) (s : Spec):
+Lemma Lemma_4_8a (P Q : Asn) (s : specif):
 
-        P ‖ Q ⊑ ((P ‖ s {[ Q ]}) ⨾ s).
+        P ‖ Q ⊑{Spec} ((P ‖ s {[ Q ]}) ⨾ s).
 
 Proof. ranko. move: s0 H.
     apply (MonotonicFun.class (wp s)). ranko.
 Qed.
 
-Lemma Lemma_4_8b (P Q : Asn) (s : Spec):
+Lemma Lemma_4_8b (P Q : Asn) (s : specif):
 
-        s {[ P ]} ‖ Q = (s ⨾ (P ‖ Q)).
+        s {[ P ]} ‖ Q = s ⨾ (P ‖ Q).
 
 Proof.
     elim: s.
@@ -521,7 +514,7 @@ Proof.
     - ranko.
     - ranko.
     - ranko.
-    - move => R S. apply poset_antisym. 
+    - move => R S. apply wp_extensionality. apply poset_antisym. 
         + ranko. 
         + ranko.
     (** The last case is indeeded unprovable. Consider :
@@ -532,9 +525,9 @@ Abort.
          
 
 (** If we limit [s] to programs [p], the above lemma holds. *)
-Lemma Lemma_4_8c (P Q : Asn) (p : Spec) (Hprog : is_program p):
+Lemma Lemma_4_8c (P Q : Asn) (p : specif) (Hprog : is_program p):
 
-        p {[ P ]} ‖ Q = (p ⨾ (P ‖ Q)).
+        p {[ P ]} ‖ Q = p ⨾ (P ‖ Q).
 
 Proof.
     elim: p Hprog.
@@ -547,6 +540,21 @@ Proof.
     - ranko.
     - ranko.
 Qed.
+
+
+
+Lemma Lemma_4_9 (P : 𝒫(Asn)) (Q : Asn) : 
+
+    ⊔ᶜˡ { (wp (Pj ‖ Q) : Spec) , Pj | Pj ∈ P } = (⊔ᶜˡ P) ‖ Q.
+
+Proof. ranko. Qed.
+
+
+
+
+
+
+
     
         
 

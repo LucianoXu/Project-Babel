@@ -16,6 +16,7 @@
 
 [porder]
 ⊆ † ⊑♯ ⊒ ⊔ ⊓ 
+⊔ᶜˡ
 ⋢ ⋣
 
 [vector spaces]

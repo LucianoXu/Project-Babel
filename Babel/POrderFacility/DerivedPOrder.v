@@ -91,3 +91,60 @@ End CanonicalStruct.
 
 End FunPointwiseOrder.
 
+
+
+(** If 'isomorphism extensionality' is introduced, then the two type are equal. 
+    This module says that even we don't have isomorphism extensionality, we can
+    still build the new order structure using an isomorphism. *)
+
+From Babel Require Import TerminalDogma 
+                        Isomorphism.
+From Coq Require Import Relations.
+
+Module IsomorphismOrder.
+
+Definition isomor_porderMixin (A : Type) (B : poset) 
+    (Hiso : A ≅ (Poset.sort B)) : Poset.mixin_of A.
+Proof.
+    set op := fun a1 a2 => Hiso a1 ⊑ Hiso a2.
+    econstructor. instantiate (1 := op).
+    constructor.
+    - rewrite /reflexive /op => ?; reflexivity.
+    - rewrite /transitive /op => x y z; apply poset_trans.
+    - rewrite /antisymmetric /op => x y Hxy Hyx. cut (Hiso x = Hiso y). 
+        + by apply Injection.class.
+        * by apply poset_antisym.
+Defined.
+
+Definition isomor_porder (A : Type) (B : poset) (Hiso : A ≅ (Poset.sort B)) :=
+    Poset A (isomor_porderMixin Hiso).
+
+Definition isomor_clattice_joinEssence 
+    (A : Type) (B : clattice) (Hiso : A ≅ (Poset.sort B)) : 
+        CLattice.join_essence_of (isomor_porder Hiso).
+Proof.
+    repeat econstructor. 
+    instantiate (1:= (fun sa => inv_bij Hiso (⊔ᶜˡ (Hiso [<] sa)))).
+    - porder_level. 
+        have t:= (inv_bij_inv Hiso).
+        destruct t. unfold left_inverse in H0. rewrite H0.
+        porder_level.
+
+    - porder_level.
+        have t:= (inv_bij_inv Hiso).
+            destruct t. unfold left_inverse in H0. rewrite H0.
+        porder_level.
+Defined.
+
+Definition isomor_clatticeMixin 
+    (A : Type) (B : clattice) (Hiso : A ≅ (Poset.sort B)) :=
+    CLattice.join_essence_to_mixin (isomor_clattice_joinEssence Hiso).
+
+Definition isomor_clattice 
+    (A : Type) (B : clattice) (Hiso : A ≅ (Poset.sort B)) :=
+        CLattice A (isomor_clatticeMixin Hiso).
+
+End IsomorphismOrder.
+            
+
+

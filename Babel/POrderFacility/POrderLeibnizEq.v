@@ -43,9 +43,10 @@ End OrderDef.
 Module CanonicalStruct.
 
 Canonical poset_type.
-Canonical fun_monotonicType.
 
 End CanonicalStruct.
 
 End LeibnizEqOrder.
 
+
+Canonical LeibnizEqOrder.fun_monotonicType.

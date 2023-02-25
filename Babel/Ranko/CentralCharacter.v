@@ -1,8 +1,10 @@
-(** CentralTactic.v 
+(** CentralTactic.v (ESPECIALLY, equality relations are considered here)
     controls the most basic searching settings *)
 
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.
+
+From Babel.Framework Require Import Equality.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -101,6 +103,8 @@ Ltac central_step
 
     (** Note : this premise break branch cannot be repeated here. *)
     | _ => precond_break_branch
+
+    | _ => rewrite refl_iff_True
 
     (** This branch is really troublesome. *)
     | |- (_ = _) -> _ => let H := fresh "Heq" in move => H; rewrite H

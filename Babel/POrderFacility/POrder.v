@@ -21,6 +21,8 @@ Open Scope POrder_scope.
 
 Reserved Notation " a ⊑ b " (at level 60).
 Reserved Notation " a ⊒ b " (at level 60).
+Reserved Notation " a ⊑{ T } b " (at level 60).
+
 Reserved Notation " a ⋢ b " (at level 60).
 Reserved Notation " a ⊑ b ⊑ c " (at level 60, b at next level, c at next level).
 
@@ -98,7 +100,7 @@ Definition poset_antisym (T : type) := ord_antisym _ _ (ord (class T)).
 
 Notation " a ⊑ b " := (op (class _) a b) : POrder_scope.
 Notation " a ⊒ b " := (op (class _) b a) (only parsing): POrder_scope.
-
+Notation " a ⊑{ T } b " := (poset_op T a b) : POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
 
 Notation " a ⊑ b ⊑ c " := (a ⊑ b /\ b ⊑ c): POrder_scope.

@@ -188,8 +188,11 @@ Proof. move => [g [H1 H2]]. split.
 Qed.
 *)
 
-Lemma bij_has_inv (X Y : Type) (f : X -> Y) : 
-    bijective f -> exists g : bijection Y X, inverse g f.
+Definition inv_bij (X Y : Type) : bijection X Y -> bijection Y X.
+Admitted.
+
+Lemma inv_bij_inv (X Y : Type) (f : bijection X Y) :
+    inverse f (inv_bij f).
 Admitted.
 
 

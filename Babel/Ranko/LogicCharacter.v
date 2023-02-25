@@ -3,7 +3,7 @@
 From mathcomp Require Import all_ssreflect.
 Require Import Coq.Unicode.Utf8_core.
 
-From Babel Require Import BoolBasic.
+From Babel Require Import BoolBasic LogicFacility.
 
 From Babel.Ranko Require Import CentralCharacter.
 
@@ -85,6 +85,9 @@ Ltac logic_branch
     | _ => progress rewrite /is_true
     | _ => bool_const_switch_branch
     | _ => ssr_simpl_branch
+
+    | _ => rewrite iff_True_R
+    | _ => rewrite iff_True_L
     end.
 
 

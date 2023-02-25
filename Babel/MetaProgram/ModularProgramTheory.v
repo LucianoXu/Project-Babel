@@ -172,9 +172,6 @@ End SpecMod.
 Import SpecMod.Exports.
 
 
-Check (prog_porder (SpecMod.specMod _)).
-
-
 
 Theorem Theorem_Refinement_A (mT : metaType) 
         (L : feature mT) (P Q : Asn mT) 
