@@ -63,7 +63,7 @@ Canonical cpo_type (T : Type) : cpo := CPO 𝒫(T) (CPO.class [cpo of [clattice 
     
 
 (*########################################################################*)
-(** prove that certaion operators are continuous *)
+(** prove that certain operators are continuous *)
 
 (** monotonicity of mapR *)
 Definition mapR_monotonicMixin {X Y: Type} (f : X -> Y) : 

@@ -110,11 +110,11 @@ Ltac porder_step_PRE
     | _ => progress porder_simpl_branch
     | _ => progress porder_move_up_branch
 
-    | C : cpo |- @Poset.op (CPO.sort ?C) _ _ _ => 
+    | |- @Poset.op (CPO.sort ?C) _ _ _ => 
         apply (CPO.join_prop (CPO.class C));
         by repeat top_step split_mode general_apply_depth eexists_mode
 
-    | L : clattice |- @Poset.op (CLattice.sort ?L) _ _ _ =>
+    | |- @Poset.op (CLattice.sort ?L) _ _ _ =>
         apply (CLattice.join_prop (CLattice.class L));
         by repeat top_step split_mode general_apply_depth eexists_mode
 

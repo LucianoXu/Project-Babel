@@ -72,8 +72,8 @@ Lemma prog_porderMixin (mT : metaType) (L : feature mT):
 Proof.
     refine (@Poset.Mixin (syntax L) (fun s1 s2 => wp s1 ⊑ wp s2) _).
     constructor.
-    rewrite /reflexive. ranko. by apply (@poset_refl (Asn mT)).
-    rewrite /transitive. ranko. by apply (poset_trans (H x0) (H0 x0)).
+    rewrite /reflexive. ranko. by reflexivity.
+    rewrite /transitive. ranko. by transitivity (wp y x0).
     rewrite /antisymmetric. ranko.
         apply wp_extensionality. 
         apply poset_antisym. ranko. ranko.
@@ -101,7 +101,7 @@ Definition wp (mT : metaType) : syntax mT -> Asn mT -> Asn mT :=
     fun p => fun R => 
         if post p ⊑ R 
             then pre p 
-            else ⊔ᶜˡ ∅.
+            else ⊔ᶜˡ (∅ : 𝒫(Asn mT)).
 
 Lemma prog_monotonic (mT : metaType) : 
     forall p: syntax mT, MonotonicFun.mixin_of (wp p).
@@ -187,9 +187,9 @@ Proof. split.
     rewrite /SpecMod.wp.
     replace (decide_oracle (SpecMod.post (P ‖ Q) ⊑ Q))
         with true.
-        + by apply poset_refl.
+        + by reflexivity.
         + symmetry. rewrite decide_oracle_true. ranko. 
-            by apply (@poset_refl (Asn mT)).
+            by reflexivity.
     *
         ranko. rewrite /FunPointwiseOrder.fun_ord. ranko.
         rewrite /SpecMod.wp.
@@ -236,13 +236,13 @@ Proof. split.
     * ranko. refine (poset_trans _ (H Q)).
         rewrite /SpecMod.wp.
         replace (decide_oracle (SpecMod.post (P ‖ Q) ⊑ Q)) with true.
-        by apply poset_refl.
-        ranko. by apply (@poset_refl (Asn mT)).
+        by reflexivity.
+        ranko. by reflexivity.
     * ranko. rewrite /SpecMod.wp.
         case E: (decide_oracle (SpecMod.post (P ‖ Q) ⊑ x)); move : E.
         + ranko. apply (prog_monotonic s) in E.
-        by refine (poset_trans H _).
-        + ranko. apply (@CLattice.join_prop (Asn mT)). ranko.
+        by transitivity (wp s Q).
+        + ranko.
 Qed. 
 
 

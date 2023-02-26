@@ -1,3 +1,5 @@
 _opam
 _build
 playground.v
+*.vpp.*
+*.vpp

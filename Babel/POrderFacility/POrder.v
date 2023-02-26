@@ -36,6 +36,7 @@ Reserved Notation " cL '†cL' " (at level 10).
 Reserved Notation "⊔ᶜᵖᵒ" (at level 40).
 Reserved Notation "⊔ˡ" (at level 40).
 Reserved Notation "⊓ˡ" (at level 40).
+
 Reserved Notation "⊔ᶜˡ" (at level 40).
 Reserved Notation "⊓ᶜˡ" (at level 40).
 
@@ -78,12 +79,17 @@ Variables (cT : type).
 
 Definition class := 
     let: Pack _ c := cT return class_of cT in c.
+
+Definition mixin :=
+    let: Pack _ c := cT return mixin_of cT in c.
+
 Definition pack := Pack.
 
 End ClassDef.
 
 
 Module Exports.
+
 #[reversible] Coercion sort : type >-> Sortclass.
 
 Notation poset := type.
@@ -92,15 +98,21 @@ Notation Poset T m := (@pack T m).
 Notation "[ 'poset' 'of' T ]" := (T : poset)
   (at level 0, format "[ 'poset'  'of'  T ]") : POrder_scope.
 
-Notation poset_op T := (op (class T)).
-Definition poset_order (T : type) := ord (class T).
-Definition poset_refl (T : type) := ord_refl _ _ (ord (class T)).
-Definition poset_trans (T : type) := ord_trans _ _ (ord (class T)).
-Definition poset_antisym (T : type) := ord_antisym _ _ (ord (class T)).
+Notation poset_op T := (op (mixin T)).
+Definition poset_order (T : type) := ord (mixin T).
+Definition poset_refl (T : type) := ord_refl _ _ (ord (mixin T)).
+Definition poset_trans (T : type) := ord_trans _ _ (ord (mixin T)).
+Definition poset_antisym (T : type) := ord_antisym _ _ (ord (mixin T)).
 
-Notation " a ⊑ b " := (op (class _) a b) : POrder_scope.
-Notation " a ⊒ b " := (op (class _) b a) (only parsing): POrder_scope.
-Notation " a ⊑{ T } b " := (poset_op T a b) : POrder_scope.
+Definition poset_order_m (T : Type) (m : mixin_of T) := ord m.
+Definition poset_refl_m (T : Type) (m : mixin_of T) := ord_refl _ _ (ord m).
+Definition poset_trans_m (T : Type) (m : mixin_of T) := ord_trans _ _ (ord m).
+Definition poset_antisym_m (T : Type) (m : mixin_of T) := ord_antisym _ _ (ord m).
+
+Notation " a ⊑ b " := (op _ a b) (only printing): POrder_scope.
+Notation " a ⊑ b " := (op (mixin _) a b) : POrder_scope.
+Notation " a ⊒ b " := (op (mixin _) b a) (only parsing): POrder_scope.
+Notation " a ⊑{ T } b " := (poset_op T a b) (only parsing) : POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
 
 Notation " a ⊑ b ⊑ c " := (a ⊑ b /\ b ⊑ c): POrder_scope.
@@ -116,10 +128,17 @@ End Exports.
 End Poset.
 Export Poset.Exports.
 
-Add Parametric Relation (po : poset): _ (@Poset.op _ (Poset.class po))
+Add Parametric Relation (po : poset):
+         _ (Poset.op (Poset.mixin po))
     reflexivity proved by (@poset_refl po)
     transitivity proved by (@poset_trans po)
     as poset_le_rel.
+
+Add Parametric Relation (T : Type) (m : Poset.mixin_of T):
+        _ (Poset.op m)
+    reflexivity proved by (poset_refl_m m)
+    transitivity proved by (@poset_trans_m _ m)
+    as poset_le_rel_m.
 
 (** dual poset *)
 
@@ -605,7 +624,6 @@ End ClassDef.
 
 Module Exports.
 
-#[reversible] Coercion base : class_of >-> Poset.class_of.
 #[reversible] Coercion mixin : class_of >-> mixin_of.
 (*
 #[reversible] Coercion sort : type >-> Sortclass.
@@ -667,7 +685,6 @@ Definition class := let: Pack _ c := cT return class_of (sort cT) in c.
 Definition pack b m : type := Pack (@Class T b m).
 
 Definition poset := Poset (sort cT) class.
-
 Definition join_op := join_of class.
 Definition meet_op := meet_of class.
 
@@ -675,7 +692,6 @@ End ClassDef.
 
 
 Module Exports.
-#[reversible] Coercion base : class_of >-> Poset.class_of.
 #[reversible] Coercion mixin : class_of >-> mixin_of.
 (** we remove the direct coercion to force Coq going through all base classes
     one by one.
@@ -690,7 +706,9 @@ Notation Lattice t m := (@pack t _ m).
 
 Notation "[ 'lattice' 'of' T ]" := (T : lattice)
   (at level 0, format "[ 'lattice'  'of'  T ]") : POrder_scope.
+Notation "⊔ˡ" := (join_of _) : POrder_scope.
 Notation "⊔ˡ" := join_op : POrder_scope.
+Notation "⊓ˡ" := (meet_of _) : POrder_scope.
 Notation "⊓ˡ" := meet_op : POrder_scope.
 End Exports.
 
@@ -774,7 +792,7 @@ Definition pack b m : type := Pack (@Class T b m).
 Definition lattice := Lattice (sort cT) class.
 
 
-Definition cpo_mixin : CPO.mixin_of (Lattice.class lattice).
+Definition cpo_mixin : CPO.mixin_of (Poset.class lattice).
 Proof.
     refine (@CPO.Mixin _ _ (join_of class) _).
     move => c. by apply join_prop.
@@ -839,7 +857,6 @@ Module Exports.
 #[reversible] Coercion join_half : essence_of >-> join_essence_of.
 #[reversible] Coercion meet_half : essence_of >-> meet_essence_of.
 #[reversible] Coercion essence : mixin_of >-> essence_of.
-#[reversible] Coercion base : class_of >-> Lattice.class_of.
 #[reversible] Coercion mixin : class_of >-> mixin_of.
 #[reversible] Coercion cpo : type >-> CPO.type.
 Canonical cpo.
@@ -851,7 +868,10 @@ Notation CLattice T m := (@pack T _ m).
 
 Notation "[ 'clattice' 'of' T ]" := (T : clattice)
     (at level 0, format "[ 'clattice'  'of'  T ]") : POrder_scope.
+
+Notation "⊔ᶜˡ" := (join_of _) (only printing): POrder_scope.
 Notation "⊔ᶜˡ" := join_op : POrder_scope.
+Notation "⊓ᶜˡ" := (meet_of _) (only printing): POrder_scope.
 Notation "⊓ᶜˡ" := meet_op : POrder_scope.
 
 End Exports.
@@ -925,7 +945,7 @@ Definition post_fp_s (T : poset) (f : T -> T) : 𝒫(T) := { x | post_fp f x }.
 Lemma fp_in_pre_fp (T : poset) : forall f : T -> T, fp_s f ⊆ pre_fp_s f.
 Proof.
     rewrite /subset /fp_s /fp /pre_fp_s /pre_fp => //= f x ->.
-    by apply poset_refl.
+    by reflexivity.
 Qed.
 
 (* fp_in_post_fp : fp_s f ⊆ post_fp_s f *)
