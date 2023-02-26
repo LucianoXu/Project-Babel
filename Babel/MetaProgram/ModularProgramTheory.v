@@ -181,8 +181,7 @@ Theorem Theorem_Refinement_A (mT : metaType)
             : (prog_porder (SpecMod.RefinementFactory.type L))) ⊑ s 
             <-> P ⊑ wp s Q.
 Proof. split.
-    * ranko. 
-    rewrite /FunPointwiseOrder.fun_ord in H. move: H. ranko.
+    * ranko.
     refine (poset_trans _ (H Q)).
     rewrite /SpecMod.wp.
     replace (decide_oracle (SpecMod.post (P ‖ Q) ⊑ Q))
@@ -191,7 +190,7 @@ Proof. split.
         + symmetry. rewrite decide_oracle_true. ranko. 
             by reflexivity.
     *
-        ranko. rewrite /FunPointwiseOrder.fun_ord. ranko.
+        ranko.
         rewrite /SpecMod.wp.
         destruct (decide_oracle (SpecMod.post (P ‖ Q) ⊑ x)) eqn: E.
         + move: H E. ranko.
