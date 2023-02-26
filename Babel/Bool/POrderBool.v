@@ -105,8 +105,8 @@ Canonical poset_type.
 Canonical lattice_type.
 Canonical cpo_type.
 Canonical clattice_type.
-#[export] Hint Unfold impl : magic_book.
-#[export] Hint Unfold pred_join : magic_book.
+#[global] Hint Unfold impl : magic_book.
+#[global] Hint Unfold pred_join : magic_book.
 
 End CanonicalStruct.
 
