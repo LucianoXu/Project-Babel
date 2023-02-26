@@ -84,8 +84,8 @@ Module CanonicalStruct.
 
 Canonical fun_poset_type.
 Canonical monofun_poset_type.
-#[export] Hint Unfold fun_ord : magic_book.
-#[export] Hint Unfold monofun_ord : magic_book.
+#[global] Hint Unfold fun_ord : magic_book.
+#[global] Hint Unfold monofun_ord : magic_book.
 
 End CanonicalStruct.
 

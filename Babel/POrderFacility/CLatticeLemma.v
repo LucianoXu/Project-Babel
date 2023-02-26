@@ -40,10 +40,7 @@ Definition clattice_join_essence (C : poset) (D : clattice):
     CLattice.join_essence_of [C ↦ᵐ D].
 Proof.
     refine (@CLattice.JoinEssence _ (@join_op C D) _) => //=.
-    porder_level. all: rewrite /FunPointwiseOrder.monofun_ord.
-    all: porder_level.
-    all: rewrite /FunPointwiseOrder.fun_ord //=.
-    all: porder_level.
+    porder_level.
 Defined.
 
 Definition AUX_clattice_type (C : poset) (D : clattice) :=
