@@ -48,7 +48,9 @@ Ltac porder_basic_step_PRE
     | _ => progress porder_basic_move_up_branch
 
     (** reflexivity *)
+    (** See #38 *)
     | |- ?a ⊑ ?a => apply poset_refl
+    | |- Poset.op _ ?a ?a => reflexivity
     end.
 
 Ltac porder_basic_step_POST

@@ -6,7 +6,7 @@ Require Import POrder POrderSet TerminalDogma
 
 Require Import SetFacility 
                 POrderFacility 
-                POrderBool.
+                POrderInstances.
 
 From Babel Require Import Maps.
 
@@ -194,13 +194,6 @@ Proof.
 
     (** prescription *)
     ranko.
-    (*
-    rewrite Bool.andb_true_iff in H0.
-    destruct H0. apply /andP. split. by [].
-    ranko. apply /implyP => HQs. apply H.
-
-    move : HQs. by apply /implyP.
-    *)
 Qed.
 
 Axiom wp_extensionality : forall (p q : specif), wp p = wp q -> p = q.
@@ -336,14 +329,6 @@ Proof.
     move: E.
 
     * ranko.
-    (*
-    apply Bool.andb_true_iff. split; rewrite decide_oracle_true => s;
-    have t := (E s).
-    rewrite Bool.implb_andb_distrib_r in t.
-    rewrite /is_true Bool.andb_true_iff in t. apply t.
-    rewrite Bool.implb_andb_distrib_r in t.
-    rewrite /is_true Bool.andb_true_iff in t. apply t.
-    *)
 
     * ranko.
     
