@@ -28,6 +28,7 @@ Ltac allDecidable_step
     match goal with
     | _ => rewrite decide_oracle_true
     | _ => rewrite decide_oracle_false
+    | |- decide_oracle _ = decide_oracle _ => f_equal
     end.
 
 Ltac allDecidable_step_sealed :=

@@ -1,6 +1,5 @@
 Require Import POrder POrderSet TerminalDogma
                                 ExtraDogma.Extensionality
-                                ExtraDogma.IotaDescription
                                 ExtraDogma.AllDecidable.
 
 
@@ -96,19 +95,13 @@ Proof. ranko. Qed.
 
 
 (** big exists and big forall *)
-Definition EQtf (B : 𝒫(Asn)) (f : Sta -> bool) : Prop :=
-    forall x, f x = true <-> exists' P ∈ B, P x.
+Definition EQtf (B : 𝒫(Asn)) : Asn :=
+    ((fun s => exists' P ∈ B, P s) : (Sta -> bool)).
 #[local] Hint Unfold EQtf : magic_book.
-
-Lemma EQtf_iota_mixin (B : 𝒫(Asn)): Iota.mixin_of (EQtf B).
-Proof. rewrite /Iota.mixin_of /unique.
-Admitted.
-
-Canonical EQtf_iota (B : 𝒫(Asn)) := Iota (EQtf B) (EQtf_iota_mixin B).
 
 
 Lemma Lemma_3_2 (B : 𝒫(Asn)) :
-    ⊔ᶜˡ B = ι(EQtf B).
+    ⊔ᶜˡ B = EQtf B.
 Proof. ranko. Qed.
 
 
@@ -339,7 +332,7 @@ Admitted. (* Qed. *)
 
 Lemma prog_property_3 (p : specif) (prog_p : is_program p) (asnC : chain Asn) :
 
-    p {[ ι(EQtf asnC) ]} = ι(EQtf (wp p [<] asnC)).
+    p {[ (EQtf asnC) ]} = (EQtf (wp p [<] asnC)).
 
 Proof.
     elim: p prog_p.
@@ -348,7 +341,9 @@ Proof.
 
     - ranko.
 
+Abort.
 
+(*
     - ranko. rewrite asn_sub_eq. ranko.
     case E: (ι (EQtf_iota { (x0) [(b) : e], x0 : 
         monotonicfun Sta BoolOrder.clattice_type | x0 ∈ asnC }) x); move: E.
@@ -372,7 +367,7 @@ Proof.
        x0 ∈ asnC }) x) => //=; move: E1 E2.
 
 Abort.
-
+*)
 
 (** Theorem 4.1 *)
 
@@ -535,13 +530,90 @@ Lemma Lemma_4_9 (P : 𝒫(Asn)) (Q : Asn) :
 Proof. ranko. Qed.
 
 
+(*###############################################################*)
+(** An example of refinement *)
+
+(**
+
+Refinement of prescription : P0 ‖ Q0.
+
+P0 : 0 <= i <= n and f = i!
+Q0 : f = n!
+
+A first attempt,
+
+P0 ‖ Q0 ⊑ if i = n -> P0 and n = i ‖ f = i!
+            □ i < n -> P0 and n < i ‖ f = i! fi
+
+        ⊑ if i = n -> f = i! ‖ f = i!
+            □ i < n -> 0 <= i < n and f = i! ‖ f = i! fi
+
+        ⊑ if i = n -> skip
+            □ i < n -> 0 <= i < n and f = i! ‖ 0 <= i <= n and f = i!; 
+                       0 <= i <= n and f = i! ‖ f = i! fi
+
+        (note that 
+
+            0 <= i < n and f = i! ‖ 0 <= i <= n and f = i! ⊑ skip,
+
+        but this will result in a unterminating program)
 
 
+        ⊑ if i = n -> skip
+            □ i < n -> 0 <= i < n and f = i! ‖ 0 <= i <= n and f = (i-1)!; 
+                       0 <= i <= n and f = (i-1)! ‖ 0 <= i <= n and f = i!; 
+                       0 <= i <= n and f = i! ‖ f = i! fi
 
+        ⊑ if i = n -> skip
+            □ i < n -> i := i + 1; f := f * i;
+                       P0 ‖ Q0 fi
+
+Then we consider the recursion : 
+
+        f := if i = n -> skip
+            □ i < n -> i := i + 1; f := f * i; f fi.
+
+To prove 
+        
+        P0 ‖ Q0 ⊑ f
+
+using Theorem 4.11, we need the variant function
+
+        t := n - i.
+
+Here's the proof : 
+
+P0 and n - i = λ ‖ Q0
+
+    = 0 <= i <= n and f = i! and n - i = λ ‖ f = n!
+
+    ⊑ if i = n -> P0 and n - i = λ and n = i ‖ f = i!
+        □ i < n -> P0 and n - i = λ and i < n ‖ f = i! fi
+
+    ⊑ if i = n -> skip
+        □ i < n -> 0 <= i < n and n - i = λ and f = i! ‖ f = i! fi
+
+    ⊑ if i = n -> skip
+        □ i < n -> 0 <= i < n and n - i = λ and f = i! ‖ 0 <= i <= n and n - i = λ - 1 and f = (i-1)!;
+                   0 <= i <= n and n - i = λ - 1 and f = (i-1)! ‖ 0 <= i <= n and n - i = λ - 1 and f = i!
+                   0 <= i <= n and n - i = λ - 1 and f = i! ‖ f = i! fi
+
+    ⊑ if i = n -> skip
+        □ i < n -> i := i + 1; f := f * i;
+                   P0 and n - i = λ - 1 ‖ Q0 fi
+
+    ⊑ if i = n -> skip
+        □ i < n -> i := i + 1; f := f * i;
+                   P0 and n - i < λ ‖ Q0 fi
+*)
 
 
     
         
 
 
-    
+f : [ if x = 0 -> skip 
+       □ x = 0 -> x := 1 fi ; f ]
+
+f : [ if x > 0 -> x := x - 1 
+       □ x > 0 -> x := x + 1 fi ; f ]
