@@ -79,7 +79,8 @@ Ltac Alpha_step
             (** Type: [ltac]. The step tactic of top level. 
                         (without parameters) *)
 
-        (** args : some extra arguments *)
+        (** args : some extra arguments 
+                Note : we can use [Variant] to define enumerating arguments. *)
         :=
     match goal with
 

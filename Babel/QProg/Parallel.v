@@ -819,7 +819,7 @@ Ltac deSem_step_sealed
 
 Ltac deSem_killer := 
     all_move_down;
-    repeat deSem_step_sealed integer:(0) 100 integer:(0).
+    repeat deSem_step_sealed LAZY 100 LAZY.
 
 (*##################################################################*)
 

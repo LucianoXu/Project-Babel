@@ -3,3 +3,8 @@ _build
 playground.v
 *.vpp.*
 *.vpp
+
+# forl dependent graph
+graph.dpd
+graph.dot
+graph.svg

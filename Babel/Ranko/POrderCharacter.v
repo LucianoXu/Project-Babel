@@ -154,4 +154,4 @@ Ltac porder_step_sealed
         porder_step top_step split_mode general_apply_depth eexists_mode.
 
 Ltac porder_level := 
-    repeat porder_step_sealed integer:(0) 100 integer:(0).
+    repeat porder_step_sealed LAZY 100 LAZY.

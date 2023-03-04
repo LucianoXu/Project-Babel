@@ -55,12 +55,6 @@ Ltac ranko
         := 
         repeat ranko_step split_mode general_apply_depth eexists_mode.
 
-Tactic Notation "ranko" 
-        integer(split_mode) 
-        constr(general_apply_depth)
-        integer(eexists_mode)
-        := 
-        ranko split_mode general_apply_depth eexists_mode.
 
-Tactic Notation "ranko" := ranko 0 7 0.
+Tactic Notation "ranko" := ranko LAZY 7 LAZY.
 

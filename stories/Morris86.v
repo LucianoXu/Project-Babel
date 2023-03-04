@@ -606,14 +606,3 @@ P0 and n - i = λ ‖ Q0
         □ i < n -> i := i + 1; f := f * i;
                    P0 and n - i < λ ‖ Q0 fi
 *)
-
-
-    
-        
-
-
-f : [ if x = 0 -> skip 
-       □ x = 0 -> x := 1 fi ; f ]
-
-f : [ if x > 0 -> x := x - 1 
-       □ x > 0 -> x := x + 1 fi ; f ]

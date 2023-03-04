@@ -130,8 +130,8 @@ Ltac set_step_sealed
         set_step top split_mode general_apply_depth eexists_mode.
 
 Ltac set_level := 
-    repeat (set_step_sealed integer:(0) 100 integer:(0)).
+    repeat (set_step_sealed LAZY 100 LAZY).
 
 Ltac set_level_full := 
-    repeat (set_step_sealed integer:(2) 100 integer:(0)).
+    repeat (set_step_sealed AGGRESSIVE 100 LAZY).
 

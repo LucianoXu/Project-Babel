@@ -69,19 +69,24 @@ Create HintDb magic_book.
 Ltac check_and_not_both_have_evar :=
     assert_fails (split; instantiate (1 := _)).
 
-    
+
+(** mode arguments for central step *)
+Variant Ranko_central_mode :=
+| LAZY | PASSIVE | AGGRESSIVE.
+
+
 (** progress guaranteed *)
 Ltac central_step
         top_step        (* [ltac], the level-specific tactic 
                                 ( without parameters )*)
-        split_mode      (* [integer] controls the behaviour of split branch
-                                integer:(0) : unsafe split
+        split_mode      (* [Ranko_central_mode] 
+                                controls the behaviour of split branch
+                                LAZY : unsafe split
                                         unsafe, but much quicker
-                                integer:(1) : passive split
+                                PASSIVE : passive split
                                         safe but not incomplete
-                                integer:(2) : aggressive split
+                                AGGRESSIVE : aggressive split
                                         safe and complete, but may be slower
-                                other value : do not use split
                         *)
         general_apply_depth     
                         (* [Coq nat] constrols the searching depth of general
@@ -91,11 +96,10 @@ Ltac central_step
                                 This provents Ranko from a early eexists, which
                                 can be unsafe.
 
-                                integer:(0) : unsafe eexists
+                                LAZY : unsafe eexists
                                         unsafe, but much quicker
-                                integer:(1) : aggressive eexists
+                                AGGRESSIVE : aggressive eexists
                                         safe and complete, but may be slower
-                                other value : do not use eexists 
                         *)
         :=
 
@@ -112,53 +116,44 @@ Ltac central_step
     (** path selecting *)
     (** [and] goal*)
     | |- (_ /\ _) => 
-                    tryif guard split_mode = 0 
+                    match split_mode with
         (** >>>>>> split_mode: unsafe split *)
-                    then
-                        split
-
-                    else tryif guard split_mode = 1
-
+                    | LAZY => split
+                    
         (** >>>>>> split_mode: passive split*)
-                    then
+                    | PASSIVE =>
+
                         split; by repeat 
                                 top_step split_mode general_apply_depth eexists_mode
-                    
-                    else tryif guard split_mode = 2
 
         (** >>>>>> split_mode: aggressive split *)
-                    then
+                    | AGGRESSIVE => 
     
         (** If the [and] goal has at least one side without any exsitential 
             variable, we can directly split it. *)
-                        (check_and_not_both_have_evar; split)
+                            (check_and_not_both_have_evar; split)
         (** If the [and] goal has exsitential variables, the tactic must solve 
             the goal after [split], otherwise this [split] action can be unsafe. *)
-                    || (split; by repeat top_step split_mode general_apply_depth eexists_mode)
-                    || (split; last first; 
-                            by repeat top_step split_mode general_apply_depth eexists_mode)
-                    
-                    else
-        (** >>>>>> other value: do not use split *)
-                        fail
+                        || (split; by repeat top_step split_mode general_apply_depth eexists_mode)
+                        || (split; last first; 
+                                by repeat top_step split_mode general_apply_depth eexists_mode)
+                    end
                     
     | |- _ <-> _ => unfold iff
 
     (** TODO #26 *)
     | |- exists i, _ => 
-                    tryif guard eexists_mode = 0
+                    match eexists_mode with
         (** >>>>>> eexists_mode: unsafe eexists *)
-                    then
-                        eexists
+                    | LAZY => eexists
 
-                    else tryif guard eexists_mode = 1
         (** >>>>>> eexists_mode: aggressive eexists *)
-                    then
+                    | AGGRESSIVE => 
                         eexists; by repeat top_step split_mode general_apply_depth eexists_mode
 
         (** >>>>>> other value: do not use eexists *)
-                    else
-                        fail
+                    | _ => fail
+                    end
 
     (** [or] goal, complete branch *)
     | |- (_ \/ _) =>
