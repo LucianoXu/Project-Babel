@@ -4,7 +4,7 @@
 From Babel Require Import TerminalDogma 
                           ExtraDogma.Extensionality.
 
-From Babel Require Export SetFacility.
+From Babel Require Import SetFacility.
 
 From Coq Require Import Relations Classical.
 
@@ -52,6 +52,70 @@ Proof. rewrite /dualRel. by apply functional_extensionality. Qed.
 
 
 
+(** Preorder *)
+Module Preorder.
+
+Section ClassDef.
+
+Structure mixin_of (T : Type) := Mixin { op : relation T; pre_ord : preorder T op }.
+Definition class_of := mixin_of.
+
+Structure type := Pack { sort; _ : class_of sort }.
+
+Local Coercion sort : type >-> Sortclass.
+
+Variables (cT : type).
+
+Definition class := 
+    let: Pack _ c := cT return class_of cT in c.
+
+Definition mixin :=
+    let: Pack _ c := cT return mixin_of cT in c.
+
+Definition pack := Pack.
+
+End ClassDef.
+
+Module Exports.
+
+#[reversible] Coercion sort : type >-> Sortclass.
+
+Notation preorder := type.
+Notation Preorder T m := (@pack T m).
+
+Notation "[ 'preorder' 'of' T ]" := (T : preorder)
+  (at level 0, format "[ 'preorder'  'of'  T ]") : POrder_scope.
+
+Notation preorder_op T := (op (mixin T)).
+Definition preorder_order (T : type) := pre_ord (mixin T).
+Definition preorder_refl (T : type) := preord_refl _ _ (pre_ord (mixin T)).
+Definition preorder_trans (T : type) := preord_trans _ _ (pre_ord (mixin T)).
+(*
+Definition preorder_order_m (T : Type) (m : mixin_of T) := pre_ord m.
+Definition poset_refl_m (T : Type) (m : mixin_of T) := ord_refl _ _ (ord m).
+Definition poset_trans_m (T : Type) (m : mixin_of T) := ord_trans _ _ (ord m).
+Definition poset_antisym_m (T : Type) (m : mixin_of T) := ord_antisym _ _ (ord m).
+
+Notation " a ⊑ b " := (op _ a b) (only printing): POrder_scope.
+Notation " a ⊑ b " := (op (mixin _) a b) : POrder_scope.
+Notation " a ⊒ b " := (op (mixin _) b a) (only parsing): POrder_scope.
+Notation " a ⊑{ T } b " := (ord_op T a b) (only parsing) : POrder_scope.
+Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
+
+Notation " a ⊑ b ⊑ c " := (a ⊑ b /\ b ⊑ c): POrder_scope.
+
+(*
+Notation "x  ⊑ y  ⊑ ..  ⊑ z  ⊑ t" :=
+  ((fun b A a => a ⊑ b /\ A b) y .. ((fun b A a => a ⊑ b /\ A b) z (fun b => b ⊑ t)) .. x)
+  (at level 70, y at next level, z at next level, t at next level).
+*)
+*)
+End Exports.
+
+End Preorder.
+Export Preorder.Exports.
+
+
 
 (** Poset, partial-order set.
     Here we consider every order relation to be a poset.
@@ -91,6 +155,7 @@ End ClassDef.
 Module Exports.
 
 #[reversible] Coercion sort : type >-> Sortclass.
+Coercion class : type >-> class_of.
 
 Notation poset := type.
 Notation Poset T m := (@pack T m).
@@ -98,7 +163,9 @@ Notation Poset T m := (@pack T m).
 Notation "[ 'poset' 'of' T ]" := (T : poset)
   (at level 0, format "[ 'poset'  'of'  T ]") : POrder_scope.
 
-Notation poset_op T := (op (mixin T)).
+(** The operator wrapping of order level. *)  
+Definition ord_op T := (op (class T)).
+
 Definition poset_order (T : type) := ord (mixin T).
 Definition poset_refl (T : type) := ord_refl _ _ (ord (mixin T)).
 Definition poset_trans (T : type) := ord_trans _ _ (ord (mixin T)).
@@ -112,7 +179,7 @@ Definition poset_antisym_m (T : Type) (m : mixin_of T) := ord_antisym _ _ (ord m
 Notation " a ⊑ b " := (op _ a b) (only printing): POrder_scope.
 Notation " a ⊑ b " := (op (mixin _) a b) : POrder_scope.
 Notation " a ⊒ b " := (op (mixin _) b a) (only parsing): POrder_scope.
-Notation " a ⊑{ T } b " := (poset_op T a b) (only parsing) : POrder_scope.
+Notation " a ⊑{ T } b " := (ord_op T a b) (only parsing) : POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
 
 Notation " a ⊑ b ⊑ c " := (a ⊑ b /\ b ⊑ c): POrder_scope.

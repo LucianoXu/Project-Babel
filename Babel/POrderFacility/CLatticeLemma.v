@@ -1,7 +1,8 @@
 (** * CLatticeLemma.v : some lemmas about complete lattice. *)
 
 From Babel Require Import TerminalDogma 
-                          ExtraDogma.Extensionality.
+                          ExtraDogma.Extensionality
+                          SetFacility.
 
 From Babel Require Export POrder DerivedPOrder.
 

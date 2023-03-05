@@ -186,7 +186,7 @@ Export SubsetOrder.CanonicalStruct.
 
 Add Parametric Morphism {H : HilbertSpace} : (@add_set H)
     with signature 
-    (@poset_op _) ==> (@poset_op _) ==> (@poset_op _) as add_mor_le.
+    (@ord_op _) ==> (@ord_op _) ==> (@ord_op _) as add_mor_le.
 Proof.
     rewrite /add_set => x y Hxy a b Hab //=.
     apply bigU_mapR_mor_sub => //.
@@ -202,8 +202,8 @@ Proof. move => a b c d Hac Hbd. rewrite Hac Hbd. by reflexivity. Qed.
 
 Add Parametric Morphism {H : HilbertSpace} : (@scalar_convex_combS H)
     with signature 
-        eq ==> (@poset_op _) ==> (@poset_op _) 
-            ==> (@poset_op _) as convex_comb_mor_le.
+        eq ==> (@ord_op _) ==> (@ord_op _) 
+            ==> (@ord_op _) as convex_comb_mor_le.
 Proof.
     rewrite /scalar_convex_combS => p x y Hxy a b Hab //=.
     apply bigU_mapR_mor_sub => //.
@@ -217,8 +217,8 @@ Lemma PDensetOrder_cv_comb_split {H : HilbertSpace} :
 Proof. move => p a b c d Hac Hbd. by apply convex_comb_mor_le. Qed.
 
 Add Parametric Morphism {H : HilbertSpace} : (@union_set H)
-    with signature (@poset_op _) ==> (@poset_op _) 
-                    ==> (@poset_op _) as union_mor_le.
+    with signature (@ord_op _) ==> (@ord_op _) 
+                    ==> (@ord_op _) as union_mor_le.
 Proof. 
     rewrite /union_set => x y Hxy a b Hab.
     by apply union_mor_sub.

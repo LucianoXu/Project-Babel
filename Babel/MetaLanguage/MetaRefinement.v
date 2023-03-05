@@ -2,6 +2,7 @@
 From Babel Require Import TerminalDogma 
                           ExtraDogma.Extensionality
                           ExtraDogma.AllDecidable
+                          SetFacility
                           POrderFacility
                           MetaLanguage.MetaTheory.
 
@@ -23,6 +24,9 @@ Import BackwardSemModel.
 Import FunPointwiseOrder.CanonicalStruct.
 
 (*
+
+    NOTE : THIS SHOULD BE A PRE ORDER.
+
 (** wp extensionality in the meta level *)
 Axiom wp_extensionality :
         forall (mT : metaType) (L : language mT) (p q : syntax L), 
@@ -98,7 +102,6 @@ Export SpecMod.Exports.
 
 
 
-
 Theorem Theorem_Refinement_A (mT : metaType) 
         (L : language mT) (s : syntax L) (P Q : Asn mT) : 
         wp (P ‖ Q : syntax (SpecMod.type _)) ⊑ wp (s)
@@ -107,8 +110,8 @@ Proof. split.
     * ranko. refine (poset_trans _ (H Q)).
         rewrite /SpecMod.wp.
         replace (decide_oracle (SpecMod.post (P ‖ Q) ⊑ Q)) with true.
-        by reflexivity.
-        ranko.
+        by reflexivity. 
+        ranko. by apply poset_refl_m.
     * ranko. rewrite /SpecMod.wp.
         case E: (decide_oracle (SpecMod.post (P ‖ Q) ⊑ x)); move : E.
         + ranko. apply (wp_monotonic s) in E.

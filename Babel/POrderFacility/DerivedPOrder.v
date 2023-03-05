@@ -1,7 +1,8 @@
 (** * DerivedPOrder.v : some derived partial orders *)
 
 From Babel Require Import TerminalDogma 
-                          ExtraDogma.Extensionality.
+                          ExtraDogma.Extensionality
+                          SetFacility.
 
 From Babel Require Export POrder.
 

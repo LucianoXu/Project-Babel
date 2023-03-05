@@ -8,7 +8,7 @@ From Babel Require Import TerminalDogma
 
 From Coq Require Import Relations Classical Arith.
 
-From Babel Require Export POrderFacility.
+From Babel Require Export SetFacility POrderFacility.
 
 From Babel.Ranko Require Import LogicCharacter SetCharacter.
 
@@ -78,7 +78,7 @@ Proof.
     rewrite /upper_bound => a Hain Ha //=.
     apply (iota_spec (pred_join A)). by rewrite -Ha.
 
-    rewrite /upper_bound //= => b. rewrite /impl => Ha.
+    rewrite /upper_bound /ord_op //= => b. rewrite /impl => Ha.
     replace (is_true (ι (pred_join_iota A))) with (true ∈ A).
     2: apply propositional_extensionality; apply (iota_spec (pred_join A)).
     move => HA. by apply (Ha true).

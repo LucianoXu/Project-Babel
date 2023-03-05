@@ -31,6 +31,14 @@ Ltac all_move_down :=
     | H : _ |- _ => generalize dependent H 
     end.
 
+Ltac def_expand def_item :=
+    (** try unfold in the goal first *)
+    rewrite /def_item ||
+    (** try unfold in one hypothesis *)
+    match goal with
+    | H : _ |- _ => move: H; progress rewrite /def_item
+    end.
+
 
 
 (*################################################################################*)
@@ -53,7 +61,6 @@ Ltac precond_break_branch :=
 Ltac terminate := 
     by match goal with
     | H: False |- _ => destruct H
-    | H: ?A |- ?A => apply H
     | H1: ?A, H2: ~?A |- _ => destruct (H2 H1)
     | _ => by []
     end.

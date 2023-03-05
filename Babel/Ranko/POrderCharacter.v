@@ -119,8 +119,6 @@ Ltac porder_step_PRE
     | |- @Poset.op (CLattice.sort ?L) _ _ _ =>
         apply (CLattice.join_prop (CLattice.class L));
         by repeat top_step split_mode general_apply_depth eexists_mode
-
-    | _ => porder_basic_step_PRE top_step split_mode general_apply_depth eexists_mode
     end.
 
 Ltac porder_step_POST
@@ -130,7 +128,6 @@ Ltac porder_step_POST
         eexists_mode
         :=
     match goal with
-    | _ => porder_basic_step_POST top_step split_mode general_apply_depth eexists_mode
     | _ => rewrite monotonicfun_eqP
     end.
 
@@ -142,7 +139,7 @@ Ltac porder_step
         eexists_mode
         :=
     porder_step_PRE top_step split_mode general_apply_depth eexists_mode
-    || set_step top_step split_mode general_apply_depth eexists_mode
+    || porder_basic_step top_step split_mode general_apply_depth eexists_mode
     || porder_step_POST top_step split_mode general_apply_depth eexists_mode.
 
 Ltac porder_step_sealed 

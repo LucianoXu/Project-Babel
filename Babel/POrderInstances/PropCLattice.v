@@ -3,7 +3,8 @@
 *)
 
 From Babel Require Import TerminalDogma
-                            POrder.
+                            POrder
+                            SetFacility.
 From Coq Require Import PropExtensionality.
 
 From Babel.Ranko Require Import POrderCharacter.

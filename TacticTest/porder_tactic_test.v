@@ -3,7 +3,7 @@
 From Babel Require Import TerminalDogma 
                           ExtraDogma.Extensionality.
 
-From Babel Require Export POrderFacility.
+From Babel Require Export SetFacility POrderFacility.
 
 From Babel Require Import Ranko.
 
