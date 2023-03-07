@@ -24,6 +24,8 @@ Ltac porder_basic_simpl_branch :=
         || rewrite /least
         || rewrite /supremum
         || rewrite /infimum
+        || rewrite /ord_op
+
         ) => //=.
 
 Ltac porder_basic_move_up_branch := 
@@ -49,8 +51,9 @@ Ltac porder_basic_step_PRE
 
     (** reflexivity *)
     (** See #38 *)
-    | |- ?a ⊑ ?a => apply poset_refl
+    | |- ?a ⊑ ?a => reflexivity
     | |- Poset.op _ ?a ?a => reflexivity
+    
     end.
 
 Ltac porder_basic_step_POST
@@ -60,9 +63,10 @@ Ltac porder_basic_step_POST
         eexists_mode
         :=
     match goal with
-    | H : forall a, _ -> ?b ⊑ _ |- ?b ⊑ _ => 
+
+    | H : forall a, _ -> @Poset.op _ _ ?b _ |- @Poset.op _ _ ?b _ => 
         eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
-    | H : forall a, _ -> _ ⊑ ?c |- _ ⊑ ?c => 
+    | H : forall a, _ -> @Poset.op _ _ _ ?c |- @Poset.op _ _ _ ?c => 
         eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
 
     (** anti-symmetry *)
@@ -119,6 +123,11 @@ Ltac porder_step_PRE
     | |- @Poset.op (CLattice.sort ?L) _ _ _ =>
         apply (CLattice.join_prop (CLattice.class L));
         by repeat top_step split_mode general_apply_depth eexists_mode
+
+    | _ =>
+        apply CLattice.join_prop;
+        by repeat top_step split_mode general_apply_depth eexists_mode
+
     end.
 
 Ltac porder_step_POST

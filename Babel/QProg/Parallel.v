@@ -532,6 +532,7 @@ Proof.
     move => -> ->. by rewrite deSem_em.
     move => _ ->. by rewrite deSem_em.
     move => HB HA. rewrite HB //= in HAinB. 
+        rewrite /ord_op //= in HAinB.
         rewrite subset_emP in HAinB. by destruct (HA HAinB).
 
     move => HB HA.

@@ -14,9 +14,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-(** Reserved Notations *)
-Declare Scope POrder_scope.
-Open Scope POrder_scope.
 
 
 Reserved Notation " a ⊑ b " (at level 60).
@@ -51,6 +48,9 @@ Lemma dual_dualRel {T : Type} (R1 : relation T) :
 Proof. rewrite /dualRel. by apply functional_extensionality. Qed.
 
 
+Declare Scope PreOrder_scope.
+Delimit Scope PreOrder_scope with PreOrd.
+Open Scope PreOrder_scope.
 
 (** Preorder *)
 Module Preorder.
@@ -84,36 +84,40 @@ Notation preorder := type.
 Notation Preorder T m := (@pack T m).
 
 Notation "[ 'preorder' 'of' T ]" := (T : preorder)
-  (at level 0, format "[ 'preorder'  'of'  T ]") : POrder_scope.
+  (at level 0, format "[ 'preorder'  'of'  T ]") : PreOrder_scope.
 
-Notation preorder_op T := (op (mixin T)).
+Definition preord_op T := (op (class T)).
+
 Definition preorder_order (T : type) := pre_ord (mixin T).
 Definition preorder_refl (T : type) := preord_refl _ _ (pre_ord (mixin T)).
 Definition preorder_trans (T : type) := preord_trans _ _ (pre_ord (mixin T)).
-(*
+
 Definition preorder_order_m (T : Type) (m : mixin_of T) := pre_ord m.
-Definition poset_refl_m (T : Type) (m : mixin_of T) := ord_refl _ _ (ord m).
-Definition poset_trans_m (T : Type) (m : mixin_of T) := ord_trans _ _ (ord m).
-Definition poset_antisym_m (T : Type) (m : mixin_of T) := ord_antisym _ _ (ord m).
+Definition poset_refl_m (T : Type) (m : mixin_of T) := preord_refl _ _ (pre_ord m).
+Definition poset_trans_m (T : Type) (m : mixin_of T) := preord_trans _ _ (pre_ord m).
 
-Notation " a ⊑ b " := (op _ a b) (only printing): POrder_scope.
-Notation " a ⊑ b " := (op (mixin _) a b) : POrder_scope.
-Notation " a ⊒ b " := (op (mixin _) b a) (only parsing): POrder_scope.
-Notation " a ⊑{ T } b " := (ord_op T a b) (only parsing) : POrder_scope.
-Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
+Notation " a ⊑ b " := (op _ a b) (only printing): PreOrder_scope.
+Notation " a ⊑ b " := (preord_op a b) : PreOrder_scope.
+Notation " a ⊒ b " := (preord_op b a) (only parsing): PreOrder_scope.
+Notation " a ⊑{ T } b " := (preord_op T a b) (only parsing) : PreOrder_scope.
+Notation " a ⋢ b " := (~ a ⊑ b) : PreOrder_scope.
 
-Notation " a ⊑ b ⊑ c " := (a ⊑ b /\ b ⊑ c): POrder_scope.
+Notation " a ⊑ b ⊑ c " := (a ⊑ b /\ b ⊑ c): PreOrder_scope.
 
 (*
 Notation "x  ⊑ y  ⊑ ..  ⊑ z  ⊑ t" :=
   ((fun b A a => a ⊑ b /\ A b) y .. ((fun b A a => a ⊑ b /\ A b) z (fun b => b ⊑ t)) .. x)
   (at level 70, y at next level, z at next level, t at next level).
 *)
-*)
+
 End Exports.
 
 End Preorder.
 Export Preorder.Exports.
+
+
+Declare Scope POrder_scope.
+Open Scope POrder_scope.
 
 
 
@@ -177,8 +181,8 @@ Definition poset_trans_m (T : Type) (m : mixin_of T) := ord_trans _ _ (ord m).
 Definition poset_antisym_m (T : Type) (m : mixin_of T) := ord_antisym _ _ (ord m).
 
 Notation " a ⊑ b " := (op _ a b) (only printing): POrder_scope.
-Notation " a ⊑ b " := (op (mixin _) a b) : POrder_scope.
-Notation " a ⊒ b " := (op (mixin _) b a) (only parsing): POrder_scope.
+Notation " a ⊑ b " := (ord_op a b) : POrder_scope.
+Notation " a ⊒ b " := (ord_op b a) (only parsing): POrder_scope.
 Notation " a ⊑{ T } b " := (ord_op T a b) (only parsing) : POrder_scope.
 Notation " a ⋢ b " := (~ a ⊑ b) : POrder_scope.
 
@@ -194,6 +198,12 @@ End Exports.
 
 End Poset.
 Export Poset.Exports.
+
+Add Parametric Relation (po : poset):
+        _ (@ord_op po)
+    reflexivity proved by (@poset_refl po)
+    transitivity proved by (@poset_trans po)
+    as poset_le_rel_op.
 
 Add Parametric Relation (po : poset):
          _ (Poset.op (Poset.mixin po))

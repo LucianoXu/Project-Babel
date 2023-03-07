@@ -6,12 +6,13 @@ From Babel Require Import TerminalDogma
                           POrderFacility
                           MetaLanguage.MetaTheory.
 
+From Coq Require Import Relations Classical.
+
 From Babel Require Import Ranko
                             ExtensionalityCharacter
                             AllDecidableCharacter
                             ClassicalCharacter.
 
-From Coq Require Import Relations Classical.
 
 
 Set Implicit Arguments.
@@ -23,34 +24,21 @@ Coercion decide_oracle : Sortclass >-> bool.
 Import BackwardSemModel.
 Import FunPointwiseOrder.CanonicalStruct.
 
+
 (*
-
-    NOTE : THIS SHOULD BE A PRE ORDER.
-
-(** wp extensionality in the meta level *)
-Axiom wp_extensionality :
-        forall (mT : metaType) (L : language mT) (p q : syntax L), 
-            wp p = wp q -> p = q.
-
-
-Lemma prog_porderMixin (mT : metaType) (L : language mT): 
-    Poset.mixin_of (syntax L).
+Lemma prog_preorderMixin (mT : metaType) (L : language mT): 
+    Preorder.mixin_of (syntax L).
 Proof.
-    refine (@Poset.Mixin (syntax L) (fun s1 s2 => wp s1 ⊑ wp s2) _).
+    refine (@Preorder.Mixin (syntax L) (fun s1 s2 => wp s1 ⊑ wp s2) _).
     constructor.
-    rewrite /reflexive. ranko. by reflexivity.
+    rewrite /reflexive. ranko.
     rewrite /transitive. ranko. by transitivity (wp y x0).
-    rewrite /antisymmetric. ranko.
-        apply wp_extensionality. 
-        apply poset_antisym. ranko. ranko.
 Defined.
 
-Canonical prog_porder (mT : metaType) (L : language mT) := 
-    Poset (syntax L) (@prog_porderMixin mT L).
+Canonical prog_preorder (mT : metaType) (L : language mT) := 
+    Preorder (syntax L) (@prog_preorderMixin mT L).
+
 *)
-
-
-
 
 
 Module SpecMod.
@@ -111,7 +99,7 @@ Proof. split.
         rewrite /SpecMod.wp.
         replace (decide_oracle (SpecMod.post (P ‖ Q) ⊑ Q)) with true.
         by reflexivity. 
-        ranko. by apply poset_refl_m.
+        ranko.
     * ranko. rewrite /SpecMod.wp.
         case E: (decide_oracle (SpecMod.post (P ‖ Q) ⊑ x)); move : E.
         + ranko. apply (wp_monotonic s) in E.

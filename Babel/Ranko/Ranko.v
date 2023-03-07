@@ -32,6 +32,7 @@ Ltac ranko_step
     in match goal with
 
     | _ => porder_step_PRE top split_mode general_apply_depth eexists_mode
+    | _ => porder_basic_step_PRE top split_mode general_apply_depth eexists_mode
         | _ => set_step_PRE top split_mode general_apply_depth eexists_mode
             | _ => logic_branch top split_mode general_apply_depth eexists_mode
             | _ => iotaDescription_step ltac:(top split_mode general_apply_depth eexists_mode)
@@ -41,6 +42,7 @@ Ltac ranko_step
             
             | _ => central_step top split_mode general_apply_depth eexists_mode
         | _ => set_step_POST top split_mode general_apply_depth eexists_mode
+    | _ => porder_basic_step_POST top split_mode general_apply_depth eexists_mode
     | _ => porder_step_POST top split_mode general_apply_depth eexists_mode
     | H : _ |- _ => by apply H
     end.
