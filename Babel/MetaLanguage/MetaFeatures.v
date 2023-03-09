@@ -54,10 +54,9 @@ Lemma ax_sys_complete (mT : metaType) :
     forall (p : syntax mT) (P Q : Asn mT),
         P ⊑ wp p Q -> ax_sys P p Q.
 Proof.
-    move => [] P Q.
-    rewrite /wp => H.
-Qed.
+Abort.
 
+(*  
 Definition type (mT : metaType) : language mT := {|
     VeriMod.syntax := syntax mT;
     VeriMod.wp := @wp mT;
@@ -66,8 +65,9 @@ Definition type (mT : metaType) : language mT := {|
     VeriMod.ax_sys_sound := @ax_sys_sound mT;
     VeriMod.ax_sys_complete := @ax_sys_complete mT;
 |}.
+*)
 
-
+End Skip.
 
 
 

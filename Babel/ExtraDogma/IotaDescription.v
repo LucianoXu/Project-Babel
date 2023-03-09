@@ -12,7 +12,7 @@ Module Iota.
 Section ClassDef.
 
 Definition mixin_of (T : Type) (P : T -> Prop) := exists! x, P x.
-Definition class_of := mixin_of.
+Notation class_of := mixin_of (only parsing).
 
 Structure type (T : Type) := Pack {
     obj : T -> Prop;
@@ -60,7 +60,7 @@ Proof.
     move <-. by apply iota_spec.
 
     move : (Iota.class P).
-    rewrite /Iota.class_of /Iota.mixin_of //= => [] [] x [] HPx H.
+    rewrite /Iota.mixin_of //= => [] [] x [] HPx H.
     move => HPt.
     transitivity x.
     symmetry. apply H. by apply iota_spec.

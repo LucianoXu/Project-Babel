@@ -33,7 +33,7 @@ Structure type := Pack {
 Module Exports.
 Coercion sort : type >-> Sortclass.
 Notation iType := type.
-Notation IType t w := (Pack t w).
+Notation IType t w := (@Pack t w).
 Notation "[ 'iType' 'of' T ]" := ([get t | sort t ~ T : Type])
   (at level 0, format "[ 'iType'  'of'  T ]") : TerminalDogma_scope.
 Notation "[ 'witness' 'of' T ]" := (witness [iType of T])
@@ -43,3 +43,10 @@ End Exports.
 
 End IType.
 Export IType.Exports.
+
+Lemma iType_inhabited (T : iType) : (inhabited (IType.sort T)).
+Proof. constructor. apply T. Qed.
+
+Definition fun_iType (A : Type) (B : iType) := 
+    IType (A -> B) (fun _ => [witness of B]).
+Canonical fun_iType. 
