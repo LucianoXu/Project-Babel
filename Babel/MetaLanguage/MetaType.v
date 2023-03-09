@@ -35,6 +35,7 @@ Module Exports.
 
 Coercion sort : class >-> iType.
 
+Notation Asn := sort.
 Notation asnMT := class.
 Notation AsnMT s := (Class s).
 
@@ -61,6 +62,7 @@ Module Exports.
 
 Coercion sort : class >-> iType.
 
+Notation Stt := sort.
 Notation sttMT := class.
 Notation SttMT s := (Class s).
 
@@ -86,19 +88,19 @@ Record mixin_of (Stt : sttMT) (Asn : asnMT) := Mixin {
 }.
 
 Record class := Class {
-    Stt : sttMT;
-    Asn : asnMT;
-    mixin : mixin_of Stt Asn;
+    base_Stt : sttMT;
+    base_Asn : asnMT;
+    mixin : mixin_of base_Stt base_Asn;
 }.
 
 End ClassDef.
 
 Module Exports.
 
+Coercion base_Stt : class >-> sttMT.
+Coercion base_Asn : class >-> asnMT.
 Coercion mixin : class >-> mixin_of.
 
-Notation Stt := Stt.
-Notation Asn := Asn.
 Notation SVal := SVal.
 Notation sat_eval := sat_eval.
 
@@ -218,7 +220,7 @@ Module BwdMT.
 Section ClassDef.
 
 Record mixin_of (comb : baseMT) := Mixin {
-    asn_poset_mixin : Poset.mixin_of (AsnMT.sort (Asn comb));
+    asn_poset_mixin : Poset.mixin_of (Asn comb);
     asn_cpo_mixin : CPO.mixin_of (Poset _ asn_poset_mixin);
     sat_eval_Asn_monotonicity : 
         forall (P Q : Poset _ asn_poset_mixin), 
