@@ -9,8 +9,8 @@ From Babel Require Import Ranko
                             ExtensionalityCharacter
                             ClassicalCharacter.
 
-From Babel.MetaLanguage Require Import Notations
-                                        MetaType.
+From Babel Require Import MetaLanguage.Notations
+                            MetaType.
 
 From Coq Require Import Relations Classical.
 
@@ -19,22 +19,21 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Definition bwd_dual (mT : baseMT) 
-    (f : Stt mT -> Stt mT) (g : Asn mT -> Asn mT) : Prop :=
-        forall (P : Asn mT) (s : Stt mT), (g P) ∙ s ⊑ P ∙ (f s).
+Section Meta_Duality_Theories.
 
-Definition fwd_dual (mT : baseMT)
-    (g : Asn mT -> Asn mT) (f : Stt mT -> Stt mT) : Prop :=
-        forall (P : Asn mT) (s : Stt mT), P ∙ (f s) ⊑ (g P) ∙ s.
 
-Definition bidual (mT : baseMT) 
-    (f : Stt mT -> Stt mT) (g : Asn mT -> Asn mT) : Prop :=
-        bwd_dual f g /\ fwd_dual g f.
+Definition meta_dual (𝑷 : parity) (mT : baseMT 𝑷) 
+    (f : FType mT -> FType mT) (g : BType mT -> BType mT) : Prop :=
+        forall (P : BType mT) (s : FType mT), (g P) ∙ s ⊑ P ∙ (f s).
+
+Definition bidual (𝑷 : parity) (mT : baseMT 𝑷) 
+    (f : FType mT -> FType mT) (g : BType mT -> BType mT) : Prop :=
+        meta_dual f g /\ forall (P : BType mT) (s : FType mT), P ∙ (f s) ⊑ (g P) ∙ s.
 
 Notation bidual' g := (fun f => bidual f g).
 
-Notation " f ^← " := (ε (bidual f)) : MetaLan_Scope.
-Notation " g ^→ " := (ε (bidual' g)) : MetaLan_Scope.
+Notation " f ^← " := (ε (bidual f)) : MetaLan_scope.
+Notation " g ^→ " := (ε (bidual' g)) : MetaLan_scope.
 
 (** IMPORTANT : notice the relation between ' -> ' and the soundness of a
     verification system. *)

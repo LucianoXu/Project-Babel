@@ -138,7 +138,7 @@ Definition type (mT : metaType) (L0 L1 : language mT) : language mT := {|
 
 Module Exports.
 
-Notation "s0 ⨾ s1" := {| S0 := s0; S1 := s1 |} (at level 50) : MetaLan_Scope.
+Notation "s0 ⨾ s1" := {| S0 := s0; S1 := s1 |} (at level 50) : MetaLan_scope.
 
 End Exports.
 End SeqComp.

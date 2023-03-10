@@ -16,11 +16,11 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-Declare Scope MetaLan_Scope.
-Open Scope MetaLan_Scope.
+Declare Scope MetaLan_scope.
+Open Scope MetaLan_scope.
 
 
-Notation "⌈ P ⇒ Q ⌉" := (forall s, P s ⊑ Q s) : MetaLan_Scope.
+Notation "⌈ P ⇒ Q ⌉" := (forall s, P s ⊑ Q s) : MetaLan_scope.
 
 Module BackwardSemModel.
 
@@ -71,7 +71,7 @@ End BackwardSemModel.
 
 Module DeSemModel.
 
-Notation "⌈ P ⇒ Q ⌉" := (forall s, P s ⊑ Q s) : MetaLan_Scope.
+Notation "⌈ P ⇒ Q ⌉" := (forall s, P s ⊑ Q s) : MetaLan_scope.
 
 
 Lemma fun_impl_trans (X : Type) (Y : poset) (P Q R : X -> Y) : 

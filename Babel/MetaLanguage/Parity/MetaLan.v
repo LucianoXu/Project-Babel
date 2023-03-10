@@ -9,8 +9,8 @@ From Babel Require Import Ranko
                             ExtensionalityCharacter
                             ClassicalCharacter.
 
-From Babel.MetaLanguage Require Import Notations
-                                        MetaType.
+From Babel Require Import MetaLanguage.Notations
+                            MetaType.
 
 From Coq Require Import Relations Classical.
 
@@ -57,11 +57,13 @@ Export Syntax.Exports.
 Module AxSem.
 Section ClassDef.
 
-Record mixin_of (mT : asnMT) (Syn : syntax) : Type := Mixin {
-    ax_sys : Asn mT -> Syn -> Asn mT -> Prop;
+Variable (𝑷 : parity).
+
+Record mixin_of (mT : pTypeMT 𝑷) (Syn : syntax) : Type := Mixin {
+    ax_sys : mT -> Syn -> mT -> Prop;
 }.
 
-Record class (mT : asnMT) (syn : syntax): Type := Class {
+Record class (mT : pTypeMT 𝑷) (syn : syntax): Type := Class {
     mixin : mixin_of mT syn;
 }.
 
@@ -72,18 +74,19 @@ Module Exports.
 Coercion mixin : class >-> mixin_of.
 
 Notation axSem := class.
-Notation AxSem m s:= (@Class _ m s).
+Notation AxSem m:= (Class m).
 
 Notation " ⊢ { P } s { Q } " := (ax_sys (mixin _) P s Q) 
-    : MetaLan_Scope.
+    : MetaLan_scope.
 Notation " ⊢ < ax > { P } s { Q } " := (ax_sys (mixin ax) P s Q) 
-    : MetaLan_Scope.
+    : MetaLan_scope.
 
 End Exports.
 
 End AxSem.
 Export AxSem.Exports.
 
+(*
 
 (****************************************)
 (*                                      *)
@@ -114,7 +117,7 @@ Coercion mixin : class >-> mixin_of.
 Notation bwdSem := class.
 Notation BwdSem m s := (@Class _ m s).
 
-Notation " 'wp' < bwd > " := (wp_fun bwd) : MetaLan_Scope.
+Notation " 'wp' < bwd > " := (wp_fun bwd) : MetaLan_scope.
 
 End Exports.
 
@@ -208,3 +211,4 @@ End Exports.
 End VeriModC.
 Export VeriModC.Exports.
 
+*)

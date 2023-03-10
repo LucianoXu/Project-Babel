@@ -1,6 +1,6 @@
 (** HyperMeta : build meta theory with structurally. *)
 
-Notation "⌈ P ⇒ Q ⌉" := (forall s, P s ⊑ Q s) : MetaLan_Scope.
+Notation "⌈ P ⇒ Q ⌉" := (forall s, P s ⊑ Q s) : MetaLan_scope.
 
 (****************************************)
 (*                                      *)

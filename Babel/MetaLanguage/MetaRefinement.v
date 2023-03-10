@@ -80,7 +80,7 @@ Definition type (mT : metaType) : language mT := {|
 
 Module Exports.
 
-Notation "P ‖ Q" := {| pre := P; post := Q |} (at level 50) : MetaLan_Scope.
+Notation "P ‖ Q" := {| pre := P; post := Q |} (at level 50) : MetaLan_scope.
 (* #[export] Hint Unfold RefinementFactory.wp_with_spec : magic_book. *)
 
 End Exports.
