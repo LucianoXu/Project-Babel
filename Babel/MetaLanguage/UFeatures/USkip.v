@@ -27,45 +27,70 @@ Module USkip.
 Inductive syn :=
 | skip_.
 
-Definition syntax := Syntax syn.
-
 Notation Skip := skip_.
 
-(** BwdSem *)
+(** DeSem *)
 
-Definition wp_fun (mT : bwdMT): syntax -> Asn mT -> Asn mT := 
+Definition de_fun (mT : cpo): syn -> mT -> mT := 
     fun _ P => P.
 
-Lemma wp_fun_monot (mT : bwdMT) : 
-    forall s, MonotonicFun.mixin_of (@wp_fun mT s).
+Lemma de_fun_monot (mT : cpo) : 
+    forall s, MonotonicFun.mixin_of (@de_fun mT s).
 Proof. porder_level. Qed.
 
-Definition bwdSem_mixin (mT : bwdMT) : BwdSem.mixin_of mT syntax :=
+Definition deSem_mixin (mT : cpo) : DeSem.mixin_of mT syn :=
 {|
-	BwdSem.wp_fun := @wp_fun mT;
-    BwdSem.wp_monot := @wp_fun_monot mT;
+	DeSem.de_fun := @de_fun mT;
+    DeSem.de_monot := @de_fun_monot mT;
 |}.
 
-Definition bwdSem (mT : bwdMT) := BwdSem syntax (bwdSem_mixin mT).
+Definition deSem (mT : cpo) := DeSem syn (deSem_mixin mT).
 
 (** AxSem *)
 
-Inductive ax_sys (mT : asnMT) : Asn mT -> syntax -> Asn mT -> Prop :=
-| RULE_SKIP (P Q: Asn mT) (Himp : P ⊑ Q) : ax_sys P Skip Q.
+Inductive ax_sys (mT : dMT) : mT -> syn -> mT -> Prop :=
+| RULE_SKIP (P Q: mT) (Himp : mT ⊢ P ⇒ Q): ax_sys P Skip Q.
 
-Definition axSem_mixin (mT : asnMT) : AxSem.mixin_of mT syntax
+Definition axSem_mixin (mT : dMT) : AxSem.mixin_of mT syn
     := AxSem.Mixin (@ax_sys mT).
 
-Definition axSem (mT : asnMT) := AxSem syntax (axSem_mixin mT).
+Definition axSem (mT : dMT) := AxSem syn (axSem_mixin mT).
 
 (** VeriModS *)
 
-Definition veriModS_mixin (mT : bwdMT) : 
-    VeriModS.mixin_of (axSem mT) (bwdSem mT).
+Definition veriModS_mixin (mT : cpoDMT) : 
+    VeriModS.mixin_of (axSem mT) (deSem mT).
 Proof. 
     constructor. rewrite /VeriModS.axiom => s P Q.
-    move => [] R //=. rewrite /wp_fun. by reflexivity.
+    move => [] R //=. rewrite /de_fun => S.
+    apply (CpoDMT.class mT).
 Qed.
 
-Definition veriModS (mT : bwdMT) := 
-    VeriModS (axSem mT) (bwdSem mT) (veriModS_mixin mT).
+Definition veriModS (mT : cpoDMT) := VeriModS syn (veriModS_mixin mT).
+
+(** VeriModC *)
+
+Definition veriModC_mixin (mT : cpoDMT) : 
+    VeriModC.mixin_of (axSem mT) (deSem mT).
+Proof. 
+    constructor. rewrite /VeriModC.axiom.
+    move => [] P Q H.
+
+    apply RULE_SKIP.
+    apply (CpoDMT.class mT).
+    apply H.
+Qed.
+
+Definition veriModC (mT : cpoDMT) := VeriModC syn (veriModC_mixin mT).
+
+(** VeriModSC *)
+
+Definition veriModSC_mixin (mT : cpoDMT) : 
+    VeriModSC.mixin_of (veriModS mT) (veriModC mT).
+Proof. constructor. Qed.
+
+Definition veriModSC (mT : cpoDMT) := VeriModSC syn (veriModSC_mixin mT).
+
+End USkip.
+
+

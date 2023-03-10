@@ -21,33 +21,105 @@ Unset Printing Implicit Defensive.
 
 (****************************************)
 (*                                      *)
-(*       PTypeMT                        *)
-(*       (PType Metatype)               *)
+(*       DMT                            *)
+(*       (Deduction Metatype)           *)
 (*                                      *)
 (****************************************)
 
-Module PTypeMT.
+Module DMT.
+Section ClassDef.
 
-Definition  pSort : PSort := 
-    fun 𝑷 => Type.
-
-Record class (𝑷 : parity): Type := Class {
-    sort : pSort 𝑷;
+Record mixin_of (T : iType) := Mixin {
+    ded_sys : T -> T -> Prop;
 }.
 
-Definition type_of (𝑷 : parity) (c : class 𝑷) : Type := sort c.
+Notation class_of := mixin_of (only parsing).
+
+Record type := Pack {
+    sort : iType;
+    class : class_of sort;
+}.
+
+End ClassDef.
 
 Module Exports.
 
-Coercion type_of : class >-> Sortclass.
+#[reversible]
+Coercion sort : type >-> iType.
 
-Notation pTypeMT := class.
-Notation PTypeMT s := (Class s).
+Coercion class : type >-> mixin_of.
+
+Notation dMT := type.
+Notation DMT s m := (@Pack s m).
+Notation Dsys := ded_sys.
+
+Notation " ax ⊢ P ⇒ Q " := ((Dsys ax) P Q) : MetaLan_scope.
+
+End Exports.
+End DMT.
+Export DMT.Exports.
+
+
+
+(****************************************)
+(*                                      *)
+(*       cpoDMT                         *)
+(*       (cpo with Deduction Metatype)  *)
+(*                                      *)
+(****************************************)
+
+Module CpoDMT.
+
+Section ClassDef.
+
+Record mixin_of (T : iType) 
+        (b_cpo : CPO.class_of T) (b_dMT : DMT.mixin_of T) 
+        (bcpo := CPO T b_cpo) (bdMT := DMT T b_dMT):= Mixin {
+    
+    ded_iffP : forall (P Q : bcpo), 
+        P ⊑ Q   <->   bdMT ⊢ P ⇒ Q;
+}.
+
+Record class_of (T : iType) := Class {
+    b_cpo : CPO.class_of T;
+    b_dMT : DMT.mixin_of T;
+    mixin : mixin_of b_cpo b_dMT;
+}.
+
+Record type := Pack {
+    sort : iType;
+    class : class_of sort;
+}.
+
+Local Coercion sort : type >-> iType.
+Local Coercion class : type >-> class_of.
+
+Variable (cT : type).
+
+Definition pack (T : iType) (b_cpo : CPO.class_of T) (b_dMT : DMT.mixin_of T) 
+    (m : mixin_of b_cpo b_dMT) : type := @Pack T (Class m).
+
+Definition to_cpo : cpo := CPO cT (b_cpo cT).
+Definition to_dMT : dMT := DMT cT (b_dMT cT).
+
+End ClassDef.
+
+Module Exports.
+
+#[reversible]
+Coercion sort : type >-> iType.
+Coercion to_cpo : type >-> cpo.
+Coercion to_dMT : type >-> dMT.
+Coercion class : type >-> class_of.
+
+Notation cpoDMT := type.
+Notation CpoDMT T m := (@pack T _ _ m).
 
 End Exports.
 
-End PTypeMT.
-Export PTypeMT.Exports.
+End CpoDMT.
+Export CpoDMT.Exports.
+
 
 (****************************************)
 (*                                      *)
@@ -55,54 +127,80 @@ Export PTypeMT.Exports.
 (*       (Basic Metatype)               *)
 (*                                      *)
 (****************************************)
-
 Module BaseMT.
+
 Section ClassDef.
 
-
-Record mixin_of (𝑷 : parity) 
-    (baseF : pTypeMT 𝑷) (baseB : pTypeMT (-𝑷)) := Mixin {
+Record mixin_of (FType BType : iType) := Mixin {
     SVal : clattice;
-    sat_eval : baseB -> baseF -> SVal;
+    sat_eval : BType -> FType -> SVal;
 }.
 
-Record class (𝑷 : parity) := Class {
-    baseF : pTypeMT 𝑷;
-    baseB : pTypeMT (-𝑷);
-    mixin : mixin_of baseF baseB;
+Notation class_of := mixin_of (only parsing).
+
+(** This acts as the basic rules of this program world. *)
+Record type := Pack {
+    fType : iType;
+    bType : iType;
+    class : class_of fType bType;
 }.
+
+Local Coercion class : type >-> mixin_of.
+
 
 End ClassDef.
 
+
 Module Exports.
 
-Coercion mixin : class >-> mixin_of.
+Coercion class : type >-> mixin_of.
 
-Notation FType := baseF.
-Notation BType := baseB.
+Notation baseMT := type.
+Notation BaseMT fT bT m := (@Pack fT bT m).
 
+Notation FType := fType.
+Notation BType := bType.
 Notation SVal := SVal.
-Notation sat_eval := sat_eval.
 
-Notation baseMT := class.
-Notation BaseMT bP bN m := (@Class _ bP bN m).
-Notation " P ∙ s " := (sat_eval (mixin _) P s) : MetaLan_scope.
+Notation " P ∙ s " := (sat_eval (class _) P s) : MetaLan_scope.
+Notation " P ∙ s :> mT" := (sat_eval (class mT) P s) 
+    (only parsing): MetaLan_scope.
 Notation " ⌈ x ⇒ y ⌉ " := (forall P, P ∙ x ⊑ P ∙ y) : MetaLan_scope.
+Notation " ⌈ x ⇒ y ⌉ :> mT " := (forall P, P ∙ x :> mT ⊑ P ∙ y :> mT) 
+    (only parsing): MetaLan_scope.
+
 
 End Exports.
-
 End BaseMT.
 Export BaseMT.Exports.
 
+(** How to do parity transformation? *)
+Definition Parity_Trans : baseMT -> baseMT :=
+    fun b => 
+    {|
+        BaseMT.fType := BType b;
+        BaseMT.bType := FType b;
+        BaseMT.class := {|
+            BaseMT.SVal := SVal b;
+            BaseMT.sat_eval := fun bt ft => BaseMT.sat_eval b ft bt;
+        |};
+    |}.
 
+Definition parity_trans_involutive : 
+    forall b : baseMT, Parity_Trans (Parity_Trans b) = b.
+Proof. move => [] ? ? [] => //=. Qed.
+
+    
 Section BaseMT_Theories.
 
-Variable (𝑷 : parity) (mT : baseMT 𝑷).
+Variable (mT : baseMT).
+
+
 
 (** Definition of two kinds of correctness *)
 Definition correct
     (x : FType mT) (f : BType mT -> BType mT) (y : FType mT) : Prop :=
-        forall P, P ∙ x ⊑ f P ∙ y.
+        forall P, P ∙ x ⊑ (f P)∙ y.
 
 (** Extensionality *)
 Definition sat_eq : FType mT -> FType mT -> Prop :=
@@ -153,10 +251,9 @@ Definition sat_eval_inj :=
 
 End BaseMT_Theories.
 
-Notation " ⊨ { P } f { Q } " := (@correct FD _ P f Q) : MetaLan_scope.
-Notation " ⊨ [ x ] g [ y ] " := (@correct BD _ x g y) : MetaLan_scope.
-Notation " P '=FD' Q " := (@sat_eq FD _ P Q) : MetaLan_scope.
-Notation " x '=BD' y " := (@sat_eq BD _ x y) : MetaLan_scope.
+Notation " ⊨ { P } f { Q } " := (@correct _ P f Q) : MetaLan_scope.
+Notation " ⊨ [ x ] g [ y ] " := (@correct _ x g y) : MetaLan_scope.
+Notation " P '=FD' Q " := (@sat_eq _ P Q) : MetaLan_scope.
 
 
 (****************************************)
@@ -170,45 +267,54 @@ Module CpoMT.
 
 Section ClassDef.
 
-Variable (𝑷 : parity).
 
-Record mixin_of (base : baseMT 𝑷) := Mixin {
-    fType_poset_mixin : Poset.mixin_of (FType base);
-    fType_cpo_mixin : CPO.mixin_of (Poset _ fType_poset_mixin);
-    sat_eval_monotonicity : 
-        forall (x y : Poset _ fType_poset_mixin), 
-            x ⊑ y <-> ⌈ x ⇒ y ⌉;
+Record mixin_of (fType bType : iType)
+            (b : BaseMT.mixin_of fType bType) 
+            (b_cpo : CPO.class_of fType) 
+            (base := BaseMT _ _ b) (bcpo := CPO _ b_cpo)
+        := Mixin {
+
+    sat_eval_monotonicity : forall (x y : bcpo), x ⊑ y <-> ⌈ x ⇒ y ⌉ :> base;
 }.
 
-Record class := Class {
-    base : baseMT 𝑷;
-    mixin : mixin_of base;
+Record class_of (fType bType : iType) := Class {
+    base : BaseMT.mixin_of fType bType;
+    base_cpo : CPO.class_of fType;
+    mixin : mixin_of base base_cpo;
 }.
 
-Local Coercion mixin : class >-> mixin_of.
+Record type := Pack {
+    fType : iType;
+    bType : iType;
+    class : class_of fType bType;
+}.
 
-Definition FType_poset (c : class) : poset 
-    := Poset _ (fType_poset_mixin c).
-Definition FType_cpo (c : class) : cpo 
-    := CPO _ (fType_cpo_mixin c).
+Local Coercion class : type >-> class_of.
+
+Definition to_baseMT (c : type) : baseMT :=
+    BaseMT _ _ (base c).
+
+Definition fType_cpo (c : type) : cpo := CPO _ (base_cpo c).
+
+Lemma sat_eval_monotonicity_wrap (cT : type) :
+    forall (x y : (fType_cpo cT)), x ⊑ y <-> ⌈ x ⇒ y ⌉ :> (to_baseMT cT).
+Proof. apply sat_eval_monotonicity. by apply (class cT). Qed.
+
 
 End ClassDef.
 
 Module Exports.
 
-Coercion base : class >-> baseMT.
-Coercion mixin : class >-> mixin_of.
+Coercion class : type >-> class_of.
+Coercion mixin : class_of >-> mixin_of.
 
-Notation FType_poset := FType_poset.
-Canonical FType_poset.
+Coercion to_baseMT : type >-> baseMT.
 
-Notation FType_cpo := FType_cpo.
-Canonical FType_cpo.
+Notation FType_cpo := fType_cpo.
+Notation Sat_eval_monotonicity := sat_eval_monotonicity_wrap.
 
-Notation Sat_eval_monotonicity := sat_eval_monotonicity.
-
-Notation cpoMT := class.
-Notation CpoMT c m := (@Class _ c m).
+Notation cpoMT := type.
+Notation CpoMT fT bT m := (@Pack fT bT (Class m)).
 
 End Exports.
 End CpoMT.
@@ -217,10 +323,10 @@ Export CpoMT.Exports.
 
 Section CpoMT_Theories.
 
-Variable (𝑷 : parity) (mT : cpoMT 𝑷).
+Variable (mT : cpoMT).
 
-Add Morphism (@ord_op (FType_poset mT))
-    with signature (@sat_eq 𝑷 mT) ==> (@sat_eq 𝑷 mT) ==> iff 
+Add Morphism (@ord_op (FType_cpo mT))
+    with signature (@sat_eq mT) ==> (@sat_eq mT) ==> iff 
         as fType_le_mor.
 Proof.
     move => x y Hxy r s Hrs.
@@ -233,11 +339,12 @@ Qed.
 Lemma cpoMT_sat_eval_inj : sat_eval_inj mT.
 Proof.
     rewrite /sat_eval_inj => x y Hxy. 
-    apply poset_antisym; apply Sat_eval_monotonicity => P; 
-    rewrite Hxy; by reflexivity.
+    apply (@poset_antisym (FType_cpo mT)). 
+    all: apply Sat_eval_monotonicity => P; rewrite Hxy; by reflexivity.
 Qed.
 
 End CpoMT_Theories.
+
 
 (****************************************)
 (*                                      *)
@@ -251,41 +358,52 @@ Module CLatticeMT.
 
 Section ClassDef.
 
-Variable (𝑷 : parity).
+Record mixin_of (fType bType: iType)
+        (b : CpoMT.class_of fType bType) (b_cl : CLattice.class_of fType)
+        (mT := CpoMT fType bType b) (cl := CLattice fType b_cl) 
+            := Mixin {
 
-Record mixin_of (cpo_mT : cpoMT 𝑷) := Mixin {
-    fType_lattice_mixin : Lattice.mixin_of (FType_poset cpo_mT);
-    fType_clattice_mixin : CLattice.mixin_of 
-            (Lattice.class (Lattice _ fType_lattice_mixin));
     sat_eval_join_mor : 
-        forall (X : 𝒫(CLattice _ fType_clattice_mixin)) P, 
-            P ∙ (⊔ᶜˡ X) = ⊔ᶜˡ { P ∙ s, s | s ∈ X };
+        forall (X : 𝒫(cl)) (P : BType mT), 
+          P ∙ (⊔ᶜˡ X) = ⊔ᶜˡ { P ∙ s, s | s ∈ X };
 }.
 
-Record class := Class {
-    cpo_mT : cpoMT 𝑷;
-    mixin : mixin_of cpo_mT;
+Record class_of (fType bType : iType) := Class {
+    b_cpoMT : CpoMT.class_of fType bType;
+    b_cl : CLattice.class_of fType;
+    mixin : mixin_of b_cpoMT b_cl;
 }.
 
-Local Coercion mixin : class >-> mixin_of.
+Record type := Pack {
+    fType : iType;
+    bType : iType;
+    class : class_of fType bType;
+}.
 
-Definition FType_clattice (c : class) : clattice := 
-    CLattice _ (fType_clattice_mixin c).
+Local Coercion class : type >-> class_of.
+
+Definition to_cpoMT (cT : type) : cpoMT := CpoMT _ _ (b_cpoMT cT).
+Definition FType_clattice (cT : type) : clattice := CLattice _ (b_cl cT).
+
+Lemma sat_eval_join_mor_wrap (cT : type) :
+    forall (X : 𝒫(FType_clattice cT)) (P : BType (to_cpoMT cT)), 
+        P ∙ (⊔ᶜˡ X) = ⊔ᶜˡ { P ∙ s, s | s ∈ X }.
+Proof. apply sat_eval_join_mor. apply (mixin cT). Qed.
 
 End ClassDef.
 
 Module Exports.
 
-Coercion cpo_mT : class >-> cpoMT.
-Coercion mixin : class >-> mixin_of.
+Coercion to_cpoMT : type >-> cpoMT.
+Coercion class : type >-> class_of.
 
 Notation FType_clattice := FType_clattice.
 Canonical FType_clattice.
 
-Notation Sat_eval_join_mor := sat_eval_join_mor.
+Notation Sat_eval_join_mor := sat_eval_join_mor_wrap.
 
-Notation cLatticeMT := class.
-Notation CLatticeMT c m := (@Class _ c m).
+Notation cLatticeMT := type.
+Notation CLatticeMT fT bT m := (@Pack fT bT (Class m)).
 
 End Exports.
 End CLatticeMT.

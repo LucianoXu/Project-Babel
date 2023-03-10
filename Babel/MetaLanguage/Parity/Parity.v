@@ -28,16 +28,11 @@ Notation BD := false.
 
 Notation " - P " := (~~ P) : Parity_scope.
 
-(** Parity Sort *)
-
-Definition PSort := parity -> Type.
-
-
-
 (** Parity Transformation *)
 
+(*
 Definition PTrans (theory : Type) (theory_of : parity -> theory) 
     : parity -> theory :=
         fun 𝑷 => theory_of (- 𝑷).
-
+*)
 
