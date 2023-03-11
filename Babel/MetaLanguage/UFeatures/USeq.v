@@ -19,6 +19,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+
 (** Do not import this module. *)
 Module USeq.
 
@@ -97,6 +98,7 @@ Qed.
 Definition veriModS (mT : cpoDMT) (veriS0 veriS1 : veriModS mT) := 
     VeriModS (syn veriS0 veriS1) (veriModS_mixin veriS0 veriS1).
 
+    
 (** VeriModC *)
 
 

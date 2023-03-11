@@ -25,8 +25,10 @@ Reserved Notation " ⊢ [ x ] s [ y ] " (at level 10, x, s, y at next level).
 
 Reserved Notation " ⟦ s ⟧ < de > " (at level 50, de at next level).
 
+Reserved Notation " x ⊕[ Hj ] y " (at level 50, Hj, y at next level).
 
 Reserved Notation " f ^← " (at level 90). 
 Reserved Notation " g ^→ " (at level 90).
 
-Reserved Notation "s0 ⨾ s1" (at level 50).
+Reserved Notation "s0 ⨾ s1" (at level 10).
+Reserved Notation "'If' M 'Then' s0 'Else' s1 'End'".

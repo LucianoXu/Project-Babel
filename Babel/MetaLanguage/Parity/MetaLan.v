@@ -361,3 +361,36 @@ End Exports.
 End VeriModSC.
 Export VeriModSC.Exports.
 
+
+(****************************************)
+(*                                      *)
+(*       FlowCtrl                       *)
+(*       (flow contrl)                  *)
+(*                                      *)
+(****************************************)
+
+Module FlowCtrl.
+
+Record join (mT : cpo) := {
+
+    join_op : mT -> mT -> mT;
+    join_monot0 : forall x1 x2 y, x1 ⊑ x2 -> join_op x1 y ⊑ join_op x2 y;
+    join_monot1 : forall x y1 y2, y1 ⊑ y2 -> join_op x y1 ⊑ join_op x y2;
+}.
+
+Record split (mT : cpo) (Hj : join mT) := {
+    M0 : [ mT ↦ᵐ mT ];
+    M1 : [ mT ↦ᵐ mT ];
+    split_join_consistency : 
+        forall x, join_op Hj (M0 x) (M1 x) = x;
+}.
+
+Module Exports.
+
+Notation " x ⊕[ Hj ] y " := (join_op Hj x y) : MetaLan_scope.
+
+End Exports.
+
+End FlowCtrl.
+
+Export FlowCtrl.Exports.
