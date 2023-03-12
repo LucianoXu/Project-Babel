@@ -29,7 +29,7 @@ Defined.
 Canonical poset_type := Poset nat poset_mixin.
 
 Lemma nat_subset_chainMixin (A : 𝒫(nat)) :
-    Chain.class_of A.
+    Chain.mixin_of A.
 Proof.
     rewrite /Chain.mixin_of => x Hx y Hy //=.
     by apply Nat.le_ge_cases.

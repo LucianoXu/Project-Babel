@@ -3,7 +3,8 @@
 From Babel.POrderFacility Require Export
     POrder
     CLatticeLemma
-    DerivedPOrder.
+    DerivedPOrder
+    FixPoint.
 
 From Babel.Ranko Require Export
     POrderCharacter

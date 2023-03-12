@@ -41,7 +41,7 @@ Notation "s0 ⨾ s1" := {| S0 := s0; S1 := s1 |} : MetaLan_scope.
 Definition de_fun (mT : cpo) (de0 de1 : deSem mT): syn de0 de1 -> mT -> mT := 
     fun s P => ⟦ S0 s ⟧ <de0> (⟦ S1 s ⟧ <de1> P).
 
-Lemma de_fun_monot (mT : cpo) (de0 de1 : deSem mT): 
+Lemma de_fun_monot_mixin (mT : cpo) (de0 de1 : deSem mT): 
     forall s, MonotonicFun.mixin_of (@de_fun mT de0 de1 s).
 Proof. 
     porder_level.
@@ -50,11 +50,28 @@ Proof.
     by apply DeSem.de_monot. 
 Qed.
 
+Canonical de_fun_monot (mT : cpo) (de0 de1 : deSem mT) (s : syn de0 de1) : 
+        monotonicfun mT mT :=
+    MonotonicFun (de_fun s) (de_fun_monot_mixin s).
+
+Lemma de_fun_conti_mixin (mT : cpo) (de0 de1 : deSem mT): 
+    forall s, ContinuousFun.mixin_of (MonotonicFun.class (@de_fun mT de0 de1 s)).
+Proof.
+    rewrite /ContinuousFun.mixin_of => s c //=.
+    rewrite /de_fun //=.
+    rewrite DeSem.de_conti //=.
+    rewrite DeSem.de_conti //=.
+    porder_level.
+Qed.
+
+Canonical de_fun_conti (mT : cpo) (de0 de1 : deSem mT) (s : syn de0 de1) : 
+        continuousfun mT mT :=
+    ContinuousFun (de_fun s) (de_fun_conti_mixin s).
+
 Definition deSem_mixin (mT : cpo) (de0 de1 : deSem mT) : 
     DeSem.mixin_of mT (syn de0 de1) :=
 {|
 	DeSem.de_fun := @de_fun mT de0 de1;
-    DeSem.de_monot := @de_fun_monot mT de0 de1;
 |}.
 
 Definition deSem (mT : cpo) (de0 de1 : deSem mT) := 

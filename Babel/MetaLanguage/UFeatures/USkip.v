@@ -34,14 +34,23 @@ Notation Skip := skip_.
 Definition de_fun (mT : cpo): syn -> mT -> mT := 
     fun _ P => P.
 
-Lemma de_fun_monot (mT : cpo) : 
+Lemma de_fun_monot_mixin (mT : cpo) : 
     forall s, MonotonicFun.mixin_of (@de_fun mT s).
 Proof. porder_level. Qed.
+
+Canonical de_fun_monot (mT : cpo) (s : syn) : monotonicfun mT mT :=
+    MonotonicFun (de_fun s) (de_fun_monot_mixin s).
+
+Lemma de_fun_conti_mixin (mT : cpo) : 
+    forall s, ContinuousFun.mixin_of (MonotonicFun.class (@de_fun mT s)).
+Proof. porder_level. Qed.
+
+Canonical de_fun_conti (mT : cpo) (s : syn) : continuousfun mT mT :=
+    ContinuousFun (de_fun s) (de_fun_conti_mixin s).
 
 Definition deSem_mixin (mT : cpo) : DeSem.mixin_of mT syn :=
 {|
 	DeSem.de_fun := @de_fun mT;
-    DeSem.de_monot := @de_fun_monot mT;
 |}.
 
 Definition deSem (mT : cpo) := DeSem syn (deSem_mixin mT).

@@ -265,3 +265,16 @@ Proof. move => [Hfi Hfs] [Hgi Hgs]. split.
     by apply /comp_injective. by apply /comp_surjective.
 Qed.
 *)
+
+
+(** The power of functions. *)
+(** TODO #45 *)
+
+Reserved Notation " f ^[ n ] " (at level 10).
+
+Fixpoint fun_power (T : Type) (f : T -> T) (n : nat) : T -> T :=
+    match n with
+    | O => id
+    | S m => f ◦ f ^[ m ]
+    end
+    where " f ^[ n ] " := (fun_power f n) : TerminalDogma_scope.

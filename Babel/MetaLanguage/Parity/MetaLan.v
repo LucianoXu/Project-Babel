@@ -81,8 +81,7 @@ Module DeSem.
 Section ClassDef.
 
 Record mixin_of (mT : cpo) (syn : Type) : Type := Mixin {
-    de_fun : syn -> mT -> mT;
-    de_monot : forall (s : syn), MonotonicFun.mixin_of (de_fun s);
+    de_fun : syn -> [ mT ↦ mT ];
 }.
 
 Notation class_of := mixin_of (only parsing).
@@ -91,6 +90,16 @@ Record type (mT : cpo) : Type := Pack {
     syn : Type;
     class : class_of mT syn;
 }.
+
+Local Coercion class : type >-> mixin_of.
+
+Definition de_monot (mT : cpo) (cT : type mT) (s : syn cT)
+    : MonotonicFun.mixin_of (de_fun cT s) :=
+        MonotonicFun.class (de_fun cT s).
+
+Definition de_conti (mT : cpo) (cT : type mT) (s : syn cT)
+    : ContinuousFun.mixin_of (de_monot s) :=
+        ContinuousFun.class (de_fun cT s).
 
 End ClassDef.
 
@@ -371,16 +380,26 @@ Export VeriModSC.Exports.
 
 Module FlowCtrl.
 
+
+
 Record join (mT : cpo) := {
 
     join_op : mT -> mT -> mT;
-    join_monot0 : forall x1 x2 y, x1 ⊑ x2 -> join_op x1 y ⊑ join_op x2 y;
-    join_monot1 : forall x y1 y2, y1 ⊑ y2 -> join_op x y1 ⊑ join_op x y2;
+    join_monot1 : forall x, MonotonicFun.mixin_of (join_op x);
+    join_monot0 : forall y, MonotonicFun.mixin_of (join_op ^~ y);
+    join_conti0 : forall x, ContinuousFun.mixin_of (join_monot0 x);
+    join_conti1 : forall x, ContinuousFun.mixin_of (join_monot1 x);
+    (*
+    join_conti : 
+        forall (g f : [mT ↦ mT]) (ch : chain mT),
+        join_op (⊔ᶜᵖᵒ (f [<] ch)) (⊔ᶜᵖᵒ (g [<] ch)) = 
+        ⊔ᶜᵖᵒ ((fun x => join_op (f x) (g x)) [<] ch);
+    *)
 }.
 
 Record split (mT : cpo) (Hj : join mT) := {
-    M0 : [ mT ↦ᵐ mT ];
-    M1 : [ mT ↦ᵐ mT ];
+    M0 : [ mT ↦ mT ];
+    M1 : [ mT ↦ mT ];
     split_join_consistency : 
         forall x, join_op Hj (M0 x) (M1 x) = x;
 }.
@@ -394,3 +413,77 @@ End Exports.
 End FlowCtrl.
 
 Export FlowCtrl.Exports.
+
+Lemma flow_join_comp_chain_mixin (mT : cpo) (Hj : FlowCtrl.join mT) 
+        (f g : [mT ↦ mT]) (ch : chain mT):
+        Chain.mixin_of ((fun x => (f x) ⊕[Hj] (g x)) [<] ch).
+Proof.
+    rewrite /Chain.mixin_of.
+    porder_level.
+    case (Chain.class ch _ a _ a0) => Hle.
+    - left. 
+        transitivity (ContinuousFun.obj f x0 ⊕[ Hj] ContinuousFun.obj g x1).
+        apply FlowCtrl.join_monot1. by apply MonotonicFun.class.
+        apply FlowCtrl.join_monot0. by apply MonotonicFun.class.
+    - right.
+        transitivity (ContinuousFun.obj f x0 ⊕[ Hj] ContinuousFun.obj g x1).
+        apply FlowCtrl.join_monot0. by apply MonotonicFun.class.
+        apply FlowCtrl.join_monot1. by apply MonotonicFun.class.
+Qed.
+
+    
+
+Lemma flow_join_conti (mT : cpo) (Hj : FlowCtrl.join mT) (f g : [mT ↦ mT]) :
+
+    forall (x : chain mT), (⊔ᶜᵖᵒ (f [<] x)) ⊕[Hj] (⊔ᶜᵖᵒ (g [<] x))
+        = ⊔ᶜᵖᵒ (Chain ((fun x => (f x) ⊕[Hj] (g x)) [<] x)
+             (@flow_join_comp_chain_mixin _ Hj _ _ x)).
+
+Proof. move => ch. (* symmetry. apply cpo_join_eqP. *)
+
+(*
+    have Hconti0 := (FlowCtrl.join_conti0 Hj).
+    rewrite /ContinuousFun.mixin_of in Hconti0. simpl in Hconti0.
+    rewrite {}Hconti0.
+    apply cpo_join_eqP.
+
+
+    have Hconti1 := (FlowCtrl.join_conti1 Hj).
+    rewrite /ContinuousFun.mixin_of in Hconti1. simpl in Hconti1.
+    rewrite {}Hconti1.
+    
+    porder_level.
+
+    apply /lubP. split.
+    
+    porder_level.
+    
+    transitivity (
+        ContinuousFun.obj f x ⊕[ Hj] 
+        CPO.join_of (CPO.class mT) (monotonic_mapR_chain g ch)
+    ).
+    
+    + apply FlowCtrl.join_monot0.
+        apply CPO.join_prop. porder_level.
+    + apply FlowCtrl.join_monot1.
+        apply CPO.join_prop. porder_level.
+        
+    move => U H.
+
+
+
+    have Hconti0 := (FlowCtrl.join_conti0 Hj).
+    rewrite /ContinuousFun.mixin_of in Hconti0. simpl in Hconti0.
+    rewrite {}Hconti0.
+    apply CPO.join_prop.
+    porder_level.
+
+    
+    have Hconti1 := (FlowCtrl.join_conti1 Hj).
+    rewrite /ContinuousFun.mixin_of in Hconti1. simpl in Hconti1.
+    rewrite {}Hconti1.
+    apply CPO.join_prop.
+    porder_level.
+    apply H. porder_level.
+*)
+Admitted.

@@ -70,7 +70,7 @@ Ltac porder_basic_step_POST
         eapply H; by repeat top_step split_mode general_apply_depth eexists_mode
 
     (** anti-symmetry *)
-    | T : poset |- @eq ?T _ _ => apply poset_antisym
+    | _ => apply poset_antisym
     end.
 
 

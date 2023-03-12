@@ -46,7 +46,7 @@ Definition de_fun (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT) :
         syn Hj de0 de1 -> mT -> mT := 
     fun s P => ((M0 s) (⟦ S0 s ⟧ <de0> P)) ⊕[Hj] ((M1 s) (⟦ S1 s ⟧ <de1> P)).
 
-Lemma de_fun_monot (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT): 
+Lemma de_fun_monot_mixin (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT): 
     forall s, MonotonicFun.mixin_of (@de_fun mT Hj de0 de1 s).
 Proof. 
     porder_level.
@@ -62,11 +62,50 @@ Proof.
         by apply DeSem.de_monot.
 Qed.
 
+Canonical de_fun_monot (mT : cpo) (Hj : FlowCtrl.join mT) 
+    (de0 de1 : deSem mT) (s : syn Hj de0 de1): [mT ↦ᵐ mT] :=
+    MonotonicFun (de_fun s) (de_fun_monot_mixin s).
+
+Lemma de_fun_conti_mixin (mT : cpo) (Hj : FlowCtrl.join mT) 
+    (de0 de1 : deSem mT) (s : syn Hj de0 de1): 
+        ContinuousFun.mixin_of (de_fun_monot_mixin s).
+Proof.
+    rewrite /ContinuousFun.mixin_of => x.
+    rewrite /de_fun //=.
+
+    rewrite !DeSem.de_conti.
+    rewrite (ContinuousFun.mixin (ContinuousFun.class (M0 s))).
+    rewrite (ContinuousFun.mixin (ContinuousFun.class (M1 s))) //=.
+
+    have t := (flow_join_conti Hj 
+        ((M0 s) ◦ (⟦ S0 s ⟧ < de0 >)) ((M1 s) ◦ (⟦ S1 s ⟧ < de1 >)) x).
+    rewrite /conti_fun_comp /fun_comp /monotonic_mapR_chain in t. simpl in t. 
+    rewrite /monotonic_mapR_chain => //=.
+    
+    (* 
+
+
+
+    Check (Chain
+    (((λ P : CPO.sort mT,
+         ContinuousFun.obj (M0 s) (ContinuousFun.obj (⟦ S0 s ⟧ < de0 >) P)
+         ⊕[ Hj] ContinuousFun.obj (M1 s) (ContinuousFun.obj (⟦ S1 s ⟧ < de1 >) P)) [<]) x)
+    (monotonic_mapR_chainMixin (c:=x))).
+    *)
+Admitted.
+
+
+
+Canonical de_fun_conti (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT) 
+        (s : syn Hj de0 de1) : 
+        continuousfun mT mT :=
+    ContinuousFun (de_fun s) (de_fun_conti_mixin s).
+
+
 Definition deSem_mixin (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT) : 
     DeSem.mixin_of mT (syn Hj de0 de1) :=
 {|
     DeSem.de_fun := @de_fun mT Hj de0 de1;
-    DeSem.de_monot := @de_fun_monot mT Hj de0 de1;
 |}.
 
 Definition deSem (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT) := 

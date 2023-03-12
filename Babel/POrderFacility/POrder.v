@@ -621,7 +621,7 @@ Section ClassDef.
 
 Definition mixin_of (T : poset) (A : 𝒫(T)) :=
     forall' x ∈ A, forall' y ∈ A, (x ⊑ y \/ y ⊑ x).
-Definition class_of := mixin_of.
+Notation class_of := mixin_of (only parsing).
 
 
 Structure type (T : poset) := Pack {
@@ -654,10 +654,20 @@ End Chain.
 Export Chain.Exports.
 
 (* em_is_chain: empty set is a chain *)
-Lemma em_chain_mixin (T : poset) : @Chain.class_of T ∅.
+Lemma em_chain_mixin (T : poset) : @Chain.mixin_of T ∅.
 Proof. rewrite /Chain.mixin_of => ? []. Qed.
 
 Canonical em_is_chain (T : poset) := Chain ∅ (@em_chain_mixin T).
+
+Lemma chain_eqP (T : poset) (ch1 ch2 : chain T) :
+    ch1 = ch2 <-> ch1 = ch2 :> 𝒫(_).
+Proof. split.
+    by move => ->.
+    destruct ch1 as [objch1  cch1], ch2 as [objch2 cch2] => //= Hobjeq.
+    move: cch1 cch2. rewrite Hobjeq => cch1 cch2. f_equal.
+    by apply proof_irrelevance.
+Qed.
+
 
 
 (*###################################################*)
@@ -665,7 +675,7 @@ Canonical em_is_chain (T : poset) := Chain ∅ (@em_chain_mixin T).
 Module CPO.
 Section ClassDef.
 
-Record mixin_of (T0 : Type) (b : Poset.class_of T0)
+Record mixin_of (T0 : Type) (b : Poset.mixin_of T0)
                 (T := Poset T0 b) := Mixin {
     join_of : chain T -> T;
     join_prop : forall A : chain T, supremum A (join_of A);
@@ -717,6 +727,18 @@ End Exports.
 
 End CPO.
 Export CPO.Exports.
+
+
+Lemma cpo_join_eqP (T : cpo) (ch : chain T) (x : T): 
+        ⊔ᶜᵖᵒ ch = x <-> supremum ch x.
+Proof. split.
+    - move <-. apply CPO.join_prop.
+    - apply sup_unique. apply CPO.join_prop.
+Qed.
+    
+        
+
+
 
 
 (** **** CPO_bottom: every CPO has the least element *)
@@ -1000,56 +1022,6 @@ Notation " L '†cL' " := (dual_clattice L) : POrder_scope.
 (*###################################################*)
 (** ** function in poset *)
 
-(* the definition of a fixpoint *)
-Definition fp (T : poset) (f : T -> T) (x : T) : Prop := f x = x.
-
-(* set of fixpoints *)
-Definition fp_s (T : poset) (f : T -> T) : 𝒫(T) := { x | fp f x }.
-
-(* pre-fixpoint *)
-Definition pre_fp (T : poset) (f : T -> T) (x : T) : Prop := x ⊑ f x.
-
-(* pre-fixpoint set *)
-Definition pre_fp_s (T : poset) (f : T -> T) : 𝒫(T) := { x | pre_fp f x }.
-
-(* post-fixpoint *)
-Definition post_fp (T : poset) (f : T -> T) (x : T) : Prop := f x ⊑ x.
-
-(* post-fixpoint set *)
-Definition post_fp_s (T : poset) (f : T -> T) : 𝒫(T) := { x | post_fp f x }.
-
-(* fp_in_pre_fp : fp_s f ⊆ pre_fp_s f *)
-Lemma fp_in_pre_fp (T : poset) : forall f : T -> T, fp_s f ⊆ pre_fp_s f.
-Proof.
-    rewrite /subset /fp_s /fp /pre_fp_s /pre_fp => //= f x ->.
-    by reflexivity.
-Qed.
-
-(* fp_in_post_fp : fp_s f ⊆ post_fp_s f *)
-Lemma fp_in_post_fp (T : poset) : forall f : T -> T, fp_s f ⊆ post_fp_s f.
-Proof.
-    have Hdual := @fp_in_pre_fp (T †po).
-    by apply Hdual.
-Qed.
-
-
-(* a is the least fixpoint of f greater than x *)
-Definition lfp_x (T : poset) (f : T -> T) (x a : T) := 
-    least ({ y | y ∈ fp_s f /\ x ⊑ y }) a.
-
-(* a is the least fixpoint of f *)
-Definition lfp (T : poset) (f : T -> T) (a : T) := 
-    least (fp_s f) a.
-    
-(* a is the greatest fixpoint of f smaller than x *)
-Definition gfp_x (T : poset) (f : T -> T) (x a : T) := 
-    largest ({ y | y ∈ fp_s f /\ y ⊑ x }) a.
-
-
-(* a is the greatest fixpoint of f *)
-Definition gfp (T : poset) (f : T -> T) (a : T) := 
-    largest (fp_s f) a.
-
 
 (*###########################################################################*)
 (** monotonic *)
@@ -1119,6 +1091,31 @@ Proof. split.
 Qed.
 
 
+Lemma monofun_comp_mixin (T : cpo) (f g: [T ↦ᵐ T]) :
+        MonotonicFun.mixin_of (f ◦ g).
+Proof. rewrite /MonotonicFun.mixin_of.
+    move => x y Hxy.
+    by repeat apply MonotonicFun.class.
+Qed.
+
+Canonical monofun_comp (T : cpo) (f g: [T ↦ᵐ T]) : [T ↦ᵐ T] :=
+    MonotonicFun (f ◦ g) (monofun_comp_mixin f g).
+
+
+(** Monotonic Function of power*)
+Lemma monofun_power_mono_mixin (T : cpo) (f : [T ↦ᵐ T]) (n : nat) :
+        MonotonicFun.mixin_of (f ^[n]).
+Proof. rewrite /MonotonicFun.mixin_of.
+    move => x y Hxy. elim: n.
+    - by apply Hxy.
+    - move => n IHn => //=.
+        by apply MonotonicFun.class.
+Qed.
+
+Canonical monofun_power_mono (T : cpo) (f : [T ↦ᵐ T]) (n : nat) : [T ↦ᵐ T] :=
+    MonotonicFun (f ^[n]) (monofun_power_mono_mixin f n).
+
+
 (* continuous *)
 Module ContinuousFun.
 
@@ -1174,3 +1171,20 @@ End ContinuousFun.
 Export ContinuousFun.Exports.
 
 
+Lemma conti_fun_comp_mixin (T : cpo) (f g : [T ↦ T]) :
+
+    ContinuousFun.mixin_of (MonotonicFun.class (f ◦ g)).
+
+Proof.
+    rewrite /ContinuousFun.mixin_of => c //=.
+    rewrite /fun_comp.
+
+    rewrite (ContinuousFun.mixin (ContinuousFun.class g)).
+    rewrite (ContinuousFun.mixin (ContinuousFun.class f)).
+
+    f_equal. apply chain_eqP. rewrite /monotonic_mapR_chain => //=.
+    equal_f_comp c. rewrite -fun_assoc. by rewrite double_mapRF.
+Qed.
+
+Canonical conti_fun_comp (T : cpo) (f g : [T ↦ T]) : [T ↦ T] :=
+    ContinuousFun (f ◦ g) (conti_fun_comp_mixin f g).
