@@ -94,7 +94,6 @@ Ltac porder_simpl_branch :=
         || rewrite /CLattice.join_op
         || rewrite /CLattice.meet_op
         || rewrite /MonotonicFun.mixin_of
-        || rewrite /MonotonicFun.class_of
         || rewrite /ContinuousFun.mixin_of
         ) => //=.
 

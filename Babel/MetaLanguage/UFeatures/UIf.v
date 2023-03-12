@@ -46,6 +46,10 @@ Definition de_fun (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT) :
         syn Hj de0 de1 -> mT -> mT := 
     fun s P => ((M0 s) (⟦ S0 s ⟧ <de0> P)) ⊕[Hj] ((M1 s) (⟦ S1 s ⟧ <de1> P)).
 
+(** Properties
+may be useful later *)
+
+(*
 Lemma de_fun_monot_mixin (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT): 
     forall s, MonotonicFun.mixin_of (@de_fun mT Hj de0 de1 s).
 Proof. 
@@ -100,7 +104,7 @@ Canonical de_fun_conti (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT)
         (s : syn Hj de0 de1) : 
         continuousfun mT mT :=
     ContinuousFun (de_fun s) (de_fun_conti_mixin s).
-
+*)
 
 Definition deSem_mixin (mT : cpo) (Hj : FlowCtrl.join mT) (de0 de1 : deSem mT) : 
     DeSem.mixin_of mT (syn Hj de0 de1) :=

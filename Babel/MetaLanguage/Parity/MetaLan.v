@@ -68,38 +68,25 @@ End AxSem.
 Export AxSem.Exports.
 
 
-
 (****************************************)
 (*                                      *)
 (*       DeSem                          *)
 (*       (Backward Transformer)         *)
 (*                                      *)
 (****************************************)
-
-
 Module DeSem.
 Section ClassDef.
 
-Record mixin_of (mT : cpo) (syn : Type) : Type := Mixin {
-    de_fun : syn -> [ mT ↦ mT ];
+Record mixin_of (mT : Type) (syn : Type) : Type := Mixin {
+    de_fun : syn -> mT -> mT;
 }.
 
 Notation class_of := mixin_of (only parsing).
 
-Record type (mT : cpo) : Type := Pack {
+Record type (mT : Type) : Type := Pack {
     syn : Type;
     class : class_of mT syn;
 }.
-
-Local Coercion class : type >-> mixin_of.
-
-Definition de_monot (mT : cpo) (cT : type mT) (s : syn cT)
-    : MonotonicFun.mixin_of (de_fun cT s) :=
-        MonotonicFun.class (de_fun cT s).
-
-Definition de_conti (mT : cpo) (cT : type mT) (s : syn cT)
-    : ContinuousFun.mixin_of (de_monot s) :=
-        ContinuousFun.class (de_fun cT s).
 
 End ClassDef.
 
@@ -115,9 +102,125 @@ Notation DeSem s m := (@Pack _ s m).
 Notation " ⟦ s ⟧ < de > " := (de_fun de s) : MetaLan_scope.
 
 End Exports.
-
 End DeSem.
+
 Export DeSem.Exports.
+
+
+(****************************************)
+(*                                      *)
+(*       DeSemM                         *)
+(*       (Backward Transformer)         *)
+(*       (monotonic)                    *)
+(****************************************)
+
+
+Module DeSemM.
+Section ClassDef.
+
+Record mixin_of (mT : poset) (syn : Type)
+        (b : DeSem.mixin_of mT syn) : Type := Mixin {
+    mono_mixin : forall s, 
+        MonotonicFun.mixin_of (DeSem.de_fun b s);
+}.
+
+Record class_of (mT : poset) (syn : Type) := Class {
+    base_de : DeSem.mixin_of mT syn;
+    mixin : mixin_of base_de;
+}.
+
+Record type (mT : poset) : Type := Pack {
+    syn : Type;
+    class : class_of mT syn;
+}.
+
+Local Coercion class : type >-> class_of.
+
+Definition de_monot (mT : poset) (cT : type mT) (s : syn cT)
+    : MonotonicFun.mixin_of (DeSem.de_fun (base_de cT) s) :=
+        mono_mixin (mixin cT) s.
+
+Definition to_deSem (mT : poset) (cT : type mT) : deSem mT :=
+    DeSem (syn cT) (base_de cT).
+
+End ClassDef.
+
+Module Exports.
+
+#[reversible]
+Coercion syn : type >-> Sortclass.
+Coercion class : type >-> class_of.
+Coercion mixin : class_of >-> mixin_of.
+Coercion base_de : class_of >-> DeSem.mixin_of.
+
+Coercion to_deSem : type >-> deSem.
+
+Notation deSemM := type.
+Notation DeSemM s m := (@Pack _ s (Class m)).
+
+
+End Exports.
+
+End DeSemM.
+Export DeSemM.Exports.
+
+
+(****************************************)
+(*                                      *)
+(*       DeSemC                         *)
+(*       (Backward Transformer)         *)
+(*       (Continuous)                   *)
+(****************************************)
+
+
+Module DeSemC.
+Section ClassDef.
+
+Record mixin_of (mT : cpo) (syn : Type)
+        (b : DeSemM.class_of mT syn) : Type := Mixin {
+    conti_mixin : forall s, 
+        ContinuousFun.mixin_of (DeSemM.mono_mixin b s);
+}.
+
+Record class_of (mT : cpo) (syn : Type) := Class {
+    base_deM : DeSemM.class_of mT syn;
+    mixin : mixin_of base_deM;
+}.
+
+Record type (mT : cpo) : Type := Pack {
+    syn : Type;
+    class : class_of mT syn;
+}.
+
+Local Coercion class : type >-> class_of.
+
+Definition de_conti (mT : cpo) (cT : type mT) (s : syn cT)
+    : ContinuousFun.mixin_of (DeSemM.mono_mixin (base_deM cT) s) :=
+        conti_mixin (mixin cT) s.
+
+Definition to_deSemM (mT : cpo) (cT : type mT) : deSemM mT :=
+    DeSemM (syn cT) (base_deM cT).
+
+End ClassDef.
+
+Module Exports.
+
+#[reversible]
+Coercion syn : type >-> Sortclass.
+Coercion class : type >-> class_of.
+Coercion mixin : class_of >-> mixin_of.
+Coercion base_deM : class_of >-> DeSemM.class_of.
+
+Coercion to_deSemM : type >-> deSemM.
+
+Notation deSemC := type.
+Notation DeSemC s m := (@Pack _ s (Class m)).
+
+
+End Exports.
+
+End DeSemC.
+Export DeSemC.Exports.
 
 (****************************************)
 (*                                      *)

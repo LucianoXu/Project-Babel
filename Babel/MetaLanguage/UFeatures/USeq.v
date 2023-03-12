@@ -38,44 +38,53 @@ Notation "s0 ⨾ s1" := {| S0 := s0; S1 := s1 |} : MetaLan_scope.
     For now let's consider backward semantics.
 *)
 
-Definition de_fun (mT : cpo) (de0 de1 : deSem mT): syn de0 de1 -> mT -> mT := 
+Definition de_fun (mT : Type) (de0 de1 : deSem mT): syn de0 de1 -> mT -> mT := 
     fun s P => ⟦ S0 s ⟧ <de0> (⟦ S1 s ⟧ <de1> P).
 
-Lemma de_fun_monot_mixin (mT : cpo) (de0 de1 : deSem mT): 
-    forall s, MonotonicFun.mixin_of (@de_fun mT de0 de1 s).
-Proof. 
-    porder_level.
-    rewrite /de_fun.
-    apply DeSem.de_monot.
-    by apply DeSem.de_monot. 
-Qed.
-
-Canonical de_fun_monot (mT : cpo) (de0 de1 : deSem mT) (s : syn de0 de1) : 
-        monotonicfun mT mT :=
-    MonotonicFun (de_fun s) (de_fun_monot_mixin s).
-
-Lemma de_fun_conti_mixin (mT : cpo) (de0 de1 : deSem mT): 
-    forall s, ContinuousFun.mixin_of (MonotonicFun.class (@de_fun mT de0 de1 s)).
-Proof.
-    rewrite /ContinuousFun.mixin_of => s c //=.
-    rewrite /de_fun //=.
-    rewrite DeSem.de_conti //=.
-    rewrite DeSem.de_conti //=.
-    porder_level.
-Qed.
-
-Canonical de_fun_conti (mT : cpo) (de0 de1 : deSem mT) (s : syn de0 de1) : 
-        continuousfun mT mT :=
-    ContinuousFun (de_fun s) (de_fun_conti_mixin s).
-
-Definition deSem_mixin (mT : cpo) (de0 de1 : deSem mT) : 
+Definition deSem_mixin (mT : Type) (de0 de1 : deSem mT) : 
     DeSem.mixin_of mT (syn de0 de1) :=
 {|
 	DeSem.de_fun := @de_fun mT de0 de1;
 |}.
 
-Definition deSem (mT : cpo) (de0 de1 : deSem mT) := 
+Canonical deSem (mT : Type) (de0 de1 : deSem mT) := 
     DeSem (syn de0 de1) (deSem_mixin de0 de1).
+
+
+(** monotonicity *)
+
+Lemma de_fun_monot_mixin (mT : poset) (de0 de1 : deSemM mT): 
+        DeSemM.mixin_of (deSem_mixin de0 de1).
+Proof.
+    constructor. 
+    porder_level.
+    rewrite /de_fun.
+    apply DeSemM.de_monot.
+    by apply DeSemM.de_monot. 
+Qed.
+
+Canonical de_fun_monot (mT : poset) (de0 de1 : deSemM mT) : deSemM mT :=
+    DeSemM (syn de0 de1) (de_fun_monot_mixin de0 de1).
+
+
+Lemma de_fun_conti_mixin (mT : cpo) (de0 de1 : deSemC mT) :
+        DeSemC.mixin_of (DeSemM.class (de_fun_monot de0 de1)).
+Proof.
+    constructor.
+    rewrite /ContinuousFun.mixin_of => s c //=.
+    rewrite /de_fun //=.
+    have t1 := (DeSemC.de_conti (S1 s)).
+        rewrite /ContinuousFun.mixin_of in t1. simpl in t1. rewrite {}t1.
+    have t0 := (DeSemC.de_conti (S0 s)).
+        rewrite /ContinuousFun.mixin_of in t0. simpl in t0. rewrite {}t0.
+    porder_level.
+Qed.
+
+Canonical de_fun_conti (mT : cpo) (de0 de1 : deSemC mT) 
+        : deSemC mT :=
+    DeSemC (syn de0 de1) (de_fun_conti_mixin de0 de1).
+
+
 
 
 
@@ -100,7 +109,8 @@ Definition axSem (mT : dMT) (ax0 ax1 : axSem mT) :=
 (** VeriModS *)
 
 Definition veriModS_mixin (mT : cpoDMT) (veriS0 veriS1 : veriModS mT): 
-    VeriModS.mixin_of (axSem veriS0 veriS1) (deSem veriS0 veriS1).
+    VeriModS.mixin_of (axSem veriS0 veriS1) 
+    (deSem (veriS0 : DeSem.Exports.deSem (mT : cpo)) veriS1).
 Proof. 
     constructor. rewrite /VeriModS.axiom => [] [] s0 s1 P Q.
     move => [] //=. intros. rewrite /de_fun.
@@ -109,7 +119,7 @@ Proof.
     
     transitivity ((⟦ s2 ⟧ < DeSem veriS0 (VeriModS.base_de veriS0) >) R).
     - by [].
-    - by apply (DeSem.de_monot).
+    - by apply (DeSemM.de_monot ).
 Qed.
 
 Definition veriModS (mT : cpoDMT) (veriS0 veriS1 : veriModS mT) := 

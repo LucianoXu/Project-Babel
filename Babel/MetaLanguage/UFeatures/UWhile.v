@@ -111,7 +111,6 @@ Definition deSem_mixin (mT : cpo) (Hj : FlowCtrl.join mT) (de0 : deSem mT) :
 Definition deSem (mT : cpo) (Hj : FlowCtrl.join mT) (de0 : deSem mT) :=
     DeSem (syn Hj de0) (deSem_mixin Hj de0).
 
-
 (** AxSem 
     Note that cpoDMT is needed here.
 *)
@@ -122,7 +121,7 @@ Inductive ax_sys (mT : cpoDMT) (Hj : FlowCtrl.join mT) (ax0 : axSem mT) :
 | RULE_LOOP (M : FlowCtrl.split Hj)
         (s0 : ax0) (P Inv Q : mT) 
         (H : ⊢ <ax0> { Inv } s0 { (FlowCtrl.M0 M Inv) ⊕[Hj] (FlowCtrl.M1 M Q) }) 
-        (Himp : mT ⊢ P ⇒ Inv): 
+        (Himp : mT ⊢ P ⇒ ((FlowCtrl.M0 M Inv) ⊕[Hj] (FlowCtrl.M1 M Q))): 
 
             ax_sys P (While M Do s0 End) Q.
             
@@ -137,6 +136,7 @@ Definition axSem (mT : cpoDMT) (Hj : FlowCtrl.join mT) (ax0 : axSem mT)
         
 
 
+(*
 (** VeriModS *)
 
 Definition veriModS_mixin (mT : cpoDMT) (Hj : FlowCtrl.join mT) 
@@ -146,11 +146,13 @@ Proof.
     constructor. rewrite /VeriModS.axiom => [] [] Hs s0 P Q.
     move => [] //=. intros. rewrite /de_fun.
 
-    transitivity Inv.
+    transitivity (
+        (ContinuousFun.obj (FlowCtrl.M0 M) Inv
+          ⊕[ Hj] ContinuousFun.obj (FlowCtrl.M1 M) Q0)
+    ).
     - by apply /(CpoDMT.ded_iffP (CpoDMT.mixin mT)).
 
     apply (soundness_of veriS0) in H.
-    apply (poset_trans H).
     rewrite /KleeneFp //=.
 
 
@@ -168,5 +170,5 @@ Qed.
 
 Definition veriModS (mT : cpoDMT) (veriS0 veriS1 : veriModS mT) := 
     VeriModS (syn veriS0 veriS1) (veriModS_mixin veriS0 veriS1).
-    
+*)
 End UWhile.

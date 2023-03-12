@@ -33,3 +33,5 @@ Reserved Notation " g ^→ " (at level 90).
 Reserved Notation "s0 ⨾ s1" (at level 10).
 Reserved Notation "'If' M 'Then' s0 'Else' s1 'End'".
 Reserved Notation "'While' M 'Do' s0 'End'".
+
+Reserved Notation " P ‖ Q " (at level 10).

@@ -1,10 +1,9 @@
-(** MetaRefinement.v *)
+(** UPrescript.v *)
 From Babel Require Import TerminalDogma 
                           ExtraDogma.Extensionality
                           ExtraDogma.AllDecidable
                           SetFacility
-                          POrderFacility
-                          MetaLanguage.MetaTheory.
+                          POrderFacility.
 
 From Coq Require Import Relations Classical.
 
@@ -12,6 +11,11 @@ From Babel Require Import Ranko
                             ExtensionalityCharacter
                             AllDecidableCharacter
                             ClassicalCharacter.
+
+From Babel.MetaLanguage Require Import Notations
+                            MetaType
+                            MetaLan.
+
 
 
 
@@ -21,7 +25,6 @@ Unset Printing Implicit Defensive.
 
 Coercion decide_oracle : Sortclass >-> bool.
 
-Import BackwardSemModel.
 Import FunPointwiseOrder.CanonicalStruct.
 
 
@@ -41,53 +44,53 @@ Canonical prog_preorder (mT : metaType) (L : language mT) :=
 *)
 
 
-Module SpecMod.
 
-Record syntax (mT : metaType) : Type := {
-    pre: Asn mT;
-    post: Asn mT;
+(** Do not import this module. *)
+Module UPrescript.
+
+
+(** Syntax *)
+
+Record syn (mT : cpo) := prescript_ {
+    pre : mT;
+    post : mT;
 }.
 
-Definition wp (mT : metaType) : syntax mT -> Asn mT -> Asn mT :=
+
+(** DeSem 
+*)
+
+
+Definition de_fun (mT : cpo) : syn mT -> mT -> mT :=
     fun p => fun R => 
         if post p ⊑ R 
             then pre p 
-            else ⊔ᶜˡ (∅ : 𝒫(Asn mT)).
+            else ⊔ᶜᵖᵒ (∅ : 𝒫(mT)).
 
-Lemma wp_monotonic (mT : metaType) : 
-    forall p: syntax mT, MonotonicFun.mixin_of (wp p).
+Notation " P ‖ Q " := {| pre := P; post := Q |} : MetaLan_scope.
+
+Lemma de_fun_monot_mixin (mT : cpo) (p : syn mT): 
+    MonotonicFun.mixin_of (de_fun p).
 Proof.
-    rewrite /MonotonicFun.mixin_of => p P Q.
-    rewrite /wp => H.
+    rewrite /MonotonicFun.mixin_of => P Q.
+    rewrite /de_fun => H.
 
     case E: (decide_oracle (post p ⊑ P)).
     - rewrite decide_oracle_true in E.
         replace (decide_oracle (post p ⊑ Q)) with true.
         by reflexivity.
         symmetry. rewrite decide_oracle_true. by transitivity P.
-    - apply CLattice.join_prop. ranko.
+    - apply CPO.join_prop. porder_level.
 Qed.
 
+Canonical de_fun_monot (mT : cpo) (s : syn mT): [mT ↦ᵐ mT] :=
+    MonotonicFun (de_fun s) (de_fun_monot_mixin s).
 
-Definition type (mT : metaType) : language mT := {|
-    BackwardSemModel.syntax := syntax mT;
-    BackwardSemModel.wp := @wp mT;
-    BackwardSemModel.wp_monotonic := @wp_monotonic mT;
-|}.
+End UPrescript.
 
 
 
-
-Module Exports.
-
-Notation "P ‖ Q" := {| pre := P; post := Q |} (at level 50) : MetaLan_scope.
-(* #[export] Hint Unfold RefinementFactory.wp_with_spec : magic_book. *)
-
-End Exports.
-
-End SpecMod.
-Export SpecMod.Exports.
-
+(*
 
 
 Theorem Theorem_Refinement_A (mT : metaType) 
@@ -210,4 +213,5 @@ Definition seq_cpt (plm : prog_lan_model) : prog_lan_model :=
 
 
 
+*)
 *)

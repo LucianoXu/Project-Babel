@@ -1030,7 +1030,7 @@ Section ClassDef.
 
 Definition mixin_of (T T' : poset) (f : T -> T') :=
     forall x y : T, x ⊑ y -> f x ⊑ f y.
-Definition class_of := mixin_of.
+Notation class_of := mixin_of (only parsing).
 
 
 Structure type (T T' : poset) := Pack {
@@ -1124,16 +1124,16 @@ Section ClassDef.
 (** We must build the mixin of monotonic function first, because [f [<] c] must
     be a chain. *)
 Definition mixin_of (T T' : cpo) (f0 : T -> T')
-            (bf : MonotonicFun.class_of f0) (f := MonotonicFun f0 bf) :=
+            (bf : MonotonicFun.mixin_of f0) (f := MonotonicFun f0 bf) :=
     forall c : chain T, f (⊔ᶜᵖᵒ c) = ⊔ᶜᵖᵒ (f [<] c).
 
 #[projections(primitive)]
 Record class_of (T T' : cpo) (f : T -> T'):= Class {
-    base : MonotonicFun.class_of f;
+    base : MonotonicFun.mixin_of f;
     mixin : mixin_of base;
 }.
 
-Local Coercion base : class_of >-> MonotonicFun.class_of.
+Local Coercion base : class_of >-> MonotonicFun.mixin_of.
 Local Coercion mixin : class_of >-> mixin_of.
 
 Structure type (T T' : cpo) := Pack {
@@ -1151,7 +1151,7 @@ Definition monotonicfun := MonotonicFun _ class.
 End ClassDef.
 
 Module Exports.
-#[reversible] Coercion base : class_of >-> MonotonicFun.class_of.
+#[reversible] Coercion base : class_of >-> MonotonicFun.mixin_of.
 #[reversible] Coercion mixin : class_of >-> mixin_of.
 
 #[reversible] Coercion monotonicfun : type >-> MonotonicFun.type.
